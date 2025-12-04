@@ -1,0 +1,27 @@
+{
+	"name": "uptimebeacon",
+	"version": "0.1.0",
+	"private": true,
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"typecheck": "turbo run typecheck",
+		"check": "biome check .",
+		"check:write": "biome check --write .",
+		"check:unsafe": "biome check --write --unsafe .",
+		"db:generate": "turbo run db:generate",
+		"db:push": "turbo run db:push",
+		"db:migrate": "turbo run db:migrate",
+		"db:studio": "bun run --filter @uptimebeacon/database db:studio"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.5",
+		"turbo": "^2.3.0",
+		"typescript": "^5.8.2"
+	},
+	"packageManager": "bun@1.1.0"
+}

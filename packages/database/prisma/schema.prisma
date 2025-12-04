@@ -1,0 +1,410 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTH & USER MODELS (NextAuth)
+// ============================================
+
+enum UserRole {
+    USER
+    ADMIN
+}
+
+model User {
+    id            String    @id @default(cuid())
+    name          String?
+    email         String?   @unique
+    emailVerified DateTime?
+    image         String?
+    password      String?   // Hashed password for credentials auth
+    role          UserRole  @default(USER)
+
+    accounts      Account[]
+    sessions      Session[]
+    posts         Post[]
+    monitors      Monitor[]
+    statusPages   StatusPage[]
+    notifications NotificationChannel[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Account {
+    id                       String  @id @default(cuid())
+    userId                   String
+    type                     String
+    provider                 String
+    providerAccountId        String
+    refresh_token            String? @db.Text
+    access_token             String? @db.Text
+    expires_at               Int?
+    token_type               String?
+    scope                    String?
+    id_token                 String? @db.Text
+    session_state            String?
+    refresh_token_expires_in Int?
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+    identifier String
+    token      String   @unique
+    expires    DateTime
+
+    @@unique([identifier, token])
+}
+
+model Post {
+    id        Int      @id @default(autoincrement())
+    name      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    createdBy   User   @relation(fields: [createdById], references: [id])
+    createdById String
+
+    @@index([name])
+}
+
+// ============================================
+// MONITORING ENUMS
+// ============================================
+
+enum MonitorType {
+    HTTP
+    HTTPS
+    TCP
+    PING
+    DNS
+    KEYWORD
+    JSON_QUERY
+    GRPC
+    DOCKER
+    PUSH
+}
+
+enum MonitorStatus {
+    UP
+    DOWN
+    DEGRADED
+    MAINTENANCE
+    PENDING
+}
+
+enum HttpMethod {
+    GET
+    POST
+    PUT
+    DELETE
+    PATCH
+    HEAD
+    OPTIONS
+}
+
+enum NotificationType {
+    EMAIL
+    SLACK
+    DISCORD
+    TELEGRAM
+    WEBHOOK
+    PUSHOVER
+    SMS
+}
+
+// ============================================
+// MONITORING MODELS
+// ============================================
+
+model Monitor {
+    id          String        @id @default(cuid())
+    name        String
+    description String?
+    type        MonitorType
+    status      MonitorStatus @default(PENDING)
+
+    // Connection settings
+    url      String?
+    hostname String?
+    port     Int?
+    method   HttpMethod @default(GET)
+
+    // Check settings
+    interval      Int @default(60) // seconds
+    timeout       Int @default(30) // seconds
+    retries       Int @default(3)
+    retryInterval Int @default(60) // seconds
+
+    // HTTP specific
+    expectedStatusCodes Int[]  @default([200, 201, 204])
+    headers             Json? // Custom headers as JSON
+    body                String? @db.Text // Request body
+
+    // Keyword/JSON monitoring
+    keyword       String?
+    keywordType   String? // "present" or "absent"
+    jsonPath      String?
+    expectedValue String?
+
+    // TLS/Certificate monitoring
+    ignoreTls     Boolean @default(false)
+    tlsExpiry     Boolean @default(true)
+    tlsExpiryDays Int     @default(7)
+
+    // Authentication
+    authMethod String? // "basic", "bearer", "none"
+    authUser   String?
+    authPass   String?
+    authToken  String?
+
+    // State tracking
+    active           Boolean   @default(true)
+    paused           Boolean   @default(false)
+    lastCheckAt      DateTime?
+    lastUpAt         DateTime?
+    lastDownAt       DateTime?
+    uptimePercentage Float     @default(0)
+    avgResponseTime  Float     @default(0)
+
+    // Relations
+    userId        String
+    user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    checks        MonitorCheck[]
+    incidents     Incident[]
+    statusPages   StatusPageMonitor[]
+    notifications MonitorNotification[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([status])
+    @@index([active, paused])
+}
+
+model MonitorCheck {
+    id        String  @id @default(cuid())
+    monitorId String
+    monitor   Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+    status       MonitorStatus
+    responseTime Int? // milliseconds
+    statusCode   Int?
+    message      String?
+    error        String? @db.Text
+
+    // TLS info
+    tlsValid  Boolean?
+    tlsExpiry DateTime?
+    tlsIssuer String?
+
+    // DNS info
+    dnsResolvedIp String?
+
+    createdAt DateTime @default(now())
+
+    @@index([monitorId])
+    @@index([createdAt])
+    @@index([monitorId, createdAt])
+}
+
+model Incident {
+    id        String  @id @default(cuid())
+    monitorId String
+    monitor   Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+    title       String
+    description String? @db.Text
+    status      String  @default("investigating") // investigating, identified, monitoring, resolved
+    severity    String  @default("minor") // minor, major, critical
+
+    startedAt      DateTime  @default(now())
+    acknowledgedAt DateTime?
+    resolvedAt     DateTime?
+    duration       Int? // seconds
+
+    updates IncidentUpdate[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([monitorId])
+    @@index([status])
+    @@index([startedAt])
+}
+
+model IncidentUpdate {
+    id         String   @id @default(cuid())
+    incidentId String
+    incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+    status  String
+    message String @db.Text
+
+    createdAt DateTime @default(now())
+
+    @@index([incidentId])
+}
+
+// ============================================
+// STATUS PAGE MODELS
+// ============================================
+
+model StatusPage {
+    id          String  @id @default(cuid())
+    slug        String  @unique
+    name        String
+    description String?
+
+    // Customization
+    logoUrl      String?
+    faviconUrl   String?
+    customCss    String? @db.Text
+    customDomain String?
+
+    // Settings
+    isPublic            Boolean @default(true)
+    showIncidentHistory Boolean @default(true)
+    showUptimeGraph     Boolean @default(true)
+    daysToShow          Int     @default(90)
+
+    // Relations
+    userId   String
+    user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+    monitors StatusPageMonitor[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([slug])
+}
+
+model StatusPageMonitor {
+    id           String     @id @default(cuid())
+    statusPageId String
+    statusPage   StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+    monitorId    String
+    monitor      Monitor    @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+    displayName String? // Override monitor name on status page
+    order       Int     @default(0)
+
+    createdAt DateTime @default(now())
+
+    @@unique([statusPageId, monitorId])
+    @@index([statusPageId])
+}
+
+// ============================================
+// NOTIFICATION MODELS
+// ============================================
+
+model NotificationChannel {
+    id   String           @id @default(cuid())
+    name String
+    type NotificationType
+
+    // Channel-specific config (stored as JSON)
+    config Json
+
+    // Settings
+    isDefault Boolean @default(false)
+    active    Boolean @default(true)
+
+    // Relations
+    userId   String
+    user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    monitors MonitorNotification[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+}
+
+model MonitorNotification {
+    id        String              @id @default(cuid())
+    monitorId String
+    monitor   Monitor             @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+    channelId String
+    channel   NotificationChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+    // Notification settings per monitor
+    notifyOnDown     Boolean @default(true)
+    notifyOnUp       Boolean @default(true)
+    notifyOnDegraded Boolean @default(false)
+
+    createdAt DateTime @default(now())
+
+    @@unique([monitorId, channelId])
+    @@index([monitorId])
+    @@index([channelId])
+}
+
+// ============================================
+// SITE SETTINGS (Singleton)
+// ============================================
+
+model SiteSettings {
+    id String @id @default("default")
+
+    // Branding
+    siteName        String  @default("UptimeBeacon")
+    siteDescription String? @db.Text
+    tagline         String  @default("Monitoring")
+
+    // Logo/Icon - stored as icon name (e.g., "Activity", "Zap", "Shield")
+    iconName String @default("Activity")
+
+    // URLs
+    siteUrl  String?
+    ogImage  String?
+
+    // Footer Navigation Links (stored as JSON array)
+    footerNavigation Json @default("[]")
+    footerLegal      Json @default("[]")
+    footerSocial     Json @default("[]")
+
+    // Footer customization
+    copyrightText String  @default("{year} UptimeBeacon. All rights reserved.")
+    showMadeWith  Boolean @default(true)
+    madeWithText  String  @default("Open Source")
+
+    // Header
+    githubUrl       String?
+    headerNavigation Json @default("[]")
+
+    // SEO
+    metaKeywords        String?  @db.Text
+    metaAuthor          String?
+    robotsIndex         Boolean  @default(true)
+    robotsFollow        Boolean  @default(true)
+    googleVerification  String?
+    bingVerification    String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}

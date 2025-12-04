@@ -1,0 +1,40 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"ui": "stream",
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"inputs": ["$TURBO_DEFAULT$", ".env*"],
+			"outputs": [".next/**", "!.next/cache/**", "dist/**"]
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true,
+			"dependsOn": ["^db:generate"]
+		},
+		"typecheck": {
+			"dependsOn": ["^db:generate"],
+			"inputs": ["$TURBO_DEFAULT$", "tsconfig.json"]
+		},
+		"check": {
+			"inputs": ["$TURBO_DEFAULT$", "../../biome.jsonc"]
+		},
+		"check:write": {
+			"cache": false,
+			"inputs": ["$TURBO_DEFAULT$", "../../biome.jsonc"]
+		},
+		"db:generate": {
+			"cache": false
+		},
+		"db:push": {
+			"cache": false
+		},
+		"db:migrate": {
+			"cache": false
+		},
+		"db:studio": {
+			"cache": false,
+			"persistent": true
+		}
+	}
+}

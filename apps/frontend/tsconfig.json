@@ -1,0 +1,22 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"lib": ["dom", "dom.iterable", "ES2022"],
+		"jsx": "preserve",
+		"plugins": [{ "name": "next" }],
+		"incremental": true,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"]
+		}
+	},
+	"include": [
+		"next-env.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		"**/*.cjs",
+		"**/*.js",
+		".next/types/**/*.ts"
+	],
+	"exclude": ["node_modules"]
+}
