@@ -1,12 +1,12 @@
 # Frontend Dockerfile for UptimeBeacon
-FROM oven/bun:1.1.0-alpine AS base
+FROM oven/bun:1.3.3-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/database/package.json ./packages/database/
 
