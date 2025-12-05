@@ -83,6 +83,7 @@ function Field({
 	...props
 }: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
 	return (
+		// biome-ignore lint/a11y/useSemanticElements: ShadCN UI pattern
 		<div
 			className={cn(fieldVariants({ orientation }), className)}
 			data-orientation={orientation}
@@ -203,6 +204,7 @@ function FieldError({
 			...new Map(errors.map((error) => [error?.message, error])).values(),
 		];
 
+		// biome-ignore lint/suspicious/noDoubleEquals: ShadCN UI pattern
 		if (uniqueErrors?.length == 1) {
 			return uniqueErrors[0]?.message;
 		}
@@ -211,6 +213,7 @@ function FieldError({
 			<ul className="ml-4 flex list-disc flex-col gap-1">
 				{uniqueErrors.map(
 					(error, index) =>
+						// biome-ignore lint/suspicious/noArrayIndexKey: ShadCN UI pattern
 						error?.message && <li key={index}>{error.message}</li>,
 				)}
 			</ul>

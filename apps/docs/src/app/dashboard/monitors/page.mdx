@@ -1,0 +1,480 @@
+import { Callout, Cards, Tabs } from 'nextra/components'
+
+# Monitor Management
+
+This page explains how to create, configure, and manage monitors in UptimeBeacon. Monitors are the core of the system - they continuously check your services and alert you when something goes wrong.
+
+## 🎮 Monitor Dashboard Overview
+
+When you open the Monitors page, you'll see:
+
+### What you see for each monitor:
+
+1. **Monitor Name** - E.g., "Production Website", "API Server"
+2. **Status Indicator**:
+   - 🟢 **UP** - Service is healthy
+   - 🔴 **DOWN** - Service is unreachable
+   - 🟡 **DEGRADED** - Service responding slowly
+   - ⚪ **PAUSED** - Monitoring temporarily disabled
+3. **Type Badge** - HTTP, TCP, DNS, or PING
+4. **Uptime %** - Availability over last 30 days
+5. **Response Time** - Average response time
+6. **Actions** - Edit, pause, or delete buttons
+
+## ⚙️ Creating Monitors
+
+### HTTP/HTTPS Monitor
+
+Perfect for monitoring websites, APIs, and web services.
+
+<Tabs items={['Basic', 'Advanced', 'Headers', 'Body Check']}>
+  <Tabs.Tab>
+**Basic Configuration:**
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Name** | Friendly name for this monitor | "Production Website" |
+| **URL** | Full URL to check | `https://example.com` |
+| **Method** | HTTP method | GET, POST, HEAD |
+| **Interval** | How often to check | 1-60 minutes |
+| **Timeout** | Max wait time | 5-60 seconds |
+| **Retries** | Retry attempts before alerting | 1-5 |
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+**Advanced Options:**
+
+- **Expected Status Code**: Specify acceptable HTTP codes (200, 201, 204, etc.)
+- **Follow Redirects**: Enable to follow 301/302 redirects
+- **SSL Verification**: Validate SSL certificates
+- **Certificate Expiry Warning**: Days before expiry to alert (default: 7)
+- **User Agent**: Custom user agent string
+- **Accept Self-Signed Certificates**: For development/internal services
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+**Custom Headers:**
+
+Add authentication or custom headers:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+X-API-Key: your-api-key-here
+Accept: application/json
+Content-Type: application/json
+```
+
+**Common Use Cases:**
+- API authentication
+- Custom routing headers
+- Content negotiation
+- CORS headers
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+**Response Body Validation:**
+
+Check if response contains specific text:
+
+```
+Success response must contain:
+"status":"ok"
+
+Or check for absence:
+NOT contain: "error", "failed", "exception"
+```
+
+**Use Cases:**
+- Verify API responses
+- Check page content
+- Validate JSON responses
+- Detect error pages
+
+  </Tabs.Tab>
+</Tabs>
+
+### TCP Monitor
+
+Monitor if a specific port is accessible on your server.
+
+```
+Name: PostgreSQL Database
+Type: TCP
+Host: db.example.com
+Port: 5432
+Timeout: 10 seconds
+Check Interval: 2 minutes
+```
+
+**Common Ports to Monitor:**
+- 22 - SSH
+- 80/443 - HTTP/HTTPS
+- 3306 - MySQL
+- 5432 - PostgreSQL
+- 6379 - Redis
+- 27017 - MongoDB
+- 3000-9000 - Application servers
+
+### DNS Monitor
+
+Verify DNS records and resolution.
+
+```
+Name: Domain Resolution
+Type: DNS
+Hostname: example.com
+Record Type: A / AAAA / CNAME / MX / TXT
+Expected Value: 93.184.216.34 (optional)
+DNS Server: 8.8.8.8 (optional, defaults to system DNS)
+Check Interval: 15 minutes
+```
+
+**Record Types:**
+- **A**: IPv4 address
+- **AAAA**: IPv6 address
+- **CNAME**: Canonical name (alias)
+- **MX**: Mail exchange servers
+- **TXT**: Text records (SPF, DKIM, etc.)
+- **NS**: Nameservers
+
+### PING Monitor
+
+Test basic network connectivity using ICMP.
+
+```
+Name: Server Connectivity
+Type: PING
+Host: server.example.com
+Packet Count: 4
+Packet Size: 56 bytes
+Timeout: 5 seconds
+Check Interval: 1 minute
+```
+
+<Callout type="warning">
+  **Note**: ICMP ping may be blocked by firewalls or cloud providers. Use TCP monitoring as an alternative if ping doesn't work.
+</Callout>
+
+## 🔄 Check Intervals
+
+Choose an appropriate check interval based on your needs:
+
+| Interval | Use Case | Cost Impact |
+|----------|----------|-------------|
+| **30 seconds** | Critical infrastructure | High |
+| **1 minute** | Important production services | Medium-High |
+| **5 minutes** | Standard monitoring | Medium |
+| **15 minutes** | Non-critical services | Low |
+| **30-60 minutes** | Periodic checks, scheduled tasks | Very Low |
+
+<Callout type="info">
+  **Recommendation**: Start with 5-minute intervals. Only use shorter intervals for truly critical services.
+</Callout>
+
+## 🔔 Notification Settings
+
+Link notification channels to each monitor:
+
+1. **Create notification channels** (Email, Slack, Discord, etc.)
+2. **Assign to monitors** - Select which channels to alert
+3. **Configure thresholds**:
+   - Alert immediately on failure
+   - Alert after N consecutive failures
+   - Alert on slow response times
+
+## 📊 Uptime Calculation
+
+UptimeBeacon calculates uptime based on successful checks:
+
+```
+Uptime % = (Successful Checks / Total Checks) × 100
+```
+
+**Timeframes:**
+- Last 24 hours
+- Last 7 days
+- Last 30 days
+- Last 90 days
+
+**What counts as downtime:**
+- Connection timeouts
+- Wrong status codes
+- Failed body validation
+- SSL certificate errors
+- DNS resolution failures
+
+## ⚡ Response Time Tracking
+
+Every check records response time data:
+
+- **Current**: Latest check response time
+- **Average**: Mean over selected period
+- **Min/Max**: Fastest and slowest responses
+- **P95/P99**: 95th and 99th percentile response times
+
+**Charts Available:**
+- Hourly (last 24h)
+- Daily (last 7d)
+- Weekly (last 30d)
+- Monthly (last 90d)
+
+## 🚀 Advanced Features
+
+### Tags & Organization
+
+Organize monitors with tags:
+
+```
+Tags: production, api, critical
+Tags: staging, frontend
+Tags: external-service, payment-gateway
+```
+
+**Benefits:**
+- Filter monitors by tag
+- Bulk operations on tagged monitors
+- Organize by team, environment, or service
+
+### Maintenance Mode
+
+Temporarily pause monitoring during planned maintenance:
+
+1. Click "Maintenance Mode" on a monitor
+2. Set start and end time
+3. Optionally add maintenance note
+4. No alerts will be sent during maintenance window
+
+### Monitor Groups
+
+Group related monitors together:
+
+```
+Group: E-Commerce Platform
+├─ Website Frontend
+├─ API Server
+├─ Payment Gateway
+├─ Database Connection
+└─ CDN Availability
+```
+
+**Display on status pages as a single service group**
+
+### Custom Labels
+
+Add metadata to monitors:
+
+```
+Environment: Production
+Team: Platform Engineering
+SLA: 99.95%
+Oncall: @platform-team
+Runbook: https://wiki.example.com/runbooks/api-down
+```
+
+## 💡 Best Practices
+
+### Monitor Configuration
+
+**DO:**
+- ✅ Use descriptive, clear names
+- ✅ Set appropriate timeouts (not too short)
+- ✅ Enable retries to avoid false positives
+- ✅ Monitor from multiple protocols if possible
+- ✅ Use tags for organization
+
+**DON'T:**
+- ❌ Check too frequently (waste resources)
+- ❌ Use very short timeouts (causes false alarms)
+- ❌ Monitor non-critical services with 30s intervals
+- ❌ Forget to configure notifications
+- ❌ Skip testing after setup
+
+### What to Monitor
+
+**Essential:**
+- Production website/app
+- API endpoints
+- Database connectivity
+- Payment processors
+- Authentication services
+
+**Important:**
+- CDN availability
+- Email services
+- Background job processors
+- External integrations
+- DNS resolution
+
+**Nice to Have:**
+- Staging environments
+- Development services
+- Internal tools
+- Documentation sites
+
+### Response Time Thresholds
+
+Set realistic expectations:
+
+```
+Fast: < 200ms (static sites, CDN)
+Good: 200-500ms (dynamic websites)
+Acceptable: 500-1000ms (API calls)
+Slow: 1000-3000ms (complex operations)
+Problem: > 3000ms (needs investigation)
+```
+
+## ❓ Common Questions
+
+<details>
+<summary>How many monitors can I create?</summary>
+
+There's no hard limit, but consider:
+- Server resources for checks
+- Database storage for check results
+- Cost of notification channels
+- Most users have 10-50 monitors
+
+</details>
+
+<details>
+<summary>Can I monitor localhost or internal services?</summary>
+
+Yes, if UptimeBeacon is running on the same network:
+- Use internal IP addresses
+- Use `localhost` or `127.0.0.1`
+- Configure firewall rules as needed
+
+For truly internal services, deploy UptimeBeacon within your network.
+
+</details>
+
+<details>
+<summary>Why are my monitors showing false positives?</summary>
+
+Common causes:
+- Timeout too short for slow services
+- Network issues on monitoring server
+- Rate limiting from target service
+- Intermittent connectivity problems
+
+**Solutions:**
+- Increase timeout values
+- Enable more retries
+- Adjust check interval
+- Check monitoring server connectivity
+
+</details>
+
+<details>
+<summary>Can I export monitor data?</summary>
+
+Yes! Export options:
+- CSV export of check results
+- JSON API for programmatic access
+- Grafana integration (coming soon)
+- Webhook streaming of check results
+
+</details>
+
+<details>
+<summary>How do I monitor APIs that need authentication?</summary>
+
+Use custom headers:
+
+```
+For Bearer tokens:
+Authorization: Bearer YOUR_TOKEN
+
+For API keys:
+X-API-Key: YOUR_KEY
+Authorization: ApiKey YOUR_KEY
+
+For Basic Auth:
+Authorization: Basic base64(username:password)
+```
+
+</details>
+
+## 🔧 Troubleshooting
+
+### Monitor Shows Down But Service is Up
+
+**Check:**
+1. Is the URL correct?
+2. Is the timeout sufficient?
+3. Are firewalls blocking checks?
+4. Is the expected status code correct?
+5. Does the service block automated requests?
+
+**Try:**
+- Test URL manually with curl
+- Check firewall/security group rules
+- Increase timeout value
+- Verify expected status code
+- Check for rate limiting
+
+### Response Times Seem Wrong
+
+**Possible Causes:**
+- Network latency to monitoring server
+- Target service actually slow
+- Incorrect timeout settings
+- DNS resolution delays
+
+**Debug:**
+```bash
+# Test from monitoring server
+curl -w "@curl-format.txt" -o /dev/null -s https://example.com
+
+# Check DNS resolution time
+time nslookup example.com
+
+# Full connection test
+curl -v https://example.com
+```
+
+### SSL Certificate Warnings
+
+**When you see SSL errors:**
+- Certificate expired
+- Certificate doesn't match domain
+- Self-signed certificate
+- Intermediate certificates missing
+
+**Solutions:**
+- Renew expired certificates
+- Fix domain name mismatch
+- Add self-signed cert exception (dev only)
+- Install intermediate certificates
+
+## 📈 Performance Tips
+
+### Optimize Check Frequency
+
+```
+Critical Services:
+- 1-2 minute intervals
+- Multiple notification channels
+- Immediate alerts
+
+Normal Services:
+- 5 minute intervals
+- Primary notification channel
+- Alert after 2 failed checks
+
+Low Priority:
+- 15-30 minute intervals
+- Email notifications only
+- Alert after 3 failed checks
+```
+
+### Reduce False Positives
+
+1. **Enable Retries**: Check 2-3 times before alerting
+2. **Increase Timeouts**: Allow slow responses
+3. **Maintenance Windows**: Pause during deployments
+4. **Smart Thresholds**: Alert on patterns, not single failures
+
+<Callout type="success">
+  **Pro Tip**: Review your incident history monthly and adjust monitor settings to reduce noise while maintaining reliability.
+</Callout>

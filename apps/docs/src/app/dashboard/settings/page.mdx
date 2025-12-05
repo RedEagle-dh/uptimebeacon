@@ -1,0 +1,454 @@
+import { Callout, Tabs } from 'nextra/components'
+
+# Settings & Configuration
+
+Configure UptimeBeacon to match your needs. This section covers site settings, user management, email configuration, API keys, and more.
+
+<Callout type="warning">
+  **Admin Access Required**: Most settings require administrator privileges to view and modify.
+</Callout>
+
+## ⚙️ General Settings
+
+### Site Information
+
+Configure basic site details:
+
+```
+Site Name: UptimeBeacon Monitoring
+Description: Uptime monitoring for Example Corp
+Contact Email: admin@example.com
+Support URL: https://support.example.com
+Company Name: Example Corporation
+```
+
+**Logo & Branding:**
+- Upload site logo (appears in dashboard)
+- Favicon (browser tab icon)
+- Login page background image
+- Custom CSS (advanced)
+
+### Timezone & Localization
+
+```
+Default Timezone: UTC / America/New_York / etc.
+Date Format: YYYY-MM-DD / MM/DD/YYYY / DD/MM/YYYY
+Time Format: 24-hour / 12-hour (AM/PM)
+First Day of Week: Sunday / Monday
+Language: English (more languages coming soon)
+```
+
+### Default Settings
+
+Set defaults for new monitors:
+
+```
+Check Interval: 5 minutes
+Timeout: 30 seconds
+Retries: 2
+SSL Verification: Enabled
+Follow Redirects: Enabled
+```
+
+## 👥 User Management
+
+### User Roles
+
+UptimeBeacon has three permission levels:
+
+| Role | Permissions |
+|------|-------------|
+| **Admin** | Full access to all features and settings |
+| **User** | Create/edit monitors, view all data, limited settings |
+| **Viewer** | Read-only access, view monitors and status pages |
+
+### Adding Users
+
+<Tabs items={['Invite User', 'Direct Creation', 'Bulk Import']}>
+  <Tabs.Tab>
+**Invite via Email:**
+
+1. Go to **Settings → Users**
+2. Click "Invite User"
+3. Enter details:
+```
+Email: newuser@example.com
+Role: User / Viewer / Admin
+Send Welcome Email: ☑
+```
+4. User receives invitation email
+5. They create password and access account
+
+**Invitation expires after 7 days**
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+**Create User Directly:**
+
+For local/internal use:
+
+```
+Email: user@example.com
+Name: John Doe
+Password: (auto-generated or custom)
+Role: User
+Status: Active
+
+☑ Send credentials via email
+☐ Require password change on first login
+```
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+**Bulk Import (CSV):**
+
+Prepare CSV file:
+```csv
+email,name,role
+user1@example.com,Alice Smith,user
+user2@example.com,Bob Jones,viewer
+admin@example.com,Admin User,admin
+```
+
+1. Click "Import Users"
+2. Upload CSV file
+3. Review import preview
+4. Confirm import
+5. Users receive invitation emails
+
+  </Tabs.Tab>
+</Tabs>
+
+### Managing Users
+
+**Edit User:**
+- Change role/permissions
+- Update email or name
+- Reset password
+- Enable/disable account
+
+**Remove User:**
+- Deactivate (keeps data)
+- Delete (removes all data)
+- Transfer ownership of monitors
+
+### Authentication Settings
+
+```
+Password Requirements:
+☑ Minimum 8 characters
+☑ At least one uppercase letter
+☑ At least one number
+☐ Require special characters
+☑ Password expiry (90 days)
+
+Session:
+Session timeout: 24 hours
+Remember me duration: 30 days
+Max concurrent sessions: 3
+```
+
+### OAuth Providers
+
+Enable social login:
+
+**GitHub OAuth:**
+```
+Client ID: your_github_client_id
+Client Secret: your_github_secret
+Callback URL: https://your-domain.com/api/auth/callback/github
+```
+
+**Google OAuth:**
+```
+Client ID: your_google_client_id.apps.googleusercontent.com
+Client Secret: your_google_secret
+Callback URL: https://your-domain.com/api/auth/callback/google
+```
+
+**Configuration Steps:**
+1. Create OAuth app in provider dashboard
+2. Add credentials in UptimeBeacon
+3. Enable provider
+4. Test login flow
+
+## 📧 Email Configuration
+
+### SMTP Settings
+
+Configure email server for notifications:
+
+```
+SMTP Host: smtp.gmail.com
+SMTP Port: 587
+Security: STARTTLS / SSL/TLS / None
+Username: alerts@example.com
+Password: your-app-password
+
+From Name: UptimeBeacon Alerts
+From Email: alerts@example.com
+Reply-To: support@example.com
+```
+
+**Test SMTP Configuration:**
+```
+Send test email to: admin@example.com
+[Send Test Email]
+```
+
+### Email Templates
+
+Customize email content:
+
+<Tabs items={['Incident Alert', 'Recovery', 'Invitation']}>
+  <Tabs.Tab>
+**Incident Created Email:**
+
+```html
+Subject: 🔴 {{monitor.name}} is DOWN
+
+<h2>Service Alert</h2>
+<p>{{monitor.name}} is currently unavailable.</p>
+
+<strong>Details:</strong>
+- URL: {{monitor.url}}
+- Error: {{incident.message}}
+- Started: {{incident.started_at}}
+
+<a href="{{incident.url}}">View Incident</a>
+
+Available variables:
+{{monitor.name}}, {{monitor.url}}, {{monitor.type}}
+{{incident.message}}, {{incident.started_at}}
+{{incident.severity}}, {{incident.url}}
+```
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+**Recovery Email:**
+
+```html
+Subject: 🟢 {{monitor.name}} is back UP
+
+<h2>Service Recovered</h2>
+<p>{{monitor.name}} has recovered and is now operational.</p>
+
+<strong>Incident Summary:</strong>
+- Downtime: {{incident.duration}}
+- Resolved: {{incident.resolved_at}}
+
+<a href="{{incident.url}}">View Incident Details</a>
+```
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+**User Invitation:**
+
+```html
+Subject: You've been invited to UptimeBeacon
+
+<h2>Welcome to UptimeBeacon!</h2>
+<p>{{inviter.name}} has invited you to join.</p>
+
+<strong>Your Role:</strong> {{user.role}}
+
+<a href="{{invitation.url}}">Accept Invitation</a>
+
+Invitation expires: {{invitation.expires_at}}
+```
+
+  </Tabs.Tab>
+</Tabs>
+
+### Email Delivery
+
+**Sending Limits:**
+```
+Max emails per hour: 100
+Max emails per day: 1000
+Rate limit per monitor: 1 email / 5 min
+
+Bounce handling: ☑ Enabled
+Track opens: ☐ Disabled (privacy)
+Track clicks: ☐ Disabled (privacy)
+```
+
+## 🔑 API Keys
+
+### Creating API Keys
+
+Generate keys for programmatic access:
+
+1. Go to **Settings → API Keys**
+2. Click "Create API Key"
+3. Configure:
+```
+Name: CI/CD Integration
+Permissions:
+  ☑ Read monitors
+  ☑ Create monitors
+  ☐ Delete monitors
+  ☑ Read incidents
+  ☐ Modify incidents
+
+IP Whitelist: (optional)
+  192.168.1.100
+  10.0.0.0/8
+
+Expiration: Never / 30 days / 90 days / 1 year
+```
+
+4. Copy key (shown only once!)
+```
+Key: ubk_live_1234567890abcdef...
+```
+
+### Using API Keys
+
+**Authentication Header:**
+```bash
+curl -H "Authorization: Bearer ubk_live_1234567890abcdef..." \
+     https://api.uptimebeacon.com/v1/monitors
+```
+
+**API Endpoints:**
+```
+GET    /v1/monitors           - List monitors
+POST   /v1/monitors           - Create monitor
+GET    /v1/monitors/:id       - Get monitor details
+PATCH  /v1/monitors/:id       - Update monitor
+DELETE /v1/monitors/:id       - Delete monitor
+GET    /v1/incidents          - List incidents
+GET    /v1/status-pages       - List status pages
+```
+
+### API Rate Limits
+
+```
+Default limits:
+- 100 requests per minute
+- 1,000 requests per hour
+- 10,000 requests per day
+
+Rate limit headers:
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1701705600
+```
+
+## 🔒 Security Settings
+
+### Password Policies
+
+```
+Password Requirements:
+- Minimum length: 8 characters
+- Maximum age: 90 days
+- Password history: Remember last 5
+- Lockout after: 5 failed attempts
+- Lockout duration: 30 minutes
+
+Two-Factor Authentication:
+☑ Allow TOTP (Google Authenticator)
+☐ Require for admins
+☐ Require for all users
+```
+
+### Session Management
+
+```
+Session Settings:
+- Session timeout: 24 hours
+- Absolute timeout: 7 days
+- Concurrent sessions: 3
+- Remember me: 30 days
+
+Security:
+☑ Force HTTPS
+☑ Secure cookies
+☑ HttpOnly cookies
+☑ SameSite: Strict
+```
+
+### Audit Logging
+
+Track all important actions:
+
+```
+Log Events:
+☑ User login/logout
+☑ Monitor created/edited/deleted
+☑ Incident created/resolved
+☑ Settings changed
+☑ API key created/revoked
+☑ User invited/removed
+
+Retention: 90 days
+Export format: CSV / JSON
+```
+
+**View Audit Log:**
+```
+Date       | User          | Action                | Details
+-----------|---------------|----------------------|------------------
+2024-12-04 | admin@ex.com  | Monitor Created      | Production Website
+2024-12-04 | user@ex.com   | Incident Resolved    | Incident #123
+2024-12-03 | admin@ex.com  | User Invited         | newuser@ex.com
+```
+
+## 🗄️ Data & Backup
+
+### Data Retention
+
+Configure how long to keep data:
+
+```
+Monitor Check Results:
+Keep for: 90 days / 180 days / 1 year / Forever
+After deletion: Aggregate to hourly stats
+
+Incidents:
+Keep for: 1 year / 2 years / Forever
+Include in uptime: ☑ Yes
+
+Audit Logs:
+Keep for: 90 days / 1 year
+
+Response Time Data:
+Raw data: 90 days
+Aggregated: Forever
+```
+
+### Backup & Export
+
+**Automatic Backups:**
+```
+Frequency: Daily at 2:00 AM UTC
+Retention: Last 30 backups
+Include:
+☑ Monitors configuration
+☑ Incidents and history
+☑ User accounts
+☑ Settings
+☐ Check results (large)
+
+Backup location:
+○ Internal storage
+○ AWS S3
+○ Google Cloud Storage
+○ Azure Blob Storage
+```
+
+**Manual Export:**
+1. Go to **Settings → Data & Backup**
+2. Click "Export All Data"
+3. Choose format: JSON / CSV
+4. Download archive
+
+<Callout type="info">
+  **Tip**: Changes to most settings take effect immediately. However, some changes (like SMTP configuration) may require backend restart.
+</Callout>
+
+<Callout type="warning">
+  **Backup Reminder**: Always export your configuration before making major changes to settings!
+</Callout>

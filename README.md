@@ -31,7 +31,7 @@
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) v1.1.0+
+- [Bun](https://bun.sh/) v1.3.0+
 - [Docker](https://www.docker.com/) (for PostgreSQL)
 
 ### Installation
@@ -165,7 +165,3 @@ bun db:studio        # Open Prisma Studio
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-Made with care by the UptimeBeacon community.

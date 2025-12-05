@@ -1,0 +1,717 @@
+import { Callout, Cards, Tabs } from 'nextra/components'
+
+# Status Pages
+
+Create beautiful, branded status pages to keep your users informed about service availability. Status pages automatically update when incidents occur and provide transparency about your infrastructure health.
+
+## 🎯 What is a Status Page?
+
+A status page is a public-facing webpage that displays the real-time status of your services. It helps you:
+
+- **Build Trust**: Show transparency about service health
+- **Reduce Support Load**: Users check status before contacting support
+- **Professional Image**: Demonstrate reliability and openness
+- **Keep Users Informed**: Automatic updates during incidents
+
+## 📊 Status Page Dashboard
+
+### Overview
+
+The Status Pages section shows all your created pages:
+
+| Column | Description |
+|--------|-------------|
+| **Name** | Page title |
+| **Subdomain** | URL slug (e.g., `example.uptimebeacon.com`) |
+| **Status** | Published or Draft |
+| **Monitors** | Number of services displayed |
+| **Subscribers** | Email subscribers count |
+| **Views** | Page views (last 30 days) |
+
+## 🚀 Creating a Status Page
+
+<Tabs items={['Basic Setup', 'Branding', 'Monitors', 'Advanced']}>
+  <Tabs.Tab>
+### Basic Information
+
+1. Go to **Dashboard → Status Pages**
+2. Click "Create Status Page"
+3. Configure basic settings:
+
+```
+Page Name: Example Services Status
+Subdomain: example
+  → Creates: example.uptimebeacon.com
+
+Description: Real-time status and uptime monitoring
+for all Example services.
+
+Timezone: UTC / America/New_York / etc.
+
+Language: English
+```
+
+**Subdomain Rules:**
+- 3-63 characters
+- Lowercase letters, numbers, hyphens only
+- Must start with a letter
+- No consecutive hyphens
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+### Branding & Design
+
+**Logo:**
+- Upload company logo (PNG, JPG, SVG)
+- Recommended size: 200x60px
+- Max file size: 2MB
+
+**Colors:**
+```
+Brand Color: #2563eb (primary buttons, links)
+Background: #ffffff (light) / #1f2937 (dark)
+Text Color: #111827 (light) / #f9fafb (dark)
+Card Background: #f9fafb (light) / #374151 (dark)
+
+Theme: Light, Dark, or Auto (user preference)
+```
+
+**Custom CSS (Advanced):**
+```css
+/* Add custom styles */
+.status-page-header {
+  font-family: 'Inter', sans-serif;
+}
+
+.monitor-card {
+  border-radius: 12px;
+}
+```
+
+**Favicon:**
+- Upload custom favicon
+- Formats: ICO, PNG (16x16, 32x32)
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+### Adding Monitors
+
+**Select Monitors to Display:**
+
+1. Click "Add Monitors"
+2. Select from your monitors:
+   ```
+   ☑ Production Website
+   ☑ API Server
+   ☑ Database Connection
+   ☑ CDN Availability
+   ☐ Internal Services (keep private)
+   ```
+
+3. **Organize Monitors:**
+   ```
+   Group: Core Services
+   ├─ Production Website
+   ├─ API Server
+   └─ Database Connection
+
+   Group: External Services
+   ├─ Payment Gateway
+   ├─ Email Service
+   └─ CDN
+   ```
+
+**Monitor Display Options:**
+```
+☑ Show response time charts
+☑ Show uptime percentage
+☑ Show last check time
+☐ Show detailed check history
+```
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+### Advanced Settings
+
+**Visibility:**
+```
+○ Public - Anyone can view
+○ Unlisted - Only with direct link
+○ Password Protected - Requires password
+```
+
+**Email Subscriptions:**
+```
+☑ Allow users to subscribe for updates
+☐ Require email verification
+☑ Send incident notifications to subscribers
+☑ Send maintenance notifications
+```
+
+**Custom Domain:**
+```
+Use custom domain: ☑ Enabled
+Domain: status.example.com
+
+DNS Configuration Required:
+CNAME status.example.com → example.uptimebeacon.com
+```
+
+**SEO Settings:**
+```
+Page Title: Example Services Status | Uptime Monitoring
+Meta Description: Real-time status updates...
+Meta Keywords: status, uptime, monitoring, example
+```
+
+**Social Sharing:**
+```
+Twitter: @example
+Facebook: facebook.com/example
+```
+
+  </Tabs.Tab>
+</Tabs>
+
+## 🎨 Status Page Layouts
+
+### Default Layout
+
+```
+┌─────────────────────────────────────┐
+│ [Logo]  Example Status    [🟢 All OK]│
+├─────────────────────────────────────┤
+│ Real-time status of all services   │
+├─────────────────────────────────────┤
+│ 🟢 Production Website        200ms  │
+│    ▂▄▅▄▃▅▆▄▃▅ 99.98%              │
+├─────────────────────────────────────┤
+│ 🟢 API Server                 45ms   │
+│    ▂▃▄▃▂▄▅▄▃▅ 99.99%              │
+├─────────────────────────────────────┤
+│ 🟢 Database                   12ms   │
+│    ▂▂▃▃▂▃▄▃▂▄ 100.00%             │
+└─────────────────────────────────────┘
+```
+
+### Grouped Layout
+
+```
+┌─────────────────────────────────────┐
+│ Core Services                  [▼] │
+├─────────────────────────────────────┤
+│ 🟢 Production Website              │
+│ 🟢 API Server                      │
+│ 🟢 Database                        │
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│ External Services              [▼] │
+├─────────────────────────────────────┤
+│ 🟢 Payment Gateway                 │
+│ 🔴 Email Service                   │
+│ 🟢 CDN                             │
+└─────────────────────────────────────┘
+```
+
+### Minimal Layout
+
+Simple, compact view:
+```
+┌─────────────────────────────────────┐
+│ [Logo] All Systems Operational     │
+├─────────────────────────────────────┤
+│ 🟢 Website  🟢 API  🟢 Database    │
+└─────────────────────────────────────┘
+```
+
+## 📱 Status Indicators
+
+### Monitor Status
+
+- 🟢 **Operational** - All checks passing
+- 🟡 **Degraded Performance** - Slow response times
+- 🟠 **Partial Outage** - Some checks failing
+- 🔴 **Major Outage** - Service completely down
+- ⚪ **Under Maintenance** - Planned maintenance
+
+### Overall Status
+
+```
+✨ All Systems Operational
+   All services are running normally
+
+⚠️  Performance Issues
+   Some services experiencing delays
+
+🔴 Service Disruption
+   Multiple services affected
+
+🔧 Scheduled Maintenance
+   Maintenance in progress
+```
+
+## 📢 Incident Updates
+
+### Automatic Updates
+
+When an incident occurs:
+
+1. **Status page updates immediately**
+2. **Monitor status changes to red**
+3. **Overall status reflects impact**
+4. **Incident banner appears at top**
+5. **Email sent to subscribers**
+
+### Incident Display
+
+```
+┌─────────────────────────────────────┐
+│ 🔴 ACTIVE INCIDENT                 │
+│ API Server Outage                   │
+│ Started: 2024-12-04 14:32 UTC      │
+│ Impact: Major Outage                │
+│                                     │
+│ Timeline:                           │
+│ 14:32 - Investigating              │
+│ 14:35 - Identified issue           │
+│ 14:40 - Monitoring                 │
+│                                     │
+│ [Subscribe for Updates]            │
+└─────────────────────────────────────┘
+```
+
+### Manual Incident Posts
+
+Create incidents even without monitor failures:
+
+```
+Title: Scheduled Maintenance
+Status: Scheduled / In Progress / Completed
+Impact: No impact / Minor / Major
+Message: We'll be upgrading our database servers...
+
+Schedule:
+Start: 2024-12-10 02:00 UTC
+End: 2024-12-10 04:00 UTC
+
+Affected Services:
+☑ API Server
+☑ Database
+☐ Website
+```
+
+## 📧 Subscriber Management
+
+### Email Subscriptions
+
+**Enable on status page:**
+```
+[Subscribe to Updates]
+Email: user@example.com
+[Subscribe]
+```
+
+**Subscription Settings:**
+```
+Send notifications for:
+☑ New incidents
+☑ Incident updates
+☑ Incident resolutions
+☑ Scheduled maintenance
+☐ Performance degradation
+```
+
+**Confirmation Email:**
+```
+Subject: Confirm your subscription
+
+Please confirm your subscription to
+Example Services Status updates.
+
+[Confirm Subscription]
+
+You'll receive notifications when:
+- Services go down or recover
+- Scheduled maintenance is planned
+- Important updates are posted
+```
+
+### Subscriber Analytics
+
+View in dashboard:
+- Total subscribers
+- Subscription rate over time
+- Notification delivery rate
+- Unsubscribe rate
+- Most engaged subscribers
+
+## 🌐 Custom Domain Setup
+
+### DNS Configuration
+
+**Step 1: Add CNAME Record**
+```
+Type: CNAME
+Name: status
+Value: example.uptimebeacon.com
+TTL: 3600
+```
+
+**Step 2: Verify in Dashboard**
+1. Go to Status Page settings
+2. Enter custom domain: `status.example.com`
+3. Click "Verify DNS"
+4. Wait for propagation (5-60 minutes)
+
+**Step 3: SSL Certificate**
+- Automatic via Let's Encrypt
+- Usually takes 2-5 minutes
+- Renews automatically every 90 days
+
+### Troubleshooting DNS
+
+**DNS not propagating?**
+```bash
+# Check DNS resolution
+dig status.example.com CNAME
+
+# Check from multiple locations
+nslookup status.example.com 8.8.8.8
+```
+
+**SSL certificate issues?**
+- Ensure DNS is fully propagated
+- Check CAA records don't block Let's Encrypt
+- Wait 24 hours for full propagation
+
+## 📊 Status Page Analytics
+
+### Metrics Tracked
+
+**Traffic:**
+- Total page views
+- Unique visitors
+- Views per day/week/month
+- Geographic distribution
+
+**Engagement:**
+- Subscriber growth
+- Incident view rate
+- Average time on page
+- Bounce rate
+
+**Performance:**
+- Page load time
+- API response time
+- Uptime percentage
+- Incident frequency
+
+### Reports
+
+Generate reports:
+```
+Period: Last 7 days / 30 days / 90 days / Custom
+
+Metrics:
+☑ Page views and visitors
+☑ Subscriber count
+☑ Incident summary
+☑ Monitor availability
+☐ Custom metrics
+
+Export: PDF / CSV / JSON
+```
+
+## 🔗 Status Page API
+
+Embed status widgets or fetch data programmatically.
+
+### Public API Endpoints
+
+**Current Status:**
+```bash
+GET https://example.uptimebeacon.com/api/status
+
+Response:
+{
+  "status": "operational",
+  "monitors": [
+    {
+      "name": "Production Website",
+      "status": "operational",
+      "uptime": 99.98,
+      "response_time": 245
+    }
+  ],
+  "active_incidents": []
+}
+```
+
+**Incident History:**
+```bash
+GET https://example.uptimebeacon.com/api/incidents
+
+Response:
+{
+  "incidents": [
+    {
+      "id": "inc_123",
+      "title": "API Slowdown",
+      "status": "resolved",
+      "impact": "minor",
+      "started_at": "2024-12-04T10:00:00Z",
+      "resolved_at": "2024-12-04T10:15:00Z"
+    }
+  ]
+}
+```
+
+### Status Badge
+
+Embed a badge showing current status:
+
+```markdown
+![Status](https://example.uptimebeacon.com/badge)
+```
+
+**Badge Styles:**
+- `?style=flat` - Flat design
+- `?style=flat-square` - Square corners
+- `?style=plastic` - Glossy look
+- `?style=for-the-badge` - Large badge
+
+**Custom Labels:**
+```
+?label=Services&color=brightgreen
+```
+
+## 📱 Mobile Optimization
+
+Status pages are fully responsive:
+
+```
+Desktop:     Full layout with charts
+Tablet:      Simplified charts, full info
+Mobile:      Compact cards, essential info
+```
+
+**Mobile Features:**
+- Touch-friendly navigation
+- Optimized images
+- Fast loading (<2s)
+- No horizontal scroll
+- Easy subscription
+
+## 💡 Best Practices
+
+### Content Strategy
+
+**DO:**
+- ✅ Be transparent about issues
+- ✅ Update status regularly during incidents
+- ✅ Use clear, non-technical language
+- ✅ Show historical uptime data
+- ✅ Link to support resources
+
+**DON'T:**
+- ❌ Hide or minimize problems
+- ❌ Use vague updates like "investigating"
+- ❌ Leave stale incidents open
+- ❌ Overcomplicate the design
+- ❌ Forget to test on mobile
+
+### Incident Communication
+
+**Good Update:**
+```
+14:32 - Investigating API slowness affecting
+        approximately 15% of requests
+14:35 - Identified database connection pool
+        exhaustion, applying fix
+14:40 - Fix deployed, monitoring recovery
+14:45 - Service fully recovered, investigating
+        root cause
+```
+
+**Bad Update:**
+```
+14:32 - Issue detected
+14:45 - Fixed
+```
+
+### Design Tips
+
+```
+Branding:
+- Use brand colors subtly
+- Don't overwhelm with branding
+- Focus on clarity and readability
+
+Layout:
+- Keep it simple and clean
+- Show most critical services first
+- Group related services
+- Use responsive design
+
+Updates:
+- Update at least every 30 minutes during incidents
+- Be specific about impact
+- Provide ETAs when possible
+- Explain what happened after resolution
+```
+
+## 🎯 Status Page Templates
+
+### SaaS Application
+
+```
+Services:
+├─ Web Application
+├─ API
+├─ Authentication
+├─ File Storage
+└─ Email Delivery
+
+Features:
+- 30-day uptime graph
+- Response time charts
+- Incident history
+- Scheduled maintenance calendar
+```
+
+### E-Commerce Platform
+
+```
+Services:
+├─ Website
+├─ Shopping Cart
+├─ Payment Processing
+├─ Order Management
+└─ Customer Portal
+
+Special:
+- Peak traffic indicators
+- Regional availability
+- Payment gateway status
+```
+
+### Infrastructure Provider
+
+```
+Services:
+├─ Compute Instances
+├─ Block Storage
+├─ Object Storage
+├─ Networking
+└─ Control Panel
+
+Details:
+- Per-region status
+- Network graphs
+- System metrics
+```
+
+## ❓ Common Questions
+
+<details>
+<summary>Can I have multiple status pages?</summary>
+
+Yes! Create separate status pages for:
+- Different products/services
+- Different customer segments
+- Different regions
+- Internal vs external services
+
+</details>
+
+<details>
+<summary>How do I make my status page private?</summary>
+
+Options:
+1. **Unlisted**: Only accessible via direct link
+2. **Password Protected**: Require password to view
+3. **IP Whitelist**: Only specific IPs can access (enterprise)
+
+Settings → Status Pages → [Your Page] → Visibility
+
+</details>
+
+<details>
+<summary>Can subscribers choose which incidents to get notified about?</summary>
+
+Currently, subscribers receive all incident notifications. Coming soon:
+- Per-service subscriptions
+- Severity-based filtering
+- Digest emails (daily/weekly summary)
+
+</details>
+
+<details>
+<summary>What happens if my status page goes down?</summary>
+
+Status pages are served from redundant infrastructure:
+- Multiple servers across regions
+- CDN caching
+- Separate from monitoring infrastructure
+- 99.99% uptime SLA
+
+</details>
+
+<details>
+<summary>Can I embed the status page on my website?</summary>
+
+Yes! Options:
+1. **iFrame embed**:
+```html
+<iframe src="https://example.uptimebeacon.com/embed"
+        width="100%" height="600px"></iframe>
+```
+
+2. **Status widget** (JavaScript):
+```html
+<script src="https://example.uptimebeacon.com/widget.js"></script>
+<div id="uptimebeacon-widget"></div>
+```
+
+3. **API integration** (custom design):
+Fetch JSON data and render your own UI
+
+</details>
+
+## 🔒 Security & Privacy
+
+### Access Control
+
+```
+Public status pages:
+- No authentication required
+- Anyone can view and subscribe
+- Good for building trust
+
+Private status pages:
+- Password protected
+- Only authorized users
+- Good for internal services
+```
+
+### Data Privacy
+
+- **No personal data** collected without consent
+- **Subscriber emails** encrypted at rest
+- **GDPR compliant** - easy unsubscribe
+- **No tracking cookies** without consent
+
+### Security Headers
+
+Automatic security headers:
+```
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Content-Security-Policy: ...
+Strict-Transport-Security: max-age=31536000
+```
+
+<Callout type="success">
+  **Pro Tip**: Create your status page early and share it with customers proactively. It builds trust even when everything is working perfectly!
+</Callout>

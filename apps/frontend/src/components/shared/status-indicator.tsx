@@ -98,6 +98,7 @@ export function StatusDot({
 				animate && status === "MAINTENANCE" && "after:bg-blue-500/40",
 				className,
 			)}
+			role="img"
 		/>
 	);
 }
@@ -205,7 +206,10 @@ export function UptimeBar({ days = 30, data, className }: UptimeBarProps) {
 							"h-8 w-1 rounded-sm transition-all duration-200 ease-out hover:h-10 hover:w-1.5",
 							config.barClass,
 						)}
-						key={`uptime-${index}`}
+						key={`uptime-${
+							// biome-ignore lint/suspicious/noArrayIndexKey: ShadCN UI pattern
+							index
+						}`}
 						title={`Day ${days - index}: ${config.label}`}
 					/>
 				);

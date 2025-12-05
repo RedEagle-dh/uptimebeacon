@@ -80,7 +80,7 @@ export const websocketHandler = new Elysia().ws("/ws", {
 		);
 	},
 
-	close(ws) {
+	close(_ws) {
 		// Find and remove the client
 		for (const client of clients) {
 			// We can't directly compare ws objects, so we remove based on the close event

@@ -117,6 +117,7 @@ function Carousel({
 				canScrollNext,
 			}}
 		>
+			{/** biome-ignore lint/a11y/useSemanticElements: ShadCN UI pattern */}
 			<div
 				aria-roledescription="carousel"
 				className={cn("relative", className)}
@@ -156,6 +157,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
 	const { orientation } = useCarousel();
 
 	return (
+		// biome-ignore lint/a11y/useSemanticElements: ShadCN UI pattern
 		<div
 			aria-roledescription="slide"
 			className={cn(

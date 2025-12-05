@@ -1,0 +1,369 @@
+import { Callout, Cards, Steps } from 'nextra/components'
+
+# Installing UptimeBeacon
+
+Get UptimeBeacon up and running in just a few minutes! This guide walks you through the complete setup process step by step.
+
+## 📋 Prerequisites
+
+Before you begin, make sure you have:
+
+- **Node.js 18+** or **Bun runtime** installed on your system
+- **PostgreSQL database** (local or hosted like Supabase, Neon, etc.)
+- **Basic command line knowledge**
+- **Email provider** (optional, for email notifications)
+
+That's all you need to get started!
+
+## 🚀 Quick Start (Self-Hosted)
+
+<Steps>
+### Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/uptimebeacon.git
+cd uptimebeacon
+```
+
+### Install Dependencies
+
+Using Bun (recommended):
+```bash
+bun install
+```
+
+Or using npm:
+```bash
+npm install
+```
+
+### Set Up Database
+
+Start PostgreSQL with Docker:
+```bash
+docker compose up -d
+```
+
+Or use your existing PostgreSQL instance and update the connection string.
+
+### Configure Environment Variables
+
+Copy the example environment files:
+```bash
+cp apps/frontend/.env.example apps/frontend/.env
+cp apps/backend/.env.example apps/backend/.env
+```
+
+Edit the `.env` files with your configuration:
+
+**Frontend (`apps/frontend/.env`):**
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/uptimebeacon"
+AUTH_SECRET="your-secret-key-here"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+**Backend (`apps/backend/.env`):**
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/uptimebeacon"
+PORT=3001
+FRONTEND_URL="http://localhost:3000"
+```
+
+### Initialize the Database
+
+Generate Prisma client and push schema:
+```bash
+bun db:generate
+bun db:push
+```
+
+### Start the Application
+
+Start both frontend and backend:
+```bash
+bun dev
+```
+
+This will start:
+- **Frontend** on http://localhost:3000
+- **Backend** on http://localhost:3001
+
+### Create Your First User
+
+Open http://localhost:3000 and create an account. The first user will automatically become an admin.
+
+</Steps>
+
+<Callout type="success">
+  **Congratulations!** UptimeBeacon is now running on your system.
+</Callout>
+
+## 🌐 Production Deployment
+
+### Using Docker
+
+Build and run with Docker Compose:
+
+```bash
+# Build images
+docker compose -f docker-compose.prod.yml build
+
+# Start services
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Manual Deployment
+
+<Steps>
+### Build the Application
+
+```bash
+bun build
+```
+
+### Set Environment Variables
+
+Set production environment variables on your hosting platform.
+
+### Run Database Migrations
+
+```bash
+bun db:migrate
+```
+
+### Start the Services
+
+```bash
+# Start backend
+cd apps/backend && bun start
+
+# Start frontend
+cd apps/frontend && bun start
+```
+</Steps>
+
+## ⚙️ Configuration Options
+
+### Frontend Environment Variables
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
+| `AUTH_SECRET` | Secret for NextAuth.js | Yes | - |
+| `NEXTAUTH_URL` | Full URL of your frontend | Yes | - |
+| `GITHUB_CLIENT_ID` | GitHub OAuth client ID | No | - |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth secret | No | - |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | No | - |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth secret | No | - |
+
+### Backend Environment Variables
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
+| `PORT` | Backend server port | Yes | 3001 |
+| `FRONTEND_URL` | Frontend URL for CORS | Yes | - |
+| `SMTP_HOST` | SMTP server for emails | No | - |
+| `SMTP_PORT` | SMTP port | No | 587 |
+| `SMTP_USER` | SMTP username | No | - |
+| `SMTP_PASS` | SMTP password | No | - |
+| `SMTP_FROM` | Email sender address | No | - |
+
+## 🔒 Security Best Practices
+
+### Generate Strong Secrets
+
+Generate a secure `AUTH_SECRET`:
+
+```bash
+openssl rand -base64 32
+```
+
+### Use Environment Variables
+
+Never commit sensitive data to version control. Always use environment variables for:
+- Database credentials
+- API keys
+- OAuth secrets
+- SMTP passwords
+
+### Enable HTTPS
+
+Always use HTTPS in production. You can use:
+- **Let's Encrypt** for free SSL certificates
+- **Cloudflare** for SSL and DDoS protection
+- **Reverse proxy** like Nginx with SSL termination
+
+## 📊 Database Setup Options
+
+### Option 1: Local PostgreSQL
+
+Install PostgreSQL locally:
+
+**macOS (Homebrew):**
+```bash
+brew install postgresql@15
+brew services start postgresql@15
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+### Option 2: Docker PostgreSQL
+
+Use the included Docker Compose file:
+
+```bash
+docker compose up -d postgres
+```
+
+### Option 3: Hosted Database
+
+Use a managed PostgreSQL service:
+
+- **Supabase** - Free tier with 500MB storage
+- **Neon** - Serverless PostgreSQL with generous free tier
+- **Railway** - Simple PostgreSQL hosting
+- **Render** - Free PostgreSQL for 90 days
+- **AWS RDS** - Enterprise-grade managed PostgreSQL
+
+## ✅ Verify Installation
+
+Check that everything is working:
+
+### Frontend Health Check
+Visit http://localhost:3000 - you should see the login page
+
+### Backend Health Check
+```bash
+curl http://localhost:3001/health
+```
+
+Should return:
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-12-04T..."
+}
+```
+
+### Database Connection
+```bash
+bun db:studio
+```
+
+Opens Prisma Studio to view your database.
+
+## 🚫 Troubleshooting
+
+<details>
+<summary>Database connection failed</summary>
+
+**Check these points:**
+- ✅ Is PostgreSQL running?
+- ✅ Is the DATABASE_URL correct?
+- ✅ Can you connect with `psql` or a database client?
+
+**Common fixes:**
+```bash
+# Check PostgreSQL status
+docker compose ps  # If using Docker
+
+# Test connection
+psql "postgresql://postgres:password@localhost:5432/uptimebeacon"
+```
+
+</details>
+
+<details>
+<summary>Frontend won't start</summary>
+
+**Checklist:**
+- ✅ Did you run `bun install`?
+- ✅ Did you run `bun db:generate`?
+- ✅ Is port 3000 available?
+- ✅ Are environment variables set correctly?
+
+**Try these steps:**
+```bash
+# Clean install
+rm -rf node_modules
+bun install
+
+# Regenerate Prisma client
+bun db:generate
+
+# Check port availability
+lsof -i :3000  # macOS/Linux
+```
+
+</details>
+
+<details>
+<summary>Backend won't start</summary>
+
+**Possible causes:**
+- Port 3001 is already in use
+- Missing environment variables
+- Database connection failed
+
+**Debug steps:**
+```bash
+# Check environment variables
+cd apps/backend && cat .env
+
+# Test database connection
+bun db:push
+
+# Check port
+lsof -i :3001  # macOS/Linux
+```
+
+</details>
+
+<details>
+<summary>Monitors not running checks</summary>
+
+**Verify:**
+- Backend service is running
+- Monitors are enabled in the dashboard
+- Check backend logs for errors
+
+**View logs:**
+```bash
+# If using Docker
+docker compose logs -f backend
+
+# If running directly
+cd apps/backend && bun dev
+```
+
+</details>
+
+## 🚀 Next Steps
+
+Perfect! UptimeBeacon is now installed. Here's what to do next:
+
+<Cards>
+  <Cards.Card title="First Steps" href="/getting-started"/>
+  <Cards.Card title="Create First Monitor" href="/dashboard/monitors"/>
+  <Cards.Card title="Set Up Notifications" href="/dashboard/notifications"/>
+  <Cards.Card title="Create Status Page" href="/dashboard/status-pages"/>
+</Cards>
+
+## 🆘 Need Help?
+
+If something isn't working or you have questions:
+
+- 📖 **Documentation**: Browse our full documentation
+- 💬 **GitHub Issues**: Report bugs or request features
+- 📧 **Support**: Email support for assistance
+
+<Callout type="info">
+  **Installation complete!** Continue with the [Getting Started Guide](/getting-started) to create your first monitor.
+</Callout>

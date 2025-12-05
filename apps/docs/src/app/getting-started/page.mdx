@@ -1,0 +1,448 @@
+import { Callout, Cards, Steps } from 'nextra/components'
+
+# Getting Started
+
+After successfully installing UptimeBeacon, this guide will walk you through the basic setup and creating your first monitor.
+
+## 🎯 Quick Start in 5 Minutes
+
+<Steps>
+### Create Your Account
+Register on the platform or log in if you already have an account
+
+### Create First Monitor
+Add your first website or service to monitor
+
+### Set Up Notifications
+Configure how you want to be alerted
+
+### View Status
+Check your monitor dashboard and response times
+</Steps>
+
+## 👤 User Management
+
+### Creating Your Account
+
+On first installation, you'll need to create an account:
+
+1. Navigate to the login page
+2. Click "Sign Up" or "Create Account"
+3. Enter your email and password
+4. Verify your email (if required)
+
+**First user becomes admin automatically!**
+
+### User Roles
+
+UptimeBeacon has three user roles:
+
+- **Admin**: Full access to all features and settings
+- **User**: Can create monitors and view all data
+- **Viewer**: Read-only access to monitors and status pages
+
+## 📊 Creating Your First Monitor
+
+### HTTP/HTTPS Monitor
+
+Monitor a website or API endpoint:
+
+<Steps>
+### Navigate to Monitors
+
+Go to **Dashboard → Monitors** and click "Create Monitor"
+
+### Configure Basic Settings
+
+```
+Name: My Website
+Type: HTTP/HTTPS
+URL: https://example.com
+Check Interval: 5 minutes
+```
+
+### Advanced Options (Optional)
+
+- **Request Method**: GET, POST, HEAD, etc.
+- **Request Headers**: Add custom headers
+- **Expected Status Code**: 200, 201, etc.
+- **Response Body Contains**: Check for specific text
+- **Follow Redirects**: Enable/disable redirect following
+- **SSL Certificate Verification**: Validate SSL certificates
+
+### Save and Enable
+
+Click "Create Monitor" - checks will start automatically!
+</Steps>
+
+### TCP Port Monitor
+
+Monitor if a port is accessible:
+
+```
+Name: Database Server
+Type: TCP
+Host: db.example.com
+Port: 5432
+Check Interval: 2 minutes
+```
+
+### DNS Monitor
+
+Verify DNS resolution:
+
+```
+Name: Domain DNS Check
+Type: DNS
+Hostname: example.com
+Record Type: A
+Expected Value: 93.184.216.34 (optional)
+Check Interval: 15 minutes
+```
+
+### Ping Monitor
+
+Test basic connectivity:
+
+```
+Name: Server Connectivity
+Type: PING
+Host: server.example.com
+Packet Count: 4
+Check Interval: 1 minute
+```
+
+## 🔔 Setting Up Notifications
+
+Notifications alert you when monitors go down or recover.
+
+### Email Notifications
+
+<Steps>
+### Create Notification Channel
+
+Go to **Dashboard → Notifications** and click "Add Channel"
+
+### Configure Email
+
+```
+Channel Type: Email
+Name: Team Alerts
+Email Address: alerts@example.com
+```
+
+### Link to Monitors
+
+Select which monitors should use this notification channel
+</Steps>
+
+### Slack Notifications
+
+<Steps>
+### Create Slack Webhook
+
+1. Go to Slack → Apps → Incoming Webhooks
+2. Create a new webhook
+3. Copy the webhook URL
+
+### Add to UptimeBeacon
+
+```
+Channel Type: Slack
+Name: #engineering-alerts
+Webhook URL: https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+```
+</Steps>
+
+### Discord Notifications
+
+```
+Channel Type: Discord
+Name: Server Monitoring
+Webhook URL: https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_TOKEN
+```
+
+### Telegram Notifications
+
+<Steps>
+### Create Bot with BotFather
+
+1. Message @BotFather on Telegram
+2. Use `/newbot` command
+3. Get your bot token
+
+### Get Chat ID
+
+1. Add bot to your group
+2. Send a message
+3. Visit: `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`
+4. Find your chat ID
+
+### Configure in UptimeBeacon
+
+```
+Channel Type: Telegram
+Name: Operations Team
+Bot Token: YOUR_BOT_TOKEN
+Chat ID: YOUR_CHAT_ID
+```
+</Steps>
+
+### Webhook Notifications
+
+For custom integrations:
+
+```
+Channel Type: Webhook
+Name: Custom Integration
+Webhook URL: https://your-api.com/webhook
+HTTP Method: POST
+Headers: (optional custom headers)
+```
+
+Webhook payload format:
+```json
+{
+  "monitor": {
+    "id": "123",
+    "name": "My Website",
+    "url": "https://example.com"
+  },
+  "incident": {
+    "status": "DOWN",
+    "message": "Connection timeout",
+    "timestamp": "2024-12-04T12:00:00Z"
+  }
+}
+```
+
+## 📈 Understanding Your Dashboard
+
+### Monitor Overview
+
+The main dashboard shows:
+
+- **Status Indicator**: Green (UP), Red (DOWN), Yellow (DEGRADED)
+- **Uptime Percentage**: Last 24h, 7d, 30d, 90d
+- **Average Response Time**: Performance metrics
+- **Last Check**: When the monitor was last checked
+- **Active Incidents**: Current downtime events
+
+### Response Time Charts
+
+View performance trends:
+
+- **Last 24 Hours**: Hourly averages
+- **Last 7 Days**: Daily averages
+- **Last 30 Days**: Weekly trends
+- **Custom Range**: Select date range
+
+### Incident History
+
+Track all downtime events:
+
+- **Start Time**: When the incident began
+- **Duration**: How long the service was down
+- **Resolution**: When service recovered
+- **Status Updates**: Timeline of the incident
+
+## 🎨 Creating a Status Page
+
+Status pages keep your users informed about service availability.
+
+<Steps>
+### Create Status Page
+
+Go to **Dashboard → Status Pages** and click "Create"
+
+### Configure Basic Info
+
+```
+Page Name: Example Status
+Subdomain: example (becomes example.uptimebeacon.com)
+Description: Real-time status of our services
+```
+
+### Customize Branding
+
+- **Logo**: Upload your company logo
+- **Brand Color**: Choose primary color
+- **Favicon**: Custom favicon
+- **Custom Domain**: Use your own domain (optional)
+
+### Add Monitors
+
+Select which monitors to display on the status page
+
+### Publish
+
+Click "Publish" to make your status page live
+</Steps>
+
+Your status page will be available at: `https://your-subdomain.uptimebeacon.com`
+
+## 🔧 Basic Configuration
+
+### Site Settings
+
+Configure global settings:
+
+**General:**
+- Site name and description
+- Default timezone
+- Language preferences
+
+**Email Settings:**
+- SMTP server configuration
+- Email sender name and address
+- Email templates
+
+**API Settings:**
+- Generate API keys
+- Configure webhooks
+- Rate limiting
+
+### User Management (Admins Only)
+
+Invite team members:
+
+<Steps>
+### Go to User Management
+
+Navigate to **Dashboard → Users**
+
+### Invite User
+
+```
+Email: teammate@example.com
+Role: User or Viewer
+```
+
+### User Accepts Invitation
+
+They'll receive an email with setup instructions
+</Steps>
+
+## ✅ Best Practices
+
+### Monitor Configuration
+
+- **Check Intervals**:
+  - Critical services: 1-5 minutes
+  - Important services: 5-15 minutes
+  - Less critical: 30 minutes - 1 hour
+
+- **Timeout Settings**:
+  - Fast endpoints: 5-10 seconds
+  - Slower services: 15-30 seconds
+  - External APIs: 30-60 seconds
+
+### Notification Strategy
+
+- **Critical Services**: Multiple channels (email + Slack/Discord)
+- **Important Services**: Primary channel (email or chat)
+- **Non-Critical**: Email only or batched notifications
+
+### Status Page Setup
+
+- Keep it simple and clear
+- Group related services
+- Show historical uptime data
+- Enable incident subscriptions
+
+## 🎯 Next Steps
+
+Now that you're set up, explore these features:
+
+<Cards>
+  <Cards.Card title="Monitor Management" href="/dashboard/monitors"/>
+  <Cards.Card title="Incident Handling" href="/dashboard/incidents"/>
+  <Cards.Card title="Advanced Notifications" href="/dashboard/notifications"/>
+  <Cards.Card title="Status Page Customization" href="/dashboard/status-pages"/>
+</Cards>
+
+## 💡 Tips & Tricks
+
+### Performance Optimization
+
+- **Group similar monitors**: Use tags to organize
+- **Stagger check intervals**: Avoid checking everything at once
+- **Use appropriate timeouts**: Not too short, not too long
+
+### Alert Fatigue Prevention
+
+- **Set up retries**: Avoid false positives
+- **Use escalation**: Start with warnings before critical alerts
+- **Batch notifications**: Group multiple alerts when appropriate
+
+### Team Collaboration
+
+- **Define on-call schedule**: Who gets notified when
+- **Document runbooks**: Link to resolution guides in monitors
+- **Review incidents**: Learn from downtime events
+
+## ❓ Common Questions
+
+<details>
+<summary>How often can I check my monitors?</summary>
+
+Minimum interval is 30 seconds. For most use cases, 1-5 minutes is recommended to balance accuracy with resource usage.
+
+</details>
+
+<details>
+<summary>Can I monitor services behind a firewall?</summary>
+
+UptimeBeacon needs internet access to your services. For internal monitoring, you can:
+- Expose a health check endpoint
+- Use VPN or tunneling (Tailscale, Cloudflare Tunnel)
+- Deploy UptimeBeacon inside your network
+
+</details>
+
+<details>
+<summary>What happens when a monitor goes down?</summary>
+
+1. UptimeBeacon performs retry checks (configurable)
+2. If still down, creates an incident
+3. Sends notifications to configured channels
+4. Updates status page
+5. Continues monitoring until service recovers
+6. Closes incident and sends recovery notification
+
+</details>
+
+<details>
+<summary>How do I monitor APIs with authentication?</summary>
+
+Use custom headers in HTTP monitors:
+
+```
+Headers:
+Authorization: Bearer YOUR_TOKEN
+X-API-Key: YOUR_API_KEY
+```
+
+</details>
+
+<details>
+<summary>Can I get notified only during business hours?</summary>
+
+Not currently supported, but on the roadmap! You can:
+- Use different notification channels for different times
+- Set up a webhook that filters by time
+- Configure monitoring intervals differently
+
+</details>
+
+## 🆘 Need Help?
+
+If you're stuck or have questions:
+
+- 📖 **Documentation**: Browse detailed guides
+- 💬 **Community**: Join discussions
+- 📧 **Support**: Contact the team
+
+<Callout type="success">
+  **You're ready!** Start monitoring your services and stay informed about their availability.
+</Callout>

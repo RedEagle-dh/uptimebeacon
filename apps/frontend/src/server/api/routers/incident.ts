@@ -200,7 +200,7 @@ export const incidentRouter = createTRPCRouter({
 					...(input.status === "resolved" && {
 						resolvedAt: new Date(),
 						duration: Math.floor(
-							(new Date().getTime() - existing.startedAt.getTime()) / 1000,
+							(Date.now() - existing.startedAt.getTime()) / 1000,
 						),
 					}),
 					...(input.status === "identified" &&
@@ -287,7 +287,7 @@ export const incidentRouter = createTRPCRouter({
 					status: "resolved",
 					resolvedAt: new Date(),
 					duration: Math.floor(
-						(new Date().getTime() - existing.startedAt.getTime()) / 1000,
+						(Date.now() - existing.startedAt.getTime()) / 1000,
 					),
 				},
 			});

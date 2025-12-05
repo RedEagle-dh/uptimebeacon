@@ -1,0 +1,576 @@
+import { Callout, Cards, Tabs } from 'nextra/components'
+
+# Notification Channels
+
+Configure how and where you receive alerts when monitors detect issues. UptimeBeacon supports multiple notification channels including Email, Slack, Discord, Telegram, and custom webhooks.
+
+## 🔔 Overview
+
+Notification channels are the destinations where alerts are sent. You can:
+
+- Create multiple channels
+- Assign channels to specific monitors
+- Configure when notifications are sent
+- Customize notification content
+- Set up escalation rules
+
+## 📧 Email Notifications
+
+The simplest way to receive alerts.
+
+### Setup
+
+<Tabs items={['Basic', 'SMTP Config', 'Templates']}>
+  <Tabs.Tab>
+**Create Email Channel:**
+
+1. Go to **Dashboard → Notifications**
+2. Click "Add Channel"
+3. Select "Email"
+4. Configure:
+
+```
+Channel Name: Engineering Team
+Email Address: engineering@example.com
+Send on: Incident Created, Incident Resolved
+```
+
+You can add multiple email addresses separated by commas.
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+**Configure SMTP Server:**
+
+For self-hosted instances, set up SMTP:
+
+```env
+# In backend .env file
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=true
+SMTP_USER=alerts@example.com
+SMTP_PASS=your-app-password
+SMTP_FROM="UptimeBeacon Alerts" <alerts@example.com>
+```
+
+**Popular SMTP Providers:**
+- Gmail: `smtp.gmail.com:587` (use app password)
+- SendGrid: `smtp.sendgrid.net:587`
+- AWS SES: `email-smtp.us-east-1.amazonaws.com:587`
+- Mailgun: `smtp.mailgun.org:587`
+- Postmark: `smtp.postmarkapp.com:587`
+
+  </Tabs.Tab>
+  <Tabs.Tab>
+**Customize Email Templates:**
+
+Modify email content in Settings → Notifications → Templates
+
+**Available Variables:**
+```
+{{monitor.name}}
+{{monitor.url}}
+{{incident.status}}
+{{incident.duration}}
+{{incident.message}}
+{{incident.url}}
+{{timestamp}}
+```
+
+**Example Template:**
+```html
+<h2>🔴 {{monitor.name}} is DOWN</h2>
+<p><strong>URL:</strong> {{monitor.url}}</p>
+<p><strong>Error:</strong> {{incident.message}}</p>
+<p><strong>Time:</strong> {{timestamp}}</p>
+<a href="{{incident.url}}">View Incident →</a>
+```
+
+  </Tabs.Tab>
+</Tabs>
+
+## 💬 Slack Notifications
+
+Send alerts to Slack channels for team collaboration.
+
+### Setup Steps
+
+1. **Create Slack Webhook:**
+   - Go to [Slack API Apps](https://api.slack.com/apps)
+   - Click "Create New App" → "From scratch"
+   - Enable "Incoming Webhooks"
+   - Click "Add New Webhook to Workspace"
+   - Select channel and authorize
+   - Copy webhook URL
+
+2. **Add to UptimeBeacon:**
+   ```
+   Channel Type: Slack
+   Name: #engineering-alerts
+   Webhook URL: https://hooks.slack.com/services/T00/B00/XX
+   ```
+
+3. **Test:**
+   - Click "Send Test Notification"
+   - Check Slack channel for test message
+
+### Message Format
+
+Slack notifications include:
+
+- **Color-coded**: Red for down, green for recovery
+- **Monitor details**: Name, URL, type
+- **Incident info**: Error message, duration
+- **Actions**: Links to view incident and status page
+- **Mentions**: @channel for critical alerts (optional)
+
+### Advanced Options
+
+```
+Mention @channel on:
+☑ Critical incidents only
+☐ All incidents
+
+Include in message:
+☑ Response time graph
+☑ Uptime percentage
+☐ Recent check history
+```
+
+## 📱 Discord Notifications
+
+Similar to Slack but for Discord servers.
+
+### Setup
+
+1. **Create Discord Webhook:**
+   - Open Discord Server Settings
+   - Go to Integrations → Webhooks
+   - Click "New Webhook"
+   - Choose channel
+   - Copy webhook URL
+
+2. **Configure in UptimeBeacon:**
+   ```
+   Channel Type: Discord
+   Name: Server Monitoring
+   Webhook URL: https://discord.com/api/webhooks/123/abc
+   Avatar URL: (optional custom avatar)
+   Username: UptimeBeacon (optional custom name)
+   ```
+
+### Embed Customization
+
+Discord notifications use rich embeds:
+
+```json
+{
+  "title": "🔴 Production API is DOWN",
+  "description": "Connection timeout after 30 seconds",
+  "color": 15158332,
+  "fields": [
+    {"name": "Monitor", "value": "Production API"},
+    {"name": "URL", "value": "https://api.example.com"},
+    {"name": "Started", "value": "2024-12-04 14:32:05 UTC"}
+  ],
+  "footer": {"text": "UptimeBeacon"}
+}
+```
+
+## 🤖 Telegram Notifications
+
+Receive alerts on Telegram for mobile-friendly notifications.
+
+### Setup
+
+1. **Create Telegram Bot:**
+   ```
+   1. Message @BotFather on Telegram
+   2. Send: /newbot
+   3. Choose bot name: "My Uptime Bot"
+   4. Choose username: "my_uptime_bot"
+   5. Copy bot token: 123456:ABC-DEF...
+   ```
+
+2. **Get Chat ID:**
+   ```
+   Method 1 - For personal messages:
+   1. Send any message to your bot
+   2. Visit: https://api.telegram.org/bot<TOKEN>/getUpdates
+   3. Find "chat":{"id": NUMBER}
+
+   Method 2 - For group chats:
+   1. Add bot to group
+   2. Send message in group
+   3. Visit same URL
+   4. Look for negative number (group ID)
+   ```
+
+3. **Configure Channel:**
+   ```
+   Channel Type: Telegram
+   Name: Personal Alerts
+   Bot Token: 123456:ABC-DEF1234...
+   Chat ID: 987654321 (or -1234567890 for groups)
+   ```
+
+### Message Options
+
+```
+Format: HTML or Markdown
+☑ Include buttons (View Incident, Status Page)
+☑ Silent notifications (no sound)
+☐ Disable link previews
+```
+
+## 🔗 Webhook Notifications
+
+Send alerts to custom endpoints for integration with other systems.
+
+### Basic Setup
+
+```
+Channel Type: Webhook
+Name: Custom Integration
+URL: https://your-api.com/webhook
+Method: POST
+Content-Type: application/json
+```
+
+### Payload Format
+
+**Incident Created:**
+```json
+{
+  "event": "incident.created",
+  "timestamp": "2024-12-04T14:32:05Z",
+  "monitor": {
+    "id": "mon_123",
+    "name": "Production Website",
+    "url": "https://example.com",
+    "type": "HTTP"
+  },
+  "incident": {
+    "id": "inc_456",
+    "status": "open",
+    "severity": "high",
+    "started_at": "2024-12-04T14:32:05Z",
+    "message": "Connection timeout after 30s",
+    "url": "https://app.uptimebeacon.com/incidents/456"
+  }
+}
+```
+
+**Incident Resolved:**
+```json
+{
+  "event": "incident.resolved",
+  "timestamp": "2024-12-04T14:38:12Z",
+  "monitor": { ... },
+  "incident": {
+    "id": "inc_456",
+    "status": "resolved",
+    "started_at": "2024-12-04T14:32:05Z",
+    "resolved_at": "2024-12-04T14:38:12Z",
+    "duration_seconds": 367,
+    "message": "Service recovered"
+  }
+}
+```
+
+### Custom Headers
+
+Add authentication or custom headers:
+
+```
+Headers:
+Authorization: Bearer YOUR_API_TOKEN
+X-API-Key: your-api-key
+X-Custom-Header: custom-value
+```
+
+### Retry Configuration
+
+```
+Retry on failure: ☑ Enabled
+Max retries: 3
+Retry delay: 5 seconds (exponential backoff)
+Timeout: 30 seconds
+```
+
+### Webhook Security
+
+**Verify Requests:**
+```javascript
+// UptimeBeacon signs webhooks with HMAC
+const signature = request.headers['x-uptimebeacon-signature'];
+const payload = request.body;
+const secret = 'your-webhook-secret';
+
+const hmac = crypto.createHmac('sha256', secret);
+hmac.update(JSON.stringify(payload));
+const expectedSignature = hmac.digest('hex');
+
+if (signature === expectedSignature) {
+  // Request is valid
+}
+```
+
+## 📞 Phone Call & SMS (Coming Soon)
+
+Voice and SMS notifications for critical alerts.
+
+**Planned Features:**
+- Phone call alerts with voice message
+- SMS text messages
+- Escalation if not acknowledged
+- Integration with Twilio, Vonage
+
+## 🎯 Notification Rules
+
+Control when and how notifications are sent.
+
+### Basic Rules
+
+```
+Send notification when:
+☑ Incident is created (monitor goes down)
+☑ Incident is resolved (monitor recovers)
+☐ Incident is updated (status change)
+☐ Monitor performance degrades
+```
+
+### Advanced Filtering
+
+```
+Only notify if:
+- Severity is: Critical or High
+- Monitor has tag: production
+- Time is: Business hours (9 AM - 5 PM)
+- Day is: Monday-Friday
+- Incident duration > 5 minutes
+```
+
+### Escalation Rules
+
+**Level 1** (Immediate):
+- Send to primary channels
+- Email, Slack notification
+
+**Level 2** (After 5 minutes):
+- Alert on-call engineer
+- Send SMS, phone call
+
+**Level 3** (After 15 minutes):
+- Escalate to manager
+- Page incident commander
+
+### Notification Throttling
+
+Prevent alert fatigue:
+
+```
+Rate Limiting:
+- Max 1 notification per monitor per 5 minutes
+- Batch multiple failures into single alert
+- Suppress duplicate notifications
+
+Quiet Hours:
+- Mute non-critical alerts: 10 PM - 8 AM
+- Only critical alerts during weekends
+```
+
+## 📊 Notification Analytics
+
+Track notification effectiveness:
+
+### Metrics
+
+- **Delivery Rate**: Successfully sent / Total attempts
+- **Acknowledgment Time**: How fast alerts are acknowledged
+- **Resolution Time**: From alert to incident resolved
+- **False Positives**: Alerts that were not real incidents
+
+### Reports
+
+View in **Dashboard → Notifications → Analytics**:
+
+- Notifications sent per channel
+- Delivery success rate
+- Average response time
+- Most active monitors
+- Hourly/daily patterns
+
+## 🔧 Testing Notifications
+
+Always test before relying on notifications!
+
+### Send Test Alert
+
+1. Go to notification channel
+2. Click "Send Test Notification"
+3. Check destination receives message
+4. Verify formatting and content
+
+### Test Scenarios
+
+```
+Test Types:
+□ Incident created notification
+□ Incident resolved notification
+□ Custom message test
+□ Webhook connectivity
+□ SMTP configuration
+```
+
+## 💡 Best Practices
+
+### Channel Strategy
+
+**DO:**
+- ✅ Use multiple channels for redundancy
+- ✅ Route by severity (critical → SMS, low → email)
+- ✅ Separate channels for different teams
+- ✅ Test regularly
+- ✅ Document escalation procedures
+
+**DON'T:**
+- ❌ Send everything to everyone
+- ❌ Use only one notification method
+- ❌ Ignore delivery failures
+- ❌ Skip testing webhooks
+- ❌ Forget to update contact info
+
+### Reduce Alert Fatigue
+
+1. **Tune Monitor Settings**: Avoid false positives
+2. **Use Severity Levels**: Not everything is critical
+3. **Batch Notifications**: Group related alerts
+4. **Quiet Hours**: Mute non-critical at night
+5. **Acknowledge Promptly**: Show alerts are seen
+
+### On-Call Best Practices
+
+```
+Setup:
+- Dedicated on-call channel
+- Phone/SMS for critical only
+- Escalation after 15 minutes
+- Runbooks linked in alerts
+- Clear handoff procedures
+```
+
+## ❓ Common Questions
+
+<details>
+<summary>Notifications aren't being sent. What's wrong?</summary>
+
+**Check:**
+1. Channel is enabled and saved
+2. Monitor is linked to the channel
+3. SMTP/webhook credentials are correct
+4. Network connectivity from server
+5. Notification rules allow sending
+6. Check spam folder for emails
+
+**Debug:**
+- Send test notification
+- Check backend logs
+- Verify webhook endpoint works
+- Test SMTP with external tool
+
+</details>
+
+<details>
+<summary>Can I customize notification content?</summary>
+
+Yes! Options:
+- Custom email templates (HTML/text)
+- Webhook payload format
+- Include/exclude specific fields
+- Add custom variables
+- Brand with company logo
+
+Go to: Settings → Notifications → Templates
+
+</details>
+
+<details>
+<summary>How do I set up on-call rotations?</summary>
+
+Current approach:
+1. Use different channels for each person
+2. Manually update active channel
+3. Use external tool (PagerDuty, Opsgenie)
+4. Webhook to your scheduling system
+
+**Coming soon**: Built-in on-call scheduling!
+
+</details>
+
+<details>
+<summary>Can I send notifications only during business hours?</summary>
+
+Yes! Use notification rules:
+```
+Time-based rules:
+- Only send 9 AM - 5 PM
+- Only weekdays
+- Different channels for different times
+- Quiet hours for non-critical
+```
+
+</details>
+
+<details>
+<summary>Webhook is timing out. What can I do?</summary>
+
+**Solutions:**
+1. Increase timeout in webhook settings
+2. Make your endpoint respond faster
+3. Use async processing on your end
+4. Return 200 OK immediately, process later
+5. Check network connectivity
+
+**Best Practice:**
+```javascript
+// Respond immediately
+app.post('/webhook', (req, res) => {
+  res.sendStatus(200);
+  // Process async
+  processWebhook(req.body).catch(console.error);
+});
+```
+
+</details>
+
+## 🔒 Security Considerations
+
+### Webhook Security
+
+- **Use HTTPS**: Never HTTP for webhooks
+- **Verify Signatures**: Check HMAC signatures
+- **Whitelist IPs**: Only accept from known IPs
+- **Rate Limiting**: Prevent abuse
+- **Secrets Rotation**: Change tokens regularly
+
+### Email Security
+
+- **SPF Records**: Prevent spoofing
+- **DKIM Signing**: Authenticate emails
+- **TLS Encryption**: Encrypt in transit
+- **App Passwords**: Use for Gmail/Outlook
+
+### Access Control
+
+```
+Permissions:
+- Admin: Create/edit all channels
+- Manager: Edit assigned channels
+- User: View notification status
+- Viewer: Read-only access
+```
+
+<Callout type="success">
+  **Pro Tip**: Set up at least two notification channels (e.g., Email + Slack) for critical monitors to ensure you never miss an alert!
+</Callout>

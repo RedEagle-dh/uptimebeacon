@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
 	return (
+		// biome-ignore lint/a11y/useSemanticElements: ShadCN UI pattern
 		<div
 			className={cn("group/item-group flex flex-col", className)}
 			data-slot="item-group"

@@ -1,0 +1,461 @@
+import { Callout, Cards } from 'nextra/components'
+
+# Incident Management
+
+Track, manage, and analyze downtime events in UptimeBeacon. Incidents are automatically created when monitors detect failures and provide a complete timeline of outages and recoveries.
+
+## 🎯 What is an Incident?
+
+An incident represents a period when a monitored service is unavailable or degraded. UptimeBeacon automatically:
+
+- **Creates** incidents when monitors fail
+- **Updates** status as the incident progresses
+- **Resolves** when the service recovers
+- **Records** complete timeline and impact
+
+## 📊 Incident Dashboard
+
+### Overview
+
+The Incidents page shows all downtime events:
+
+| Column | Description |
+|--------|-------------|
+| **Status** | OPEN (ongoing) or RESOLVED (recovered) |
+| **Monitor** | Which service was affected |
+| **Started** | When the incident began |
+| **Duration** | How long the service was down |
+| **Severity** | Critical, High, Medium, Low |
+| **Notifications** | How many alerts were sent |
+
+### Incident Status
+
+- 🔴 **OPEN** - Service currently down
+- 🟡 **INVESTIGATING** - Team looking into the issue
+- 🟢 **RESOLVED** - Service recovered
+- 🔵 **MONITORING** - Service back up, monitoring closely
+
+## 🔄 Incident Lifecycle
+
+### 1. Detection
+
+When a monitor fails:
+
+```
+Monitor check fails
+    ↓
+Retry attempts (if configured)
+    ↓
+Still failing?
+    ↓
+Create incident
+    ↓
+Send notifications
+    ↓
+Update status page
+```
+
+### 2. Response
+
+During an active incident:
+
+- Notifications sent to configured channels
+- Status page automatically updated
+- Incident timeline tracks all checks
+- Team can add status updates
+
+### 3. Resolution
+
+When service recovers:
+
+```
+Monitor check succeeds
+    ↓
+Verify with additional checks
+    ↓
+Mark incident as RESOLVED
+    ↓
+Send recovery notification
+    ↓
+Calculate downtime duration
+    ↓
+Update uptime statistics
+```
+
+## 📝 Incident Details
+
+Click on any incident to view complete information:
+
+### Basic Information
+
+- **Monitor Name**: Affected service
+- **Start Time**: When downtime began
+- **End Time**: When service recovered (if resolved)
+- **Duration**: Total downtime
+- **Status**: Current state
+
+### Timeline
+
+Chronological record of all events:
+
+```
+14:32:05 - Monitor check failed (Connection timeout)
+14:33:05 - Monitor check failed (Connection timeout)
+14:34:05 - Monitor check failed (Connection timeout)
+14:34:05 - Incident created
+14:34:06 - Notification sent to #alerts
+14:34:07 - Status page updated
+14:35:00 - Admin added note: "Investigating server issues"
+14:37:12 - Monitor check succeeded
+14:38:12 - Monitor check succeeded (verification)
+14:38:12 - Incident resolved automatically
+14:38:13 - Recovery notification sent
+```
+
+### Impact Analysis
+
+- **Total Downtime**: Exact duration
+- **Failed Checks**: Number of failed attempts
+- **Successful Checks After**: Verification checks
+- **Notifications Sent**: Alert count
+- **Affected Users**: If status page has subscribers
+
+### Status Updates
+
+Add manual updates during incidents:
+
+```
+[14:35] - "Investigating high database latency"
+[14:40] - "Found issue with cache server, restarting"
+[14:45] - "Cache server restarted, monitoring recovery"
+[14:50] - "All systems operational"
+```
+
+## 🔔 Incident Notifications
+
+### Notification Triggers
+
+Alerts are sent when:
+
+1. **Incident Created** - Service goes down
+2. **Incident Updated** - Manual status update added
+3. **Incident Resolved** - Service recovers
+
+### Notification Content
+
+**Downtime Alert:**
+```
+🔴 INCIDENT: Production Website is DOWN
+
+Monitor: Production Website
+URL: https://example.com
+Started: 2024-12-04 14:32:05 UTC
+Error: Connection timeout after 30s
+
+View incident: https://app.uptimebeacon.com/incidents/123
+Status page: https://status.example.com
+```
+
+**Recovery Alert:**
+```
+🟢 RESOLVED: Production Website is UP
+
+Monitor: Production Website
+Downtime: 6 minutes 7 seconds
+Resolved: 2024-12-04 14:38:12 UTC
+
+View incident: https://app.uptimebeacon.com/incidents/123
+```
+
+## 📈 Incident Analytics
+
+### Metrics Tracked
+
+- **Total Incidents**: Count over time period
+- **Average Duration**: Mean time to recovery (MTTR)
+- **Uptime Percentage**: Availability calculation
+- **Most Affected Services**: Monitors with most incidents
+- **Incident Frequency**: Incidents per day/week/month
+
+### Reports
+
+Generate incident reports:
+
+- **Daily Summary**: All incidents in 24h
+- **Weekly Report**: Week-over-week comparison
+- **Monthly Overview**: Long-term trends
+- **Custom Range**: Any date range
+
+**Export Options:**
+- PDF report
+- CSV data
+- JSON for integrations
+
+## 🏷️ Incident Severity
+
+Classify incidents by impact:
+
+### Critical
+- Production services down
+- Revenue-impacting outages
+- Security incidents
+- Data loss events
+
+### High
+- Important features unavailable
+- Significant performance degradation
+- Authentication/authorization issues
+- Payment processing problems
+
+### Medium
+- Non-critical features down
+- Minor performance issues
+- Isolated component failures
+- Staging environment issues
+
+### Low
+- Internal tools unavailable
+- Development environment issues
+- Non-essential services down
+- Minor functionality degraded
+
+<Callout type="info">
+  Severity can be set automatically based on monitor tags or manually adjusted per incident.
+</Callout>
+
+## 🛠️ Manual Incident Management
+
+### Create Manual Incident
+
+Sometimes you need to report incidents before monitors detect them:
+
+1. Go to **Incidents** page
+2. Click "Create Manual Incident"
+3. Select affected monitor
+4. Add description
+5. Set severity
+6. Publish
+
+**Use cases:**
+- Planned maintenance
+- Partial outages monitors can't detect
+- Third-party service issues
+- User-reported problems
+
+### Add Status Updates
+
+Keep stakeholders informed:
+
+1. Open an active incident
+2. Click "Add Update"
+3. Write status message
+4. Choose if update triggers notifications
+5. Post update
+
+**Example updates:**
+```
+"Investigating increased error rates"
+"Identified database connection pool exhaustion"
+"Applied fix, monitoring recovery"
+"Issue resolved, root cause analysis in progress"
+```
+
+### Close Incidents Manually
+
+For manual incidents or when automatic resolution doesn't work:
+
+1. Open the incident
+2. Click "Resolve Incident"
+3. Add resolution notes
+4. Confirm
+
+## 📊 Best Practices
+
+### During an Incident
+
+**DO:**
+- ✅ Acknowledge immediately
+- ✅ Add regular status updates
+- ✅ Keep status page current
+- ✅ Document all actions taken
+- ✅ Verify complete recovery
+
+**DON'T:**
+- ❌ Ignore or dismiss alerts
+- ❌ Leave stakeholders in the dark
+- ❌ Resolve before fully verified
+- ❌ Skip post-incident analysis
+- ❌ Forget to notify recovery
+
+### Post-Incident
+
+1. **Review Timeline**: Understand what happened
+2. **Calculate Impact**: Downtime, affected users
+3. **Identify Root Cause**: Why did it fail?
+4. **Document Lessons**: What was learned?
+5. **Implement Fixes**: Prevent recurrence
+6. **Update Runbooks**: Improve response
+
+### Incident Communication
+
+**Internal:**
+- Use chat channels for coordination
+- Update incident with findings
+- Tag relevant team members
+- Share resolution steps
+
+**External:**
+- Status page updates
+- Twitter/social media (for major outages)
+- Email to subscribers
+- Blog post for serious incidents
+
+## 🔍 Investigating Incidents
+
+### Check Monitor Logs
+
+View detailed check history:
+
+```bash
+# Recent checks for monitor
+GET /api/monitors/{id}/checks?limit=100
+
+# Checks during incident
+GET /api/monitors/{id}/checks?from=START_TIME&to=END_TIME
+```
+
+### Analyze Response Times
+
+Look for patterns before failure:
+
+- Gradual slowdown → Resource exhaustion
+- Sudden failure → Service crash/network issue
+- Intermittent failures → Load balancer issues
+
+### Review Related Incidents
+
+Check if multiple services affected:
+
+- Same time period → Infrastructure issue
+- Same error message → Common cause
+- Pattern across monitors → Systemic problem
+
+## 📱 Mobile Incident Management
+
+Manage incidents on the go:
+
+- View active incidents
+- Add status updates
+- Acknowledge alerts
+- Mark as resolved
+- View incident timeline
+
+## 🔗 Integrations
+
+### Incident Management Tools
+
+Connect with:
+
+- **PagerDuty**: Auto-create incidents
+- **Opsgenie**: Escalation and on-call routing
+- **Jira**: Create tickets automatically
+- **ServiceNow**: ITSM integration
+- **Slack**: Incident channels
+- **Microsoft Teams**: Team notifications
+
+### Webhooks
+
+Send incident data to custom endpoints:
+
+```json
+{
+  "event": "incident.created",
+  "incident": {
+    "id": "inc_123",
+    "monitor_id": "mon_456",
+    "status": "open",
+    "severity": "high",
+    "started_at": "2024-12-04T14:32:05Z",
+    "message": "Connection timeout after 30s"
+  }
+}
+```
+
+**Webhook Events:**
+- `incident.created`
+- `incident.updated`
+- `incident.resolved`
+- `incident.acknowledged`
+
+## ❓ Common Questions
+
+<details>
+<summary>Why wasn't an incident created when my service was down?</summary>
+
+Possible reasons:
+- Retry checks still in progress
+- Monitor is paused or disabled
+- Service recovered before retries completed
+- Check interval too long to detect brief outage
+
+</details>
+
+<details>
+<summary>Can I delete old incidents?</summary>
+
+Yes, but be careful:
+- Deleting affects uptime calculations
+- Historical data is lost
+- Better to archive or filter by date
+- Export data before deleting if needed
+
+</details>
+
+<details>
+<summary>How do I prevent false positive incidents?</summary>
+
+Configure monitors properly:
+- Increase timeout values
+- Enable retry attempts (2-3 retries)
+- Use maintenance windows during deploys
+- Whitelist monitoring IPs if needed
+- Set realistic response time thresholds
+
+</details>
+
+<details>
+<summary>Can I customize incident notification messages?</summary>
+
+Yes! Customize:
+- Notification templates
+- Severity-based messages
+- Include custom fields
+- Add runbook links
+- Brand with company info
+
+Settings → Notifications → Templates
+
+</details>
+
+## 🎯 Incident Response Checklist
+
+```markdown
+□ Acknowledge incident immediately
+□ Verify the issue is real (not false positive)
+□ Assess severity and impact
+□ Notify relevant team members
+□ Add initial status update
+□ Begin investigation
+□ Document findings in incident timeline
+□ Implement fix
+□ Verify recovery with multiple checks
+□ Resolve incident
+□ Send recovery notification
+□ Schedule post-incident review
+□ Update documentation and runbooks
+□ Implement preventive measures
+```
+
+<Callout type="success">
+  **Pro Tip**: Create incident response playbooks for common failure scenarios to reduce mean time to recovery (MTTR).
+</Callout>

@@ -106,10 +106,12 @@ export default async function RootLayout({
 		<html className={`${geist.variable} dark`} lang="en">
 			<head>
 				<script
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: important for SEO
 					dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
 					type="application/ld+json"
 				/>
 				<script
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: important for SEO
 					dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppJsonLd) }}
 					type="application/ld+json"
 				/>
