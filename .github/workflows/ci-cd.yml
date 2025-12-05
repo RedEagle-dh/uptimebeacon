@@ -1,0 +1,520 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      force_frontend:
+        description: 'Force frontend release'
+        type: boolean
+        default: false
+      force_backend:
+        description: 'Force backend release'
+        type: boolean
+        default: false
+      skip_tests:
+        description: 'Skip lint and typecheck'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  REGISTRY: ghcr.io
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+  id-token: write
+
+jobs:
+  # ============================================
+  # CI: Lint and Typecheck
+  # ============================================
+  lint-and-typecheck:
+    name: Lint and Typecheck
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_tests != 'true'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.3
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: bun run db:generate
+
+      - name: Run Biome Linter
+        run: bun run check
+
+      - name: Run TypeScript Typecheck
+        run: bun run typecheck
+
+  # ============================================
+  # Detect Changes
+  # ============================================
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    if: |
+      always() &&
+      (needs.lint-and-typecheck.result == 'success' || needs.lint-and-typecheck.result == 'skipped') &&
+      github.event_name != 'pull_request' &&
+      !contains(github.event.head_commit.message, '[skip ci]')
+    outputs:
+      frontend: ${{ steps.changes.outputs.frontend }}
+      backend: ${{ steps.changes.outputs.backend }}
+      shared: ${{ steps.changes.outputs.shared }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'apps/frontend/**'
+            backend:
+              - 'apps/backend/**'
+            shared:
+              - 'packages/**'
+
+  # ============================================
+  # Release: Frontend
+  # ============================================
+  release-frontend:
+    name: Release Frontend
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      always() &&
+      needs.detect-changes.result == 'success' &&
+      (needs.detect-changes.outputs.frontend == 'true' ||
+       needs.detect-changes.outputs.shared == 'true' ||
+       github.event.inputs.force_frontend == 'true')
+    outputs:
+      released: ${{ steps.semantic-release.outputs.released }}
+      version: ${{ steps.semantic-release.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.3
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Semantic Release
+        id: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        working-directory: apps/frontend
+        run: |
+          OUTPUT=$(bunx semantic-release 2>&1) || true
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "Published release"; then
+            echo "released=true" >> $GITHUB_OUTPUT
+            VERSION=$(echo "$OUTPUT" | grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?" | head -1)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "released=false" >> $GITHUB_OUTPUT
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
+
+  # ============================================
+  # Release: Backend
+  # ============================================
+  release-backend:
+    name: Release Backend
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      always() &&
+      needs.detect-changes.result == 'success' &&
+      (needs.detect-changes.outputs.backend == 'true' ||
+       needs.detect-changes.outputs.shared == 'true' ||
+       github.event.inputs.force_backend == 'true')
+    outputs:
+      released: ${{ steps.semantic-release.outputs.released }}
+      version: ${{ steps.semantic-release.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.3.3
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Semantic Release
+        id: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        working-directory: apps/backend
+        run: |
+          OUTPUT=$(bunx semantic-release 2>&1) || true
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "Published release"; then
+            echo "released=true" >> $GITHUB_OUTPUT
+            VERSION=$(echo "$OUTPUT" | grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?" | head -1)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "released=false" >> $GITHUB_OUTPUT
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
+
+  # ============================================
+  # Build: Frontend (Multi-arch)
+  # ============================================
+  build-frontend:
+    name: Build Frontend (${{ matrix.platform }})
+    needs: release-frontend
+    if: needs.release-frontend.outputs.released == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}/frontend
+
+    steps:
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/frontend/Dockerfile
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ needs.release-frontend.outputs.version }}
+          cache-from: type=gha,scope=frontend-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=frontend-${{ matrix.platform }}
+          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          provenance: false
+          sbom: false
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests/frontend
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/frontend/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-digests-${{ matrix.runner }}
+          path: /tmp/digests/frontend/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # ============================================
+  # Build: Backend (Multi-arch)
+  # ============================================
+  build-backend:
+    name: Build Backend (${{ matrix.platform }})
+    needs: release-backend
+    if: needs.release-backend.outputs.released == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}/backend
+
+    steps:
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/backend/Dockerfile
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ needs.release-backend.outputs.version }}
+          cache-from: type=gha,scope=backend-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=backend-${{ matrix.platform }}
+          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          provenance: false
+          sbom: false
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests/backend
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/backend/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-digests-${{ matrix.runner }}
+          path: /tmp/digests/backend/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # ============================================
+  # Merge: Frontend Manifests
+  # ============================================
+  merge-frontend:
+    name: Merge Frontend Manifests
+    runs-on: ubuntu-latest
+    needs: [release-frontend, build-frontend]
+    if: needs.release-frontend.outputs.released == 'true'
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}/frontend
+
+    steps:
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests/frontend
+          pattern: frontend-digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release-frontend.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-frontend.outputs.version }}
+            type=semver,pattern={{major}},value=${{ needs.release-frontend.outputs.version }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests/frontend
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.IMAGE_NAME }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ needs.release-frontend.outputs.version }}
+
+  # ============================================
+  # Merge: Backend Manifests
+  # ============================================
+  merge-backend:
+    name: Merge Backend Manifests
+    runs-on: ubuntu-latest
+    needs: [release-backend, build-backend]
+    if: needs.release-backend.outputs.released == 'true'
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}/backend
+
+    steps:
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests/backend
+          pattern: backend-digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release-backend.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-backend.outputs.version }}
+            type=semver,pattern={{major}},value=${{ needs.release-backend.outputs.version }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests/backend
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.IMAGE_NAME }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ needs.release-backend.outputs.version }}
+
+  # ============================================
+  # Summary
+  # ============================================
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, detect-changes, release-frontend, release-backend, merge-frontend, merge-backend]
+    if: always()
+    env:
+      FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/frontend
+      BACKEND_IMAGE: ghcr.io/${{ github.repository }}/backend
+
+    steps:
+      - name: Set lowercase image names
+        run: |
+          echo "FRONTEND_IMAGE=${FRONTEND_IMAGE,,}" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE=${BACKEND_IMAGE,,}" >> $GITHUB_ENV
+
+      - name: Generate Summary
+        run: |
+          echo "## CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### CI Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint & Typecheck | ${{ needs.lint-and-typecheck.result == 'success' && '✅ Passed' || needs.lint-and-typecheck.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+            echo "### Changes Detected" >> $GITHUB_STEP_SUMMARY
+            echo "| Area | Changed |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|---------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Frontend | ${{ needs.detect-changes.outputs.frontend == 'true' && '✅ Yes' || '❌ No' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Backend | ${{ needs.detect-changes.outputs.backend == 'true' && '✅ Yes' || '❌ No' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Shared | ${{ needs.detect-changes.outputs.shared == 'true' && '✅ Yes' || '❌ No' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            echo "### Releases" >> $GITHUB_STEP_SUMMARY
+            echo "| Package | Released | Version |" >> $GITHUB_STEP_SUMMARY
+            echo "|---------|----------|---------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Frontend | ${{ needs.release-frontend.outputs.released == 'true' && '✅ Yes' || '❌ No' }} | ${{ needs.release-frontend.outputs.version || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Backend | ${{ needs.release-backend.outputs.released == 'true' && '✅ Yes' || '❌ No' }} | ${{ needs.release-backend.outputs.version || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            echo "### Deployments" >> $GITHUB_STEP_SUMMARY
+            echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+            echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Frontend | ${{ needs.merge-frontend.result == 'success' && '✅ Deployed' || needs.merge-frontend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Backend | ${{ needs.merge-backend.result == 'success' && '✅ Deployed' || needs.merge-backend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            if [[ "${{ needs.merge-frontend.result }}" == "success" ]] || [[ "${{ needs.merge-backend.result }}" == "success" ]]; then
+              echo "### Docker Images" >> $GITHUB_STEP_SUMMARY
+              if [[ "${{ needs.merge-frontend.result }}" == "success" ]]; then
+                echo "- \`${FRONTEND_IMAGE}:${{ needs.release-frontend.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+              fi
+              if [[ "${{ needs.merge-backend.result }}" == "success" ]]; then
+                echo "- \`${BACKEND_IMAGE}:${{ needs.release-backend.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          fi
+
+      - name: Check Pipeline Status
+        run: |
+          if [[ "${{ needs.lint-and-typecheck.result }}" == "failure" ]]; then
+            echo "❌ Lint and typecheck failed!"
+            exit 1
+          fi
+          echo "✅ Pipeline completed successfully!"
