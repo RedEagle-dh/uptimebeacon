@@ -1,65 +1,60 @@
 # Backend Dockerfile for UptimeBeacon
+# Using Bun with Prisma 7 (no Rust engine)
+
 FROM oven/bun:1.3.3-alpine AS base
+WORKDIR /app
 
 # Prune stage - generate pruned monorepo
 FROM base AS pruner
-WORKDIR /app
 RUN bun add -g turbo
 COPY . .
 RUN turbo prune @uptimebeacon/backend --docker
 
-# Install dependencies only when needed
+# Install dependencies
 FROM base AS deps
 WORKDIR /app
-
-# Copy pruned package files
 COPY --from=pruner /app/out/json/ .
-
-# Copy Prisma schema for postinstall generate
 COPY --from=pruner /app/out/full/packages/database/prisma ./packages/database/prisma
-
-# Install dependencies
-RUN bun install --frozen-lockfile
+COPY --from=pruner /app/out/full/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
+RUN bun install --frozen-lockfile --backend=hardlink
 
 # Build stage
 FROM base AS builder
 WORKDIR /app
-
-# Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=pruner /app/out/full/ .
+COPY --from=pruner /app/tsconfig.json ./tsconfig.json
 
-# Generate Prisma Client
+# Generate Prisma Client (Prisma 7 - no Rust engine)
 RUN bun run db:generate
 
-# Build backend
+# Build backend (bundles most dependencies)
 RUN bun run --filter @uptimebeacon/backend build
 
 # Production image
 FROM base AS runner
 WORKDIR /app
 
-# Version info (injected at build time)
 ARG APP_VERSION="0.1.0"
 ENV APP_VERSION=$APP_VERSION
-
 ENV NODE_ENV=production
 
 # Create non-root user
-RUN addgroup --system --gid 1001 backend
 RUN adduser --system --uid 1001 backend
 
-# Copy built application (bundled, no node_modules needed)
-COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
-COPY --from=builder /app/packages/database/generated ./packages/database/generated
+# Copy built application (bundled)
+COPY --from=builder --chown=backend:bun /app/apps/backend/dist ./apps/backend/dist
 
-# Set correct permissions
-RUN chown -R backend:backend /app
+# Copy Prisma generated client (Prisma 7 - lightweight, no binary engines)
+COPY --from=builder --chown=backend:bun /app/packages/database/generated ./packages/database/generated
+
+# Install only the runtime dependencies needed for Prisma 7 adapter
+# pg is required at runtime for database connections
+RUN bun add pg @prisma/adapter-pg
 
 USER backend
 
 EXPOSE 3001
-
 ENV PORT=3001
 
 CMD ["bun", "run", "apps/backend/dist/index.js"]

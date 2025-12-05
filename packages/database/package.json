@@ -22,11 +22,14 @@
 		"postinstall": "prisma generate"
 	},
 	"dependencies": {
-		"@prisma/client": "^6.6.0"
+		"@prisma/adapter-pg": "^7.0.0",
+		"@prisma/client": "^7.0.0",
+		"pg": "^8.16.0"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.10",
-		"prisma": "^6.6.0",
+		"@types/pg": "^8.15.4",
+		"prisma": "^7.0.0",
 		"typescript": "^5.8.2"
 	}
 }

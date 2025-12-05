@@ -3,10 +3,16 @@
  * for Docker builds.
  */
 import "./src/env.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import("next").NextConfig} */
 const config = {
 	output: "standalone",
+	// Required for monorepo: tells Next.js where the root is for dependency tracing
+	outputFileTracingRoot: path.join(__dirname, "../../"),
 	transpilePackages: ["@uptimebeacon/database"],
 };
 

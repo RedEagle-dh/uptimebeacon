@@ -1,89 +1,73 @@
-FROM alpine AS debug-tools
-RUN apk add --no-cache tree
-
 # Frontend Dockerfile for UptimeBeacon
-FROM alpine AS base
+# Based on official Next.js with Bun example, adapted for Turborepo
 
-RUN apk add --no-cache nodejs npm
-
-RUN npm install -g bun
-
-RUN npm install -g turbo
+FROM oven/bun:1.3.3-alpine AS base
+WORKDIR /app
 
 # Prune stage - generate pruned monorepo
 FROM base AS pruner
-WORKDIR /app
+
 RUN bun add -g turbo
+
 COPY . .
+
 RUN turbo prune @uptimebeacon/frontend --docker
 
-# Install dependencies only when needed
+# Install dependencies
 FROM base AS deps
 WORKDIR /app
 
-# Copy pruned package files
 COPY --from=pruner /app/out/json/ .
-
-# Copy Prisma schema for postinstall generate
 COPY --from=pruner /app/out/full/packages/database/prisma ./packages/database/prisma
+COPY --from=pruner /app/out/full/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
 
-# Install dependencies
 RUN bun install --frozen-lockfile
 
-# Rebuild the source code only when needed
+# Build stage
 FROM base AS builder
+
 WORKDIR /app
 
-# Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=pruner /app/out/full/ .
-
-# Copy root tsconfig (frontend extends it)
 COPY --from=pruner /app/tsconfig.json ./tsconfig.json
 
-# Generate Prisma Client
 RUN bun run db:generate
 
-# Build frontend
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SKIP_ENV_VALIDATION=1
+
 RUN bun run --filter @uptimebeacon/frontend build
 
-# Production image, copy all the files and run next
+# Production image
 FROM base AS runner
+
 WORKDIR /app
 
-# Version info (injected at build time)
 ARG APP_VERSION="0.1.0"
 ENV APP_VERSION=$APP_VERSION
-
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy necessary files
 COPY --from=builder /app/apps/frontend/public ./apps/frontend/public
-COPY --from=builder /app/apps/frontend/.next/standalone ./
-COPY --from=builder /app/apps/frontend/.next/static ./apps/frontend/.next/static
-COPY --from=builder /app/packages/database/generated ./packages/database/generated
 
-# Set correct permissions
-#RUN chown -R nextjs:nodejs /app
+# Set correct permission for prerender cache
+RUN mkdir -p .next && chown nextjs:bun .next
 
-#USER nextjs
+COPY --from=builder --chown=nextjs:bun /app/apps/frontend/.next/standalone ./
+COPY --from=builder --chown=nextjs:bun /app/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=builder --chown=nextjs:bun /app/packages/database/generated ./packages/database/generated
+
+USER nextjs
 
 EXPOSE 3000
-
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-COPY --from=debug-tools /usr/bin/tree /usr/local/bin/tree
-
-COPY apps/frontend/docker-entrypoint.sh /usr/local/bin/
+COPY --chown=nextjs:bun apps/frontend/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
-CMD ["bun", "run", "apps/frontend/server.js"]
+CMD ["bun", "apps/frontend/server.js"]
