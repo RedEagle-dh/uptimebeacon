@@ -1,10 +1,10 @@
 "use client";
 
+import { ArrowUpCircle, X } from "lucide-react";
+import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
-import { ArrowUpCircle, X } from "lucide-react";
-import { useState } from "react";
 
 interface UpdateBannerProps {
 	isAdmin: boolean;
@@ -31,10 +31,7 @@ export function UpdateBanner({ isAdmin, onViewDetails }: UpdateBannerProps) {
 	}
 
 	// Check if this version was already dismissed
-	if (
-		status.dismissedVersion === status.latestVersion ||
-		isDismissed
-	) {
+	if (status.dismissedVersion === status.latestVersion || isDismissed) {
 		return null;
 	}
 
@@ -58,7 +55,7 @@ export function UpdateBanner({ isAdmin, onViewDetails }: UpdateBannerProps) {
 	};
 
 	return (
-		<Alert variant="warning" className="mb-4">
+		<Alert className="mb-4" variant="warning">
 			<ArrowUpCircle className="h-4 w-4" />
 			<AlertTitle className="flex items-center justify-between">
 				<span>
@@ -66,34 +63,34 @@ export function UpdateBanner({ isAdmin, onViewDetails }: UpdateBannerProps) {
 					{status.latestVersion}
 				</span>
 				<Button
-					variant="ghost"
-					size="icon"
-					className="h-6 w-6 -mr-2"
-					onClick={handleDismiss}
+					className="-mr-2 h-6 w-6"
 					disabled={dismissMutation.isPending}
+					onClick={handleDismiss}
+					size="icon"
+					variant="ghost"
 				>
 					<X className="h-4 w-4" />
 					<span className="sr-only">Dismiss</span>
 				</Button>
 			</AlertTitle>
-			<AlertDescription className="flex items-center gap-2 mt-1">
+			<AlertDescription className="mt-1 flex items-center gap-2">
 				<span>A new version of UptimeBeacon is available.</span>
 				{status.releaseUrl && (
 					<a
-						href={status.releaseUrl}
-						target="_blank"
-						rel="noopener noreferrer"
 						className="underline hover:no-underline"
+						href={status.releaseUrl}
+						rel="noopener noreferrer"
+						target="_blank"
 					>
 						Release notes
 					</a>
 				)}
 				{onViewDetails && (
 					<Button
-						variant="link"
-						size="sm"
 						className="h-auto p-0 text-yellow-400"
 						onClick={onViewDetails}
+						size="sm"
+						variant="link"
 					>
 						How to update
 					</Button>

@@ -1,9 +1,9 @@
+import { z } from "zod";
 import {
 	adminProcedure,
 	createTRPCRouter,
 	publicProcedure,
 } from "@/server/api/trpc";
-import { z } from "zod";
 
 // Backend API URL
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";

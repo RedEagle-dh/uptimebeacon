@@ -1,5 +1,7 @@
 "use client";
 
+import { AlertTriangle, Check, Copy, ExternalLink } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -8,8 +10,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangle, Check, Copy, ExternalLink } from "lucide-react";
-import { useState } from "react";
 
 interface UpdateInstructionsProps {
 	open: boolean;
@@ -45,7 +45,7 @@ docker compose up -d`;
 	const backupCommand = `docker compose exec db pg_dump -U postgres uptimebeacon > backup_$(date +%Y%m%d).sql`;
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog onOpenChange={onOpenChange} open={open}>
 			<DialogContent className="max-w-2xl">
 				<DialogHeader>
 					<DialogTitle>How to Update UptimeBeacon</DialogTitle>
@@ -57,10 +57,10 @@ docker compose up -d`;
 				<div className="space-y-6">
 					{/* Warning */}
 					<div className="flex items-start gap-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
-						<AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+						<AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500" />
 						<div className="text-sm">
 							<p className="font-medium text-yellow-500">Before updating</p>
-							<p className="text-yellow-400/80 mt-1">
+							<p className="mt-1 text-yellow-400/80">
 								Always back up your database before performing an update,
 								especially for major version changes.
 							</p>
@@ -73,14 +73,14 @@ docker compose up -d`;
 							Step 1: Backup your database (recommended)
 						</h3>
 						<div className="relative">
-							<pre className="rounded-lg bg-neutral-900 p-4 text-sm text-neutral-300 overflow-x-auto">
+							<pre className="overflow-x-auto rounded-lg bg-neutral-900 p-4 text-neutral-300 text-sm">
 								<code>{backupCommand}</code>
 							</pre>
 							<Button
-								variant="ghost"
-								size="icon"
 								className="absolute top-2 right-2 h-8 w-8"
 								onClick={() => copyToClipboard(backupCommand, "backup")}
+								size="icon"
+								variant="ghost"
 							>
 								{copiedCommand === "backup" ? (
 									<Check className="h-4 w-4 text-green-500" />
@@ -97,14 +97,14 @@ docker compose up -d`;
 							Step 2: Pull and restart containers
 						</h3>
 						<div className="relative">
-							<pre className="rounded-lg bg-neutral-900 p-4 text-sm text-neutral-300 overflow-x-auto">
+							<pre className="overflow-x-auto rounded-lg bg-neutral-900 p-4 text-neutral-300 text-sm">
 								<code>{updateCommands}</code>
 							</pre>
 							<Button
-								variant="ghost"
-								size="icon"
 								className="absolute top-2 right-2 h-8 w-8"
 								onClick={() => copyToClipboard(updateCommands, "update")}
+								size="icon"
+								variant="ghost"
 							>
 								{copiedCommand === "update" ? (
 									<Check className="h-4 w-4 text-green-500" />
@@ -119,10 +119,10 @@ docker compose up -d`;
 					{releaseUrl && (
 						<div className="pt-2">
 							<a
+								className="inline-flex items-center gap-2 text-blue-400 text-sm hover:text-blue-300"
 								href={releaseUrl}
-								target="_blank"
 								rel="noopener noreferrer"
-								className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300"
+								target="_blank"
 							>
 								<ExternalLink className="h-4 w-4" />
 								View release notes on GitHub
@@ -132,23 +132,23 @@ docker compose up -d`;
 
 					{/* Watchtower Recommendation */}
 					<div className="rounded-lg border border-neutral-800 p-4">
-						<h3 className="font-medium text-neutral-200 mb-2">
+						<h3 className="mb-2 font-medium text-neutral-200">
 							Automatic Updates with Watchtower
 						</h3>
-						<p className="text-sm text-neutral-400 mb-3">
+						<p className="mb-3 text-neutral-400 text-sm">
 							For automatic updates, you can use{" "}
 							<a
-								href="https://containrrr.dev/watchtower/"
-								target="_blank"
-								rel="noopener noreferrer"
 								className="text-blue-400 hover:underline"
+								href="https://containrrr.dev/watchtower/"
+								rel="noopener noreferrer"
+								target="_blank"
 							>
 								Watchtower
 							</a>
 							, a container that monitors your running containers and
 							automatically updates them when new images are available.
 						</p>
-						<p className="text-xs text-neutral-500">
+						<p className="text-neutral-500 text-xs">
 							Note: Watchtower requires access to the Docker socket, which has
 							security implications. Only use it in trusted environments.
 						</p>

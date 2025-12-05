@@ -1,9 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { UpdateBanner } from "@/components/shared/UpdateBanner";
 import { UpdateInstructions } from "@/components/shared/UpdateInstructions";
 import { api } from "@/trpc/react";
-import { useState } from "react";
 
 interface DashboardContentProps {
 	children: React.ReactNode;
@@ -21,15 +21,18 @@ export function DashboardContent({ children, isAdmin }: DashboardContentProps) {
 	return (
 		<>
 			{isAdmin && (
-				<UpdateBanner isAdmin={isAdmin} onViewDetails={() => setShowInstructions(true)} />
+				<UpdateBanner
+					isAdmin={isAdmin}
+					onViewDetails={() => setShowInstructions(true)}
+				/>
 			)}
 			{children}
 			{isAdmin && (
 				<UpdateInstructions
-					open={showInstructions}
-					onOpenChange={setShowInstructions}
 					currentVersion={status?.currentVersion ?? "0.1.0"}
 					latestVersion={status?.latestVersion ?? null}
+					onOpenChange={setShowInstructions}
+					open={showInstructions}
 					releaseUrl={status?.releaseUrl ?? null}
 				/>
 			)}

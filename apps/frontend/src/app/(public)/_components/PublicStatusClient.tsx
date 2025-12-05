@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
 	type Status,
@@ -116,6 +116,7 @@ export function PublicStatusClient() {
 	const [data] = api.statusPage.getPublicOverview.useSuspenseQuery();
 	const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: update timestamp when data refetches
 	useEffect(() => {
 		setLastUpdated(new Date().toLocaleString());
 	}, [data]);

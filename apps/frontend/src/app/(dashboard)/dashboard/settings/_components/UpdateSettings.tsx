@@ -1,5 +1,13 @@
 "use client";
 
+import {
+	ArrowUpCircle,
+	CheckCircle2,
+	ExternalLink,
+	Loader2,
+	RefreshCw,
+} from "lucide-react";
+import { useState } from "react";
 import { UpdateInstructions } from "@/components/shared/UpdateInstructions";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,14 +28,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/trpc/react";
-import {
-	ArrowUpCircle,
-	CheckCircle2,
-	ExternalLink,
-	Loader2,
-	RefreshCw,
-} from "lucide-react";
-import { useState } from "react";
 
 export function UpdateSettings() {
 	const [showInstructions, setShowInstructions] = useState(false);
@@ -54,7 +54,9 @@ export function UpdateSettings() {
 	};
 
 	const handleIntervalChange = (value: string) => {
-		updateSettingsMutation.mutate({ checkIntervalSeconds: Number.parseInt(value, 10) });
+		updateSettingsMutation.mutate({
+			checkIntervalSeconds: Number.parseInt(value, 10),
+		});
 	};
 
 	const isLoading = statusLoading || settingsLoading;
@@ -99,7 +101,7 @@ export function UpdateSettings() {
 											: "Up to Date"}
 									</span>
 								</div>
-								<div className="text-sm text-muted-foreground">
+								<div className="text-muted-foreground text-sm">
 									<p>
 										Current version:{" "}
 										<span className="font-mono">{status?.currentVersion}</span>
@@ -125,32 +127,32 @@ export function UpdateSettings() {
 							</div>
 							<div className="flex gap-2">
 								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => checkNowMutation.mutate()}
 									disabled={checkNowMutation.isPending}
+									onClick={() => checkNowMutation.mutate()}
+									size="sm"
+									variant="outline"
 								>
 									{checkNowMutation.isPending ? (
-										<Loader2 className="h-4 w-4 animate-spin mr-2" />
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 									) : (
-										<RefreshCw className="h-4 w-4 mr-2" />
+										<RefreshCw className="mr-2 h-4 w-4" />
 									)}
 									Check Now
 								</Button>
 								{status?.updateAvailable && (
-									<Button size="sm" onClick={() => setShowInstructions(true)}>
+									<Button onClick={() => setShowInstructions(true)} size="sm">
 										How to Update
 									</Button>
 								)}
 							</div>
 						</div>
 						{status?.releaseUrl && status?.updateAvailable && (
-							<div className="mt-3 pt-3 border-t border-border/40">
+							<div className="mt-3 border-border/40 border-t pt-3">
 								<a
+									className="inline-flex items-center gap-1 text-blue-400 text-sm hover:text-blue-300"
 									href={status.releaseUrl}
-									target="_blank"
 									rel="noopener noreferrer"
-									className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300"
+									target="_blank"
 								>
 									<ExternalLink className="h-4 w-4" />
 									View release notes
@@ -165,7 +167,7 @@ export function UpdateSettings() {
 					<div className="space-y-4">
 						<div className="flex items-center justify-between">
 							<div>
-								<Label htmlFor="auto-check" className="font-medium">
+								<Label className="font-medium" htmlFor="auto-check">
 									Automatic Update Checks
 								</Label>
 								<p className="text-muted-foreground text-sm">
@@ -173,17 +175,17 @@ export function UpdateSettings() {
 								</p>
 							</div>
 							<Switch
-								id="auto-check"
 								checked={settings?.autoCheck ?? true}
-								onCheckedChange={handleAutoCheckChange}
 								disabled={updateSettingsMutation.isPending}
+								id="auto-check"
+								onCheckedChange={handleAutoCheckChange}
 							/>
 						</div>
 
 						{settings?.autoCheck && (
 							<div className="flex items-center justify-between">
 								<div>
-									<Label htmlFor="check-interval" className="font-medium">
+									<Label className="font-medium" htmlFor="check-interval">
 										Check Interval
 									</Label>
 									<p className="text-muted-foreground text-sm">
@@ -191,9 +193,9 @@ export function UpdateSettings() {
 									</p>
 								</div>
 								<Select
-									value={String(settings?.checkIntervalSeconds ?? 21600)}
-									onValueChange={handleIntervalChange}
 									disabled={updateSettingsMutation.isPending}
+									onValueChange={handleIntervalChange}
+									value={String(settings?.checkIntervalSeconds ?? 21600)}
 								>
 									<SelectTrigger className="w-32">
 										<SelectValue />
@@ -212,10 +214,10 @@ export function UpdateSettings() {
 			</Card>
 
 			<UpdateInstructions
-				open={showInstructions}
-				onOpenChange={setShowInstructions}
 				currentVersion={status?.currentVersion ?? "0.1.0"}
 				latestVersion={status?.latestVersion ?? null}
+				onOpenChange={setShowInstructions}
+				open={showInstructions}
 				releaseUrl={status?.releaseUrl ?? null}
 			/>
 		</>
