@@ -1,5 +1,14 @@
+FROM alpine AS debug-tools
+RUN apk add --no-cache tree
+
 # Frontend Dockerfile for UptimeBeacon
-FROM oven/bun:1.3.3-alpine AS base
+FROM alpine AS base
+
+RUN apk add --no-cache nodejs npm
+
+RUN npm install -g bun
+
+RUN npm install -g turbo
 
 # Prune stage - generate pruned monorepo
 FROM base AS pruner
@@ -62,13 +71,19 @@ COPY --from=builder /app/apps/frontend/.next/static ./apps/frontend/.next/static
 COPY --from=builder /app/packages/database/generated ./packages/database/generated
 
 # Set correct permissions
-RUN chown -R nextjs:nodejs /app
+#RUN chown -R nextjs:nodejs /app
 
-USER nextjs
+#USER nextjs
 
 EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+
+COPY --from=debug-tools /usr/bin/tree /usr/local/bin/tree
+
+COPY apps/frontend/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 CMD ["bun", "run", "apps/frontend/server.js"]
