@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/RedEagle-dh/uptimebeacon/compare/backend-v1.1.2...backend-v1.1.3) (2025-12-05)
+
+
+### Bug Fixes
+
+* Dockerfile builds frontend and backend ([eafd3a7](https://github.com/RedEagle-dh/uptimebeacon/commit/eafd3a7993e0cf47dca767353f981ef9e07d3817))
+
 ## [1.1.1](https://github.com/RedEagle-dh/uptimebeacon/compare/backend-v1.1.0...backend-v1.1.1) (2025-12-05)
 
 
