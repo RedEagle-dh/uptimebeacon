@@ -1,14 +1,22 @@
 # Frontend Dockerfile for UptimeBeacon
 FROM oven/bun:1.3.3-alpine AS base
 
+# Prune stage - generate pruned monorepo
+FROM base AS pruner
+WORKDIR /app
+RUN bun add -g turbo
+COPY . .
+RUN turbo prune @uptimebeacon/frontend --docker
+
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 
-# Copy package files
-COPY package.json bun.lock ./
-COPY apps/frontend/package.json ./apps/frontend/
-COPY packages/database/package.json ./packages/database/
+# Copy pruned package files
+COPY --from=pruner /app/out/json/ .
+
+# Copy Prisma schema for postinstall generate
+COPY --from=pruner /app/out/full/packages/database/prisma ./packages/database/prisma
 
 # Install dependencies
 RUN bun install --frozen-lockfile
@@ -19,7 +27,10 @@ WORKDIR /app
 
 # Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY --from=pruner /app/out/full/ .
+
+# Copy root tsconfig (frontend extends it)
+COPY --from=pruner /app/tsconfig.json ./tsconfig.json
 
 # Generate Prisma Client
 RUN bun run db:generate

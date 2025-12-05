@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker build:*)",
+      "Bash(bun install:*)",
+      "Bash(bunx turbo prune --help:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
