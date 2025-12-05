@@ -5,6 +5,8 @@ on:
     branches: [main]
     tags:
       - 'v*.*.*'
+      - 'frontend-v*.*.*'
+      - 'backend-v*.*.*'
   workflow_dispatch:
 
 env:
@@ -63,7 +65,10 @@ jobs:
       - name: Get version
         id: version
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          if [[ "${{ github.ref }}" == refs/tags/frontend-v* ]]; then
+            # Extract version from frontend-v1.0.0 format
+            echo "version=${GITHUB_REF#refs/tags/frontend-}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           else
             echo "version=${{ github.sha }}" >> $GITHUB_OUTPUT
@@ -201,7 +206,10 @@ jobs:
       - name: Get version
         id: version
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          if [[ "${{ github.ref }}" == refs/tags/backend-v* ]]; then
+            # Extract version from backend-v1.0.0 format
+            echo "version=${GITHUB_REF#refs/tags/backend-}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           else
             echo "version=${{ github.sha }}" >> $GITHUB_OUTPUT

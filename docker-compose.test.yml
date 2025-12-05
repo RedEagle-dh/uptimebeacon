@@ -20,7 +20,9 @@ services:
       - uptimebeacon-network
 
   frontend:
-    image: ghcr.io/redeagle-dh/uptimebeacon/frontend:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
     container_name: uptimebeacon-frontend
     restart: unless-stopped
     environment:
@@ -43,7 +45,9 @@ services:
       start_period: 40s
 
   backend:
-    image: ghcr.io/redeagle-dh/uptimebeacon/backend:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
     container_name: uptimebeacon-backend
     restart: unless-stopped
     environment:

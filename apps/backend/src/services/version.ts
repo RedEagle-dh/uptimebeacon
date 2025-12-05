@@ -81,13 +81,37 @@ export function compareVersions(
 
 /**
  * Find the latest semantic version from a list of tags
+ * Supports formats: v1.0.0, 1.0.0, frontend-v1.0.0, backend-v1.0.0
  */
-function findLatestVersion(tags: string[]): string | null {
+function findLatestVersion(
+	tags: string[],
+	prefix?: "frontend" | "backend",
+): string | null {
+	logger.debug(`Available tags: ${tags.join(", ")}`);
+
+	// Extract version from tag, handling different formats
+	const extractVersion = (
+		tag: string,
+	): { original: string; version: string } | null => {
+		// Match prefixed tags like frontend-v1.0.0 or backend-v1.0.0
+		if (prefix) {
+			const prefixMatch = tag.match(
+				new RegExp(`^${prefix}-v?(\\d+\\.\\d+\\.\\d+)$`),
+			);
+			if (prefixMatch?.[1]) return { original: tag, version: prefixMatch[1] };
+		}
+		// Match standard semver tags like v1.0.0 or 1.0.0
+		const semverMatch = tag.match(/^v?(\d+\.\d+\.\d+)$/);
+		if (semverMatch?.[1]) return { original: tag, version: semverMatch[1] };
+		return null;
+	};
+
 	const semverTags = tags
-		.filter((tag) => /^v?\d+\.\d+\.\d+$/.test(tag))
-		.map((tag) => ({
-			original: tag,
-			parsed: parseVersion(tag),
+		.map(extractVersion)
+		.filter((t): t is { original: string; version: string } => t !== null)
+		.map((t) => ({
+			...t,
+			parsed: parseVersion(t.version),
 		}))
 		.filter((t) => t.parsed !== null)
 		.sort((a, b) => {
@@ -98,7 +122,11 @@ function findLatestVersion(tags: string[]): string | null {
 			return bp.patch - ap.patch;
 		});
 
-	return semverTags[0]?.original || null;
+	const latest = semverTags[0];
+	if (latest) {
+		logger.debug(`Latest ${prefix || "global"} version: ${latest.version}`);
+	}
+	return latest?.version || null;
 }
 
 /**
@@ -115,15 +143,14 @@ async function fetchRegistryTags(
 		});
 
 		if (!response.ok) {
-			// If unauthorized, try without auth (public images)
+			// If unauthorized, try anonymous token auth (required for GHCR public images)
 			if (response.status === 401) {
 				logger.debug(
-					`Registry returned 401 for ${image}, trying anonymous access`,
+					`Registry returned 401 for ${image}, fetching anonymous token`,
 				);
-				// For public images, we might need to get a token first
-				const tokenResponse = await fetch(
-					`https://ghcr.io/token?scope=repository:redeagle-dh/uptimebeacon/${image}:pull`,
-				);
+				// GHCR requires a token even for public images
+				const tokenUrl = `https://ghcr.io/token?service=ghcr.io&scope=repository:${GHCR_REPO}/${image}:pull`;
+				const tokenResponse = await fetch(tokenUrl);
 				if (tokenResponse.ok) {
 					const tokenData = (await tokenResponse.json()) as { token: string };
 					const authedResponse = await fetch(
@@ -137,8 +164,16 @@ async function fetchRegistryTags(
 					);
 					if (authedResponse.ok) {
 						const data = (await authedResponse.json()) as RegistryTagsResponse;
+						logger.debug(`Found ${data.tags?.length || 0} tags for ${image}`);
 						return data.tags || [];
 					}
+					logger.warn(
+						`Failed to fetch ${image} tags after auth: ${authedResponse.status}`,
+					);
+				} else {
+					logger.warn(
+						`Failed to get token for ${image}: ${tokenResponse.status}`,
+					);
 				}
 			}
 			logger.warn(`Failed to fetch ${image} tags: ${response.status}`);
@@ -168,8 +203,12 @@ export async function checkForUpdates(): Promise<{
 		fetchRegistryTags("backend"),
 	]);
 
-	const frontendLatest = findLatestVersion(frontendTags);
-	const backendLatest = findLatestVersion(backendTags);
+	// Look for prefixed tags first (frontend-v1.0.0), fall back to standard semver
+	const frontendLatest =
+		findLatestVersion(frontendTags, "frontend") ||
+		findLatestVersion(frontendTags);
+	const backendLatest =
+		findLatestVersion(backendTags, "backend") || findLatestVersion(backendTags);
 
 	const currentVersion = getCurrentVersion();
 	const frontendUpdate = frontendLatest
