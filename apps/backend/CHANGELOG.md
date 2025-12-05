@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/RedEagle-dh/uptimebeacon/compare/backend-v1.1.0...backend-v1.1.1) (2025-12-05)
+
+
+### Bug Fixes
+
+* copying the full bun.lock instead of the pruned one because of a semantic-release issue ([774aff1](https://github.com/RedEagle-dh/uptimebeacon/commit/774aff157e1f10e49f59844ced27cc078e264c7c))
+
 # [1.1.0](https://github.com/RedEagle-dh/uptimebeacon/compare/backend-v1.0.0...backend-v1.1.0) (2025-12-05)
 
 
