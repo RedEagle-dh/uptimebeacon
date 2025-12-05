@@ -44,6 +44,10 @@ RUN bun run --filter @uptimebeacon/frontend build
 FROM base AS runner
 WORKDIR /app
 
+# Version info (injected at build time)
+ARG APP_VERSION="0.1.0"
+ENV APP_VERSION=$APP_VERSION
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
