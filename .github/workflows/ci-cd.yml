@@ -139,9 +139,9 @@ jobs:
         id: semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        working-directory: .github/release
+        working-directory: apps/frontend
         run: |
-          OUTPUT=$(npx semantic-release -e ../../apps/frontend/release.config.cjs 2>&1) || true
+          OUTPUT=$(node ../../.github/release/node_modules/semantic-release/bin/semantic-release.js 2>&1) || true
           echo "$OUTPUT"
           if echo "$OUTPUT" | grep -q "Published release"; then
             echo "released=true" >> $GITHUB_OUTPUT
@@ -158,10 +158,11 @@ jobs:
   release-backend:
     name: Release Backend
     runs-on: ubuntu-latest
-    needs: detect-changes
+    needs: [detect-changes, release-frontend]
     if: |
       always() &&
       needs.detect-changes.result == 'success' &&
+      (needs.release-frontend.result == 'success' || needs.release-frontend.result == 'skipped') &&
       (needs.detect-changes.outputs.backend == 'true' ||
        needs.detect-changes.outputs.shared == 'true' ||
        github.event.inputs.force_backend == 'true')
@@ -175,6 +176,9 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Pull latest changes
+        run: git pull origin ${{ github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -191,9 +195,9 @@ jobs:
         id: semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        working-directory: .github/release
+        working-directory: apps/backend
         run: |
-          OUTPUT=$(npx semantic-release -e ../../apps/backend/release.config.cjs 2>&1) || true
+          OUTPUT=$(node ../../.github/release/node_modules/semantic-release/bin/semantic-release.js 2>&1) || true
           echo "$OUTPUT"
           if echo "$OUTPUT" | grep -q "Published release"; then
             echo "released=true" >> $GITHUB_OUTPUT

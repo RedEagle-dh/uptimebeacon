@@ -6,9 +6,9 @@ WORKDIR /app
 
 # Prune stage - generate pruned monorepo
 FROM base AS pruner
+RUN bun add -g turbo
 COPY . .
-RUN bun install --frozen-lockfile
-RUN bunx turbo prune @uptimebeacon/backend --docker
+RUN turbo prune @uptimebeacon/backend --docker
 
 # Install dependencies
 FROM base AS deps
