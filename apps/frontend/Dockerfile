@@ -6,19 +6,15 @@ WORKDIR /app
 
 # Prune stage - generate pruned monorepo
 FROM base AS pruner
-
-RUN bun add -g turbo
-
 COPY . .
-
-RUN turbo prune @uptimebeacon/frontend --docker
+RUN bun install --frozen-lockfile
+RUN bunx turbo prune @uptimebeacon/frontend --docker
 
 # Install dependencies
 FROM base AS deps
 WORKDIR /app
 
 COPY --from=pruner /app/out/json/ .
-COPY --from=pruner /app/bun.lock ./bun.lock
 COPY --from=pruner /app/out/full/packages/database/prisma ./packages/database/prisma
 COPY --from=pruner /app/out/full/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
 
