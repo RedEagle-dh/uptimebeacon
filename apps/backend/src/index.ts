@@ -2,6 +2,7 @@ import { app } from "./app";
 import { env } from "./env";
 import { initializeAdminUser } from "./services/init-admin";
 import { initScheduler } from "./services/scheduler";
+import { initUpdateChecker } from "./services/version";
 import { logger } from "./utils/logger";
 
 const port = env.PORT;
@@ -14,6 +15,11 @@ initializeAdminUser().catch((error) => {
 // Initialize the monitoring scheduler
 initScheduler().catch((error) => {
 	logger.error("Failed to initialize scheduler:", error);
+});
+
+// Initialize the update checker
+initUpdateChecker().catch((error) => {
+	logger.error("Failed to initialize update checker:", error);
 });
 
 app.listen(port, () => {

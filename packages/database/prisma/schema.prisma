@@ -2,13 +2,12 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+    provider = "prisma-client"
     output   = "../generated/prisma"
 }
 
 datasource db {
     provider = "postgresql"
-    url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -404,6 +403,35 @@ model SiteSettings {
     robotsFollow        Boolean  @default(true)
     googleVerification  String?
     bingVerification    String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// UPDATE SETTINGS (Singleton)
+// ============================================
+
+model UpdateSettings {
+    id String @id @default("default")
+
+    // Configuration
+    autoCheck            Boolean @default(true)
+    checkIntervalSeconds Int     @default(21600) // 6 hours
+
+    // Cached version info
+    lastCheckAt           DateTime?
+    latestFrontendVersion String?
+    latestBackendVersion  String?
+    latestReleaseUrl      String?
+    releasePublishedAt    DateTime?
+
+    // Current versions (set at startup from env)
+    currentFrontendVersion String @default("0.1.0")
+    currentBackendVersion  String @default("0.1.0")
+
+    // User state
+    dismissedVersion String? // Version user dismissed notification for
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

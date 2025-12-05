@@ -4,6 +4,7 @@ import { notificationRouter } from "@/server/api/routers/notification";
 import { postRouter } from "@/server/api/routers/post";
 import { siteSettingsRouter } from "@/server/api/routers/site-settings";
 import { statusPageRouter } from "@/server/api/routers/status-page";
+import { updateRouter } from "@/server/api/routers/update";
 import { userRouter } from "@/server/api/routers/user";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
 	statusPage: statusPageRouter,
 	notification: notificationRouter,
 	siteSettings: siteSettingsRouter,
+	update: updateRouter,
 });
 
 // export type definition of API

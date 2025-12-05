@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { auth } from "@/server/auth";
+import { UpdateSettings } from "./_components/UpdateSettings";
 
 export default async function SettingsPage() {
 	const session = await auth();
@@ -30,33 +31,37 @@ export default async function SettingsPage() {
 
 			{/* Admin Settings */}
 			{isAdmin && (
-				<Card>
-					<CardHeader>
-						<CardTitle>Administration</CardTitle>
-						<CardDescription>Site-wide settings (Admin only)</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<Link
-							className="group flex items-center justify-between rounded-lg border border-border/40 bg-card/50 p-4 transition-all duration-200 hover:border-border hover:bg-card"
-							href="/dashboard/settings/branding"
-						>
-							<div className="flex items-center gap-4">
-								<div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-									<Palette className="size-5 text-muted-foreground" />
+				<>
+					<Card>
+						<CardHeader>
+							<CardTitle>Administration</CardTitle>
+							<CardDescription>Site-wide settings (Admin only)</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<Link
+								className="group flex items-center justify-between rounded-lg border border-border/40 bg-card/50 p-4 transition-all duration-200 hover:border-border hover:bg-card"
+								href="/dashboard/settings/branding"
+							>
+								<div className="flex items-center gap-4">
+									<div className="flex size-10 items-center justify-center rounded-lg bg-muted">
+										<Palette className="size-5 text-muted-foreground" />
+									</div>
+									<div>
+										<p className="font-medium transition-colors group-hover:text-foreground">
+											Branding & Customization
+										</p>
+										<p className="text-muted-foreground text-sm">
+											Customize site name, icon, footer links, and more
+										</p>
+									</div>
 								</div>
-								<div>
-									<p className="font-medium transition-colors group-hover:text-foreground">
-										Branding & Customization
-									</p>
-									<p className="text-muted-foreground text-sm">
-										Customize site name, icon, footer links, and more
-									</p>
-								</div>
-							</div>
-							<ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
-						</Link>
-					</CardContent>
-				</Card>
+								<ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+							</Link>
+						</CardContent>
+					</Card>
+
+					<UpdateSettings />
+				</>
 			)}
 
 			{/* Profile Settings */}

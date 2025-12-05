@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, Clock, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
 	type Status,
@@ -113,6 +114,12 @@ function IncidentCard({ incident }: { incident: Incident }) {
 
 export function PublicStatusClient() {
 	const [data] = api.statusPage.getPublicOverview.useSuspenseQuery();
+	const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: update timestamp when data refetches
+	useEffect(() => {
+		setLastUpdated(new Date().toLocaleString());
+	}, [data]);
 
 	const { monitors, overallStatus, activeIncidents, recentResolvedIncidents } =
 		data;
@@ -170,9 +177,9 @@ export function PublicStatusClient() {
 								? "Partial System Outage"
 								: "Status Unknown"}
 				</h1>
-				<p className="text-muted-foreground">
-					Last updated: {new Date().toLocaleString()}
-				</p>
+				{lastUpdated && (
+					<p className="text-muted-foreground">Last updated: {lastUpdated}</p>
+				)}
 			</div>
 
 			{/* Uptime Overview */}

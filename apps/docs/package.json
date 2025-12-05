@@ -4,7 +4,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"dev": "next dev",
+		"dev": "next dev --port 3003",
 		"build": "next build",
 		"start": "next start",
 		"start:standalone": "node .next/standalone/apps/docs/server.js",
