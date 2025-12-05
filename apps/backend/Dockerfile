@@ -48,13 +48,21 @@ COPY --from=builder --chown=backend:bun /app/apps/backend/dist ./apps/backend/di
 # Copy Prisma generated client (Prisma 7 - lightweight, no binary engines)
 COPY --from=builder --chown=backend:bun /app/packages/database/generated ./packages/database/generated
 
+# Copy prisma schema and migrations for runtime migrations
+COPY --from=builder --chown=backend:bun /app/packages/database/prisma ./packages/database/prisma
+
 # Install only the runtime dependencies needed for Prisma 7 adapter
 # pg is required at runtime for database connections
 RUN bun add pg @prisma/adapter-pg
+
+# Copy entrypoint script for migrations
+COPY --chown=backend:bun apps/backend/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 USER backend
 
 EXPOSE 3001
 ENV PORT=3001
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["bun", "run", "apps/backend/dist/index.js"]

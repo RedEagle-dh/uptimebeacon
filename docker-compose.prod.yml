@@ -31,7 +31,7 @@ services:
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
-      postgres:
+      backend:
         condition: service_healthy
     networks:
       - uptimebeacon-network
