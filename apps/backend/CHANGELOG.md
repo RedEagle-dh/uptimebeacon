@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/RedEagle-dh/uptimebeacon/compare/backend-v1.0.0...backend-v1.1.0) (2025-12-05)
+
+
+### Features
+
+* merging single workflows into one ci-cd workflow ([18c8310](https://github.com/RedEagle-dh/uptimebeacon/commit/18c83109d89f2669f61c0f1227ba15c4b310a36e))
+
 # 1.0.0 (2025-12-05)
 
 
