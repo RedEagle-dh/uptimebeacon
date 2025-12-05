@@ -2,7 +2,6 @@ name: CD - Deploy to GHCR
 
 on:
   push:
-    branches: [main]
     tags:
       - 'v*.*.*'
       - 'frontend-v*.*.*'

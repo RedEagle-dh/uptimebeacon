@@ -31,9 +31,10 @@ module.exports = {
 			},
 		],
 		[
-			"@semantic-release/npm",
+			"@semantic-release/exec",
 			{
-				npmPublish: false,
+				prepareCmd:
+					'sed -i \'s/"version": "[^"]*"/"version": "${nextRelease.version}"/\' package.json',
 			},
 		],
 		[

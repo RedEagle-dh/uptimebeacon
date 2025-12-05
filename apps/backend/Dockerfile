@@ -16,7 +16,7 @@ WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/full/packages/database/prisma ./packages/database/prisma
 COPY --from=pruner /app/out/full/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
-RUN bun install --frozen-lockfile --backend=hardlink
+RUN bun install --frozen-lockfile
 
 # Build stage
 FROM base AS builder
