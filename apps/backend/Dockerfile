@@ -14,6 +14,7 @@ RUN turbo prune @uptimebeacon/backend --docker
 FROM base AS deps
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/bun.lock ./bun.lock
 COPY --from=pruner /app/out/full/packages/database/prisma ./packages/database/prisma
 COPY --from=pruner /app/out/full/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
 RUN bun install --frozen-lockfile
