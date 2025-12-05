@@ -1,6 +1,10 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 
+const globalForPrisma = globalThis as unknown as {
+	prisma: PrismaClient | undefined;
+};
+
 const createPrismaClient = () => {
 	const connectionString = process.env.DATABASE_URL;
 	if (!connectionString) {
@@ -18,10 +22,18 @@ const createPrismaClient = () => {
 	});
 };
 
-const globalForPrisma = globalThis as unknown as {
-	prisma: ReturnType<typeof createPrismaClient> | undefined;
+const getDb = () => {
+	if (!globalForPrisma.prisma) {
+		globalForPrisma.prisma = createPrismaClient();
+	}
+	return globalForPrisma.prisma;
 };
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+// Lazy proxy - only creates the client when a property is accessed
+export const db = new Proxy({} as PrismaClient, {
+	get(_, prop) {
+		const client = getDb();
+		const value = client[prop as keyof PrismaClient];
+		return typeof value === "function" ? value.bind(client) : value;
+	},
+});
