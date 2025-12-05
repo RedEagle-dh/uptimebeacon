@@ -1,3 +1,18 @@
+# [1.1.0](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.0.0...frontend-v1.1.0) (2025-12-05)
+
+
+### Bug Fixes
+
+* copying the full bun.lock instead of the pruned one because of a semantic-release issue ([774aff1](https://github.com/RedEagle-dh/uptimebeacon/commit/774aff157e1f10e49f59844ced27cc078e264c7c))
+* Dockerfile builds frontend and backend ([eafd3a7](https://github.com/RedEagle-dh/uptimebeacon/commit/eafd3a7993e0cf47dca767353f981ef9e07d3817))
+* outsourcing semantic-release ([bba4e4f](https://github.com/RedEagle-dh/uptimebeacon/commit/bba4e4fd2bb5ea50fcac287cf76fdcc3c55d6edb))
+* run biome linter ([12e474f](https://github.com/RedEagle-dh/uptimebeacon/commit/12e474f685aef7de99ade76baeeda84b00dac3ca))
+
+
+### Features
+
+* merging single workflows into one ci-cd workflow ([18c8310](https://github.com/RedEagle-dh/uptimebeacon/commit/18c83109d89f2669f61c0f1227ba15c4b310a36e))
+
 # 1.0.0 (2025-12-05)
 
 
