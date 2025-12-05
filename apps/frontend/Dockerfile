@@ -37,6 +37,7 @@ RUN bun run db:generate
 
 # Build frontend
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV SKIP_ENV_VALIDATION=1
 RUN bun run --filter @uptimebeacon/frontend build
 
 # Production image, copy all the files and run next
