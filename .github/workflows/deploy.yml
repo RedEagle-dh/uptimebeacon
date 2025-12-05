@@ -9,8 +9,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  FRONTEND_IMAGE_NAME: ${{ github.repository }}/frontend
-  BACKEND_IMAGE_NAME: ${{ github.repository }}/backend
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,8 +34,13 @@ jobs:
     outputs:
       digest-amd64: ${{ steps.build.outputs.digest }}
       digest-arm64: ${{ steps.build.outputs.digest }}
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}/frontend
 
     steps:
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -55,7 +58,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
 
       - name: Get version
         id: version
@@ -78,7 +81,7 @@ jobs:
             APP_VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha,scope=frontend-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=frontend-${{ matrix.platform }}
-          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
           provenance: false
           sbom: false
 
@@ -105,8 +108,13 @@ jobs:
       contents: read
       packages: write
       id-token: write
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}/frontend
 
     steps:
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
@@ -128,7 +136,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -142,11 +150,11 @@ jobs:
         working-directory: /tmp/digests/frontend
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}@sha256:%s ' *)
+            $(printf '${{ env.IMAGE_NAME }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
 
   # Build backend images on native runners for each architecture
   build-backend:
@@ -164,8 +172,13 @@ jobs:
       contents: read
       packages: write
       id-token: write
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}/backend
 
     steps:
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -183,7 +196,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
 
       - name: Get version
         id: version
@@ -206,7 +219,7 @@ jobs:
             APP_VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha,scope=backend-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=backend-${{ matrix.platform }}
-          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
           provenance: false
           sbom: false
 
@@ -233,8 +246,13 @@ jobs:
       contents: read
       packages: write
       id-token: write
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}/backend
 
     steps:
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
@@ -256,7 +274,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -270,19 +288,27 @@ jobs:
         working-directory: /tmp/digests/backend
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}@sha256:%s ' *)
+            $(printf '${{ env.IMAGE_NAME }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
 
   deployment-summary:
     name: Deployment Summary
     needs: [merge-frontend, merge-backend]
     runs-on: ubuntu-latest
     if: always()
+    env:
+      FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/frontend
+      BACKEND_IMAGE: ghcr.io/${{ github.repository }}/backend
 
     steps:
+      - name: Set lowercase image names
+        run: |
+          echo "FRONTEND_IMAGE=${FRONTEND_IMAGE,,}" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE=${BACKEND_IMAGE,,}" >> $GITHUB_ENV
+
       - name: Generate Summary
         run: |
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
@@ -293,13 +319,13 @@ jobs:
           echo "| Backend | ${{ needs.merge-backend.result == 'success' && 'Success' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Images" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: \`${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Backend: \`${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: \`${FRONTEND_IMAGE}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: \`${BACKEND_IMAGE}:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Commands" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${FRONTEND_IMAGE}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${BACKEND_IMAGE}:latest" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Check Deployment Status
