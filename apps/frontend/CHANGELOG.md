@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.1.0...frontend-v1.1.1) (2025-12-06)
+
+
+### Bug Fixes
+
+* adding /api/health endpoint on the frontend ([f62815c](https://github.com/RedEagle-dh/uptimebeacon/commit/f62815cea8ffc9489e55780e424c9b3e386876f7))
+
 # [1.1.0](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.0.0...frontend-v1.1.0) (2025-12-05)
 
 
