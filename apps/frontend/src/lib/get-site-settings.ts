@@ -61,6 +61,11 @@ export interface SocialLink {
  * Uses React cache() for request deduplication
  */
 export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
+	// Skip database access during build if DATABASE_URL is not set
+	if (!process.env.DATABASE_URL) {
+		return DEFAULT_SETTINGS;
+	}
+
 	try {
 		const settings = await db.siteSettings.findUnique({
 			where: { id: "default" },
