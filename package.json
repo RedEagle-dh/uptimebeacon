@@ -7,7 +7,7 @@
 		"packages/*"
 	],
 	"scripts": {
-		"prepare": "git config core.hooksPath .githooks",
+		"prepare": "git config core.hooksPath .githooks || true",
 		"build": "turbo run build",
 		"clean": "rm -rf **/*/node_modules",
 		"dev": "turbo run dev",
