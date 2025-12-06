@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.1.1...frontend-v1.1.2) (2025-12-06)
+
+
+### Bug Fixes
+
+* making prepare script optional for docker environments where git ([ac62ff1](https://github.com/RedEagle-dh/uptimebeacon/commit/ac62ff13c334587ffc237a5512f1435edb0e3521))
+
 ## [1.1.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.1.0...frontend-v1.1.1) (2025-12-06)
 
 
