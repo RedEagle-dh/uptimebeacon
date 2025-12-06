@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.2.0...frontend-v1.2.1) (2025-12-06)
+
+
+### Bug Fixes
+
+* get-site-settings.ts retrieving DATABASE_URL during build ([5e7d105](https://github.com/RedEagle-dh/uptimebeacon/commit/5e7d105d2f999dba358c6c982d64c9a301558447))
+
 # [1.2.0](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.1.2...frontend-v1.2.0) (2025-12-06)
 
 
