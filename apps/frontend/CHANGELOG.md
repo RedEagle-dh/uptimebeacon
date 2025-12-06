@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.1.2...frontend-v1.2.0) (2025-12-06)
+
+
+### Features
+
+* adding timeout minutes on build workflow ([2a2bd6e](https://github.com/RedEagle-dh/uptimebeacon/commit/2a2bd6e3894733a741845dda24ecc357f30bfa60))
+
 ## [1.1.2](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.1.1...frontend-v1.1.2) (2025-12-06)
 
 
