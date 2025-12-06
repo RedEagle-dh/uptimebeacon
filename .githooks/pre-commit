@@ -1,0 +1,14 @@
+#!/bin/sh
+
+echo "Running Biome check..."
+
+bun check
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "Biome check failed. Please fix the errors before committing."
+    echo "Run 'bun check:write' to auto-fix issues."
+    exit 1
+fi
+
+echo "Biome check passed!"
