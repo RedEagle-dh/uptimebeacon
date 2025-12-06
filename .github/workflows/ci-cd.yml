@@ -215,6 +215,7 @@ jobs:
     name: Build Frontend (${{ matrix.platform }})
     needs: release-frontend
     if: needs.release-frontend.outputs.released == 'true'
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -287,6 +288,7 @@ jobs:
     name: Build Backend (${{ matrix.platform }})
     needs: release-backend
     if: needs.release-backend.outputs.released == 'true'
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
