@@ -93,28 +93,36 @@ async function executeCheck(monitorId: string): Promise<void> {
 			},
 		});
 
-		// Calculate new uptime percentage
-		const recentChecks = await db.monitorCheck.findMany({
-			where: {
-				monitorId: monitor.id,
-				createdAt: {
-					gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+		// Calculate new uptime percentage and average response time using database aggregation
+		const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+		// Use parallel queries for better performance
+		const [totalCount, upCount, avgResult] = await Promise.all([
+			db.monitorCheck.count({
+				where: {
+					monitorId: monitor.id,
+					createdAt: { gte: oneDayAgo },
 				},
-			},
-		});
+			}),
+			db.monitorCheck.count({
+				where: {
+					monitorId: monitor.id,
+					createdAt: { gte: oneDayAgo },
+					status: "UP",
+				},
+			}),
+			db.monitorCheck.aggregate({
+				where: {
+					monitorId: monitor.id,
+					createdAt: { gte: oneDayAgo },
+					responseTime: { not: null },
+				},
+				_avg: { responseTime: true },
+			}),
+		]);
 
-		const upChecks = recentChecks.filter((c) => c.status === "UP").length;
-		const uptimePercentage =
-			recentChecks.length > 0 ? (upChecks / recentChecks.length) * 100 : 0;
-
-		// Calculate average response time
-		const responseTimes = recentChecks
-			.filter((c) => c.responseTime != null)
-			.map((c) => c.responseTime!);
-		const avgResponseTime =
-			responseTimes.length > 0
-				? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
-				: 0;
+		const uptimePercentage = totalCount > 0 ? (upCount / totalCount) * 100 : 0;
+		const avgResponseTime = avgResult._avg.responseTime ?? 0;
 
 		// Update monitor status
 		const previousStatus = monitor.status;

@@ -12,7 +12,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import { type Status, StatusDot, UptimeBar } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
@@ -179,7 +179,7 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 function EmptyState() {
 	return (
 		<div className="flex flex-col items-center justify-center rounded-xl border border-border/50 border-dashed bg-muted/10 py-16">
-			<div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted/50">
+			<div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted/50">
 				<Plus className="size-6 text-muted-foreground" />
 			</div>
 			<h3 className="font-semibold">No monitors yet</h3>
@@ -197,27 +197,31 @@ function EmptyState() {
 }
 
 export function MonitorsClient() {
-	const [monitors] = api.monitor.getAll.useSuspenseQuery();
 	const [searchQuery, setSearchQuery] = useState("");
+	// Use deferred value to prevent excessive re-renders while typing
+	const deferredSearch = useDeferredValue(searchQuery);
 
-	const filteredMonitors = monitors.filter((monitor) => {
-		if (!searchQuery) return true;
-		const query = searchQuery.toLowerCase();
-		return (
-			monitor.name.toLowerCase().includes(query) ||
-			monitor.url?.toLowerCase().includes(query) ||
-			monitor.hostname?.toLowerCase().includes(query)
-		);
-	});
+	// Get all monitors for stats (without search filter)
+	const [allMonitors] = api.monitor.getAll.useSuspenseQuery(undefined);
 
-	const stats = {
-		total: monitors.length,
-		up: monitors.filter((m) => m.status === "UP").length,
-		down: monitors.filter((m) => m.status === "DOWN").length,
-		degraded: monitors.filter((m) => m.status === "DEGRADED").length,
-	};
+	// Pass search to server for server-side filtering (more efficient for large datasets)
+	const [monitors] = api.monitor.getAll.useSuspenseQuery(
+		deferredSearch ? { search: deferredSearch } : undefined,
+	);
 
-	const hasMonitors = monitors.length > 0;
+	// Memoize stats calculation to prevent unnecessary recalculations (use all monitors for stats)
+	const stats = useMemo(
+		() => ({
+			total: allMonitors.length,
+			up: allMonitors.filter((m) => m.status === "UP").length,
+			down: allMonitors.filter((m) => m.status === "DOWN").length,
+			degraded: allMonitors.filter((m) => m.status === "DEGRADED").length,
+		}),
+		[allMonitors],
+	);
+
+	// Show empty state only if user has no monitors at all
+	const hasMonitors = allMonitors.length > 0;
 
 	return (
 		<div className="space-y-6">
@@ -301,10 +305,10 @@ export function MonitorsClient() {
 
 					{/* Monitors list */}
 					<div className="space-y-3">
-						{filteredMonitors.map((monitor) => (
+						{monitors.map((monitor) => (
 							<MonitorRow key={monitor.id} monitor={monitor} />
 						))}
-						{filteredMonitors.length === 0 && searchQuery && (
+						{monitors.length === 0 && searchQuery && (
 							<div className="py-8 text-center text-muted-foreground">
 								No monitors match your search
 							</div>

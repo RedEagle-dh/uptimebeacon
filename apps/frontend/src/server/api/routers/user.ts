@@ -12,31 +12,35 @@ export const userRouter = createTRPCRouter({
 	register: publicProcedure
 		.input(
 			z.object({
-				name: z.string().min(2, "Name must be at least 2 characters"),
-				email: z.string().email("Invalid email address"),
-				password: z.string().min(8, "Password must be at least 8 characters"),
+				name: z.string().min(2, "Name must be at least 2 characters").max(100),
+				email: z.string().email("Invalid email address").max(255),
+				password: z
+					.string()
+					.min(8, "Password must be at least 8 characters")
+					.max(128),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
 			// Registration is only allowed when no users exist
 			const userCount = await ctx.db.user.count();
 			if (userCount > 0) {
+				// Use generic error message to prevent user enumeration
 				throw new TRPCError({
 					code: "FORBIDDEN",
-					message:
-						"Registration is disabled. Please contact your administrator.",
+					message: "Registration is not available.",
 				});
 			}
 
-			// Check if user already exists (edge case)
+			// Check if user already exists (edge case - shouldn't happen if userCount is 0)
 			const existingUser = await ctx.db.user.findUnique({
 				where: { email: input.email },
 			});
 
 			if (existingUser) {
+				// Use same generic error message to prevent user enumeration
 				throw new TRPCError({
-					code: "CONFLICT",
-					message: "A user with this email already exists",
+					code: "FORBIDDEN",
+					message: "Registration is not available.",
 				});
 			}
 

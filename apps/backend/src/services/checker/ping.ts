@@ -1,6 +1,28 @@
 import type { Monitor } from "@uptimebeacon/database";
 import type { CheckResult } from "./types";
 
+// Validate hostname to prevent command injection and internal access
+function isValidHostname(hostname: string): boolean {
+	// Only allow valid domain names and IP addresses
+	// Regex for domain names (including subdomains)
+	const domainRegex =
+		/^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+	// Regex for IPv4 addresses
+	const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+
+	// Check for dangerous characters that could enable command injection
+	if (/[;&|`$"'\\<>(){}[\]\n\r\t]/.test(hostname)) {
+		return false;
+	}
+
+	// Check max length
+	if (hostname.length > 253) {
+		return false;
+	}
+
+	return domainRegex.test(hostname) || ipv4Regex.test(hostname);
+}
+
 export async function checkPing(
 	monitor: Monitor,
 	startTime: number,
@@ -9,6 +31,14 @@ export async function checkPing(
 		return {
 			status: "DOWN",
 			error: "Hostname is required for ping checks",
+		};
+	}
+
+	// Validate hostname to prevent command injection
+	if (!isValidHostname(monitor.hostname)) {
+		return {
+			status: "DOWN",
+			error: "Invalid hostname format",
 		};
 	}
 
