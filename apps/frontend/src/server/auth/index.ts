@@ -12,13 +12,16 @@ const safeAuth = async () => {
 		return await uncachedAuth();
 	} catch (error) {
 		// Check if this is a JWT decryption error
-		if (
-			error instanceof Error &&
-			(error.message.includes("no matching decryption secret") ||
-				error.message.includes("JWTSessionError"))
-		) {
-			// Return null to treat user as logged out
-			return null;
+		if (error instanceof Error) {
+			const errorString = `${error.name} ${error.message} ${error.cause}`;
+			if (
+				errorString.includes("no matching decryption secret") ||
+				errorString.includes("JWTSessionError") ||
+				errorString.includes("JWEDecryptionFailed")
+			) {
+				// Return null to treat user as logged out
+				return null;
+			}
 		}
 		// Re-throw other errors
 		throw error;

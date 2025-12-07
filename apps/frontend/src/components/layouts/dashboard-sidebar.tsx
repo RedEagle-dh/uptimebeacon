@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -251,13 +252,11 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
 								</DropdownMenuItem>
 								<DropdownMenuSeparator className="my-1 bg-neutral-800" />
 								<DropdownMenuItem
-									asChild
 									className="cursor-pointer rounded-lg px-2 py-2 text-red-500 focus:bg-red-500/10 focus:text-red-400"
+									onClick={() => signOut({ callbackUrl: "/" })}
 								>
-									<Link href="/api/auth/signout">
-										<LogOut className="mr-2 size-4" />
-										Log out
-									</Link>
+									<LogOut className="mr-2 size-4" />
+									Log out
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>

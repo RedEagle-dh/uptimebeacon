@@ -9,7 +9,7 @@
 	"scripts": {
 		"prepare": "git config core.hooksPath .githooks || true",
 		"build": "turbo run build",
-		"clean": "rm -rf **/*/node_modules",
+		"clean": "rm -rf **/*/node_modules **/*/.next",
 		"dev": "turbo run dev",
 		"typecheck": "turbo run typecheck",
 		"check": "biome check .",
