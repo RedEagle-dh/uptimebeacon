@@ -1,3 +1,10 @@
+# [1.3.0-beta.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.2.1...frontend-v1.3.0-beta.1) (2025-12-07)
+
+
+### Features
+
+* add design pattern docs, fix UI inconsistencies, performance and ([136032f](https://github.com/RedEagle-dh/uptimebeacon/commit/136032f79f41209e0e5b45dd9aeb0b12160a6b4e))
+
 ## [1.2.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.2.0...frontend-v1.2.1) (2025-12-06)
 
 
