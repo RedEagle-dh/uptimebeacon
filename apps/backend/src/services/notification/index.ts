@@ -26,24 +26,17 @@ export async function sendNotifications(
 		},
 	});
 
-	// Send notifications in parallel for better performance
-	const results = await Promise.allSettled(
-		monitorNotifications.map(({ channel }) =>
-			sendToChannel(channel, monitor, event, incident).then(() => ({
-				channel,
-				success: true,
-			})),
-		),
-	);
-
-	// Log results
-	for (const result of results) {
-		if (result.status === "fulfilled") {
+	for (const { channel } of monitorNotifications) {
+		try {
+			await sendToChannel(channel, monitor, event, incident);
 			logger.info(
-				`Sent ${event} notification to ${result.value.channel.type} channel: ${result.value.channel.name}`,
+				`Sent ${event} notification to ${channel.type} channel: ${channel.name}`,
 			);
-		} else {
-			logger.error(`Failed to send notification: ${result.reason}`);
+		} catch (error) {
+			logger.error(
+				`Failed to send notification to ${channel.type} channel: ${channel.name}`,
+				error,
+			);
 		}
 	}
 }

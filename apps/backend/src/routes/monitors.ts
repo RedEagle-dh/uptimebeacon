@@ -63,9 +63,8 @@ export const monitorRoutes = new Elysia({ prefix: "/api/monitors" })
 	.get(
 		"/:id/checks",
 		async ({ params, query }) => {
-			// Cap limit to prevent excessive data loading (max 500)
-			const limit = Math.min(Math.max(1, query.limit ?? 100), 500);
-			const offset = Math.max(0, query.offset ?? 0);
+			const limit = query.limit ?? 100;
+			const offset = query.offset ?? 0;
 
 			const checks = await db.monitorCheck.findMany({
 				where: { monitorId: params.id },

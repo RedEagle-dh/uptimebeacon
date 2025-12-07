@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { INCIDENT_STATUS_CONFIG, SEVERITY_CONFIG } from "@/lib/constants";
 import { api, type RouterOutputs } from "@/trpc/react";
 
 type Incident = RouterOutputs["incident"]["getAll"][number];
@@ -16,6 +15,19 @@ function formatDate(date: Date) {
 }
 
 function IncidentCard({ incident }: { incident: Incident }) {
+	const severityColors = {
+		minor: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+		major: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+		critical: "bg-red-500/10 text-red-500 border-red-500/20",
+	};
+
+	const statusColors = {
+		investigating: "bg-yellow-500",
+		identified: "bg-orange-500",
+		monitoring: "bg-blue-500",
+		resolved: "bg-green-500",
+	};
+
 	return (
 		<Card>
 			<CardContent className="p-6">
@@ -34,9 +46,9 @@ function IncidentCard({ incident }: { incident: Incident }) {
 							<div className="mt-2 flex items-center gap-2">
 								<Badge
 									className={
-										SEVERITY_CONFIG[
-											incident.severity as keyof typeof SEVERITY_CONFIG
-										]?.badgeClass
+										severityColors[
+											incident.severity as keyof typeof severityColors
+										]
 									}
 									variant="outline"
 								>
@@ -52,7 +64,7 @@ function IncidentCard({ incident }: { incident: Incident }) {
 
 					<div className="flex items-center gap-2">
 						<span
-							className={`size-2 rounded-full ${INCIDENT_STATUS_CONFIG[incident.status as keyof typeof INCIDENT_STATUS_CONFIG]?.dotClass}`}
+							className={`size-2 rounded-full ${statusColors[incident.status as keyof typeof statusColors]}`}
 						/>
 						<span className="font-medium text-sm capitalize">
 							{incident.status}

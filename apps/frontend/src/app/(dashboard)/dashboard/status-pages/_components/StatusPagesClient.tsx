@@ -3,13 +3,28 @@
 import { ExternalLink, Globe, Plus } from "lucide-react";
 import Link from "next/link";
 
-import { type Status, StatusDot } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api, type RouterOutputs } from "@/trpc/react";
 
 type StatusPage = RouterOutputs["statusPage"]["getAll"][number];
+
+function StatusDot({ status }: { status: string }) {
+	const colors = {
+		UP: "bg-green-500",
+		DOWN: "bg-red-500",
+		DEGRADED: "bg-yellow-500",
+		PENDING: "bg-zinc-500",
+		MAINTENANCE: "bg-blue-500",
+	};
+
+	return (
+		<span
+			className={`size-2.5 rounded-full ${colors[status as keyof typeof colors] ?? "bg-zinc-500"}`}
+		/>
+	);
+}
 
 function StatusPageCard({ page }: { page: StatusPage }) {
 	const domain = page.customDomain;
@@ -22,7 +37,7 @@ function StatusPageCard({ page }: { page: StatusPage }) {
 					<Globe className="size-4" />
 					{page.name}
 				</CardTitle>
-				<StatusDot status={page.overallStatus as Status} />
+				<StatusDot status={page.overallStatus} />
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">

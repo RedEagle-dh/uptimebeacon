@@ -1,4 +1,3 @@
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
 	adminProcedure,
@@ -8,9 +7,6 @@ import {
 
 // Backend API URL
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
-
-// Timeout for backend requests (5 seconds)
-const FETCH_TIMEOUT_MS = 5000;
 
 interface VersionResponse {
 	version: string;
@@ -34,69 +30,6 @@ interface SettingsResponse {
 	autoCheck: boolean;
 	checkIntervalSeconds: number;
 	dismissedVersion: string | null;
-}
-
-// Helper function for fetch with timeout and proper error handling
-async function fetchWithTimeout<T>(
-	url: string,
-	options: RequestInit = {},
-): Promise<T> {
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-	try {
-		const response = await fetch(url, {
-			...options,
-			signal: controller.signal,
-		});
-
-		clearTimeout(timeoutId);
-
-		if (!response.ok) {
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: `Backend returned ${response.status}`,
-			});
-		}
-
-		// Validate content-type is JSON
-		const contentType = response.headers.get("content-type");
-		if (!contentType?.includes("application/json")) {
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: "Backend returned non-JSON response",
-			});
-		}
-
-		// Parse JSON with error handling
-		try {
-			return (await response.json()) as T;
-		} catch {
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: "Failed to parse backend response",
-			});
-		}
-	} catch (error) {
-		clearTimeout(timeoutId);
-
-		if (error instanceof TRPCError) {
-			throw error;
-		}
-
-		if (error instanceof Error && error.name === "AbortError") {
-			throw new TRPCError({
-				code: "TIMEOUT",
-				message: "Backend request timed out",
-			});
-		}
-
-		throw new TRPCError({
-			code: "INTERNAL_SERVER_ERROR",
-			message:
-				error instanceof Error ? error.message : "Failed to connect to backend",
-		});
-	}
 }
 
 export const updateRouter = createTRPCRouter({
@@ -148,11 +81,15 @@ export const updateRouter = createTRPCRouter({
 	 * Trigger manual update check (admin only)
 	 */
 	checkNow: adminProcedure.mutation(async () => {
-		const data = await fetchWithTimeout<CheckResponse>(
-			`${BACKEND_URL}/api/version/check`,
-			{ method: "POST" },
-		);
+		const response = await fetch(`${BACKEND_URL}/api/version/check`, {
+			method: "POST",
+		});
 
+		if (!response.ok) {
+			throw new Error(`Backend returned ${response.status}`);
+		}
+
+		const data = (await response.json()) as CheckResponse;
 		return {
 			success: data.success,
 			frontendLatest: data.frontendLatest,
@@ -167,10 +104,13 @@ export const updateRouter = createTRPCRouter({
 	 * Get update settings (admin only)
 	 */
 	getSettings: adminProcedure.query(async () => {
-		const data = await fetchWithTimeout<SettingsResponse>(
-			`${BACKEND_URL}/api/version/settings`,
-		);
+		const response = await fetch(`${BACKEND_URL}/api/version/settings`);
 
+		if (!response.ok) {
+			throw new Error(`Backend returned ${response.status}`);
+		}
+
+		const data = (await response.json()) as SettingsResponse;
 		return {
 			autoCheck: data.autoCheck,
 			checkIntervalSeconds: data.checkIntervalSeconds,
@@ -189,14 +129,15 @@ export const updateRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ input }) => {
-			await fetchWithTimeout<{ success: boolean }>(
-				`${BACKEND_URL}/api/version/settings`,
-				{
-					method: "PATCH",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(input),
-				},
-			);
+			const response = await fetch(`${BACKEND_URL}/api/version/settings`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(input),
+			});
+
+			if (!response.ok) {
+				throw new Error(`Backend returned ${response.status}`);
+			}
 
 			return { success: true };
 		}),
@@ -205,16 +146,17 @@ export const updateRouter = createTRPCRouter({
 	 * Dismiss update notification for a specific version (admin only)
 	 */
 	dismissUpdate: adminProcedure
-		.input(z.object({ version: z.string().max(50) }))
+		.input(z.object({ version: z.string() }))
 		.mutation(async ({ input }) => {
-			await fetchWithTimeout<{ success: boolean }>(
-				`${BACKEND_URL}/api/version/dismiss`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ version: input.version }),
-				},
-			);
+			const response = await fetch(`${BACKEND_URL}/api/version/dismiss`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ version: input.version }),
+			});
+
+			if (!response.ok) {
+				throw new Error(`Backend returned ${response.status}`);
+			}
 
 			return { success: true };
 		}),

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 
@@ -122,29 +122,24 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 	const checks = monitor.checks;
 	const incidents = monitor.incidents;
 
-	// Memoize chart data to avoid recalculation on every render
-	const chartData = useMemo(
-		() =>
-			uptimeData.map((day) => ({
-				date: day.date,
-				uptime: day.uptime,
-				up: day.up,
-				down: day.down,
-				degraded: day.degraded,
-			})),
-		[uptimeData],
-	);
+	// Prepare chart data with response time averages
+	const chartData = uptimeData.map((day) => ({
+		date: day.date,
+		uptime: day.uptime,
+		up: day.up,
+		down: day.down,
+		degraded: day.degraded,
+	}));
 
-	// Memoize average response time calculation
-	const avgResponseTime = useMemo(() => {
-		const recentResponseTimes = checks
-			.filter((c) => c.responseTime != null)
-			.slice(0, 50);
-		return recentResponseTimes.length > 0
+	// Calculate average response time from recent checks
+	const recentResponseTimes = checks
+		.filter((c) => c.responseTime != null)
+		.slice(0, 50);
+	const avgResponseTime =
+		recentResponseTimes.length > 0
 			? recentResponseTimes.reduce((acc, c) => acc + (c.responseTime ?? 0), 0) /
-					recentResponseTimes.length
+				recentResponseTimes.length
 			: 0;
-	}, [checks]);
 
 	return (
 		<div className="space-y-6">
