@@ -11,6 +11,11 @@ import {
 } from "lucide-react";
 import type * as React from "react";
 
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 // Status types
@@ -173,45 +178,120 @@ export function StatusText({ status, children, className }: StatusTextProps) {
 }
 
 // UptimeBar component - visual uptime representation
+export interface UptimeBarDayData {
+	status: Status;
+	date?: Date | string;
+	incidents?: number;
+	downtimeMinutes?: number;
+}
+
 interface UptimeBarProps {
 	days?: number;
-	data?: Array<{ status: Status }>;
+	data?: Array<UptimeBarDayData>;
 	className?: string;
 }
 
-// Deterministic pseudo-random based on index (avoids hydration mismatch)
-function getSeededStatus(index: number): Status {
-	// Simple hash function for deterministic "randomness"
-	const hash = ((index * 2654435761) >>> 0) % 100;
-	if (hash < 5) return "DOWN";
-	if (hash < 10) return "DEGRADED";
-	return "UP";
+function formatDate(date: Date | string): string {
+	const d = typeof date === "string" ? new Date(date) : date;
+	return d.toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+}
+
+function getTooltipContent(day: UptimeBarDayData, daysAgo: number): string {
+	const config = STATUS_CONFIG[day.status];
+	const dateStr = day.date ? formatDate(day.date) : `${daysAgo} days ago`;
+
+	if (day.status === "PENDING") {
+		return `${dateStr}\nNo data`;
+	}
+
+	if (day.status === "UP") {
+		return `${dateStr}\nNo incidents`;
+	}
+
+	const parts = [dateStr, config.label];
+
+	if (day.incidents !== undefined && day.incidents > 0) {
+		parts.push(`${day.incidents} incident${day.incidents > 1 ? "s" : ""}`);
+	}
+
+	if (day.downtimeMinutes !== undefined && day.downtimeMinutes > 0) {
+		const hours = Math.floor(day.downtimeMinutes / 60);
+		const mins = day.downtimeMinutes % 60;
+		if (hours > 0) {
+			parts.push(`${hours}h ${mins}m downtime`);
+		} else {
+			parts.push(`${mins}m downtime`);
+		}
+	}
+
+	return parts.join("\n");
 }
 
 export function UptimeBar({ days = 30, data, className }: UptimeBarProps) {
-	// Generate deterministic mock data if not provided
-	const uptimeData =
-		data ??
-		Array.from({ length: days }, (_, i) => ({
-			status: getSeededStatus(i),
-		}));
+	// Build a map of provided data by date string
+	const dataByDate = new Map<string, UptimeBarDayData>();
+	if (data) {
+		for (const day of data) {
+			if (day.date) {
+				const dateStr =
+					typeof day.date === "string"
+						? day.date.split("T")[0]
+						: day.date.toISOString().split("T")[0];
+				if (dateStr) {
+					dataByDate.set(dateStr, day);
+				}
+			}
+		}
+	}
+
+	// Generate all days, using provided data or PENDING status
+	const uptimeData = Array.from({ length: days }, (_, i) => {
+		const date = new Date();
+		date.setDate(date.getDate() - (days - 1 - i));
+		const dateStr = date.toISOString().split("T")[0]!;
+
+		const existingData = dataByDate.get(dateStr);
+		if (existingData) {
+			return existingData;
+		}
+
+		return {
+			status: "PENDING" as Status,
+			date,
+			incidents: 0,
+			downtimeMinutes: 0,
+		};
+	});
 
 	return (
-		<div className={cn("flex items-end gap-[3px]", className)}>
+		<div className={cn("flex items-center gap-[3px]", className)}>
 			{uptimeData.map((day, index) => {
 				const config = STATUS_CONFIG[day.status];
+				const daysAgo = days - index;
+
 				return (
-					<div
-						className={cn(
-							"h-8 w-1 rounded-sm transition-all duration-200 ease-out hover:h-10 hover:w-1.5",
-							config.barClass,
-						)}
+					<Tooltip
 						key={`uptime-${
 							// biome-ignore lint/suspicious/noArrayIndexKey: ShadCN UI pattern
 							index
 						}`}
-						title={`Day ${days - index}: ${config.label}`}
-					/>
+					>
+						<TooltipTrigger asChild>
+							<div
+								className={cn(
+									"h-8 w-1 cursor-pointer rounded-sm transition-shadow duration-200",
+									config.barClass,
+								)}
+							/>
+						</TooltipTrigger>
+						<TooltipContent className="whitespace-pre-line text-center">
+							{getTooltipContent(day, daysAgo)}
+						</TooltipContent>
+					</Tooltip>
 				);
 			})}
 		</div>

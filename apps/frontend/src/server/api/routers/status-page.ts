@@ -70,7 +70,106 @@ export const statusPageRouter = createTRPCRouter({
 		});
 
 		const monitors = statusPage?.monitors.map((m) => m.monitor) ?? [];
+		const monitorIds = monitors.map((m) => m.id);
 		const overallStatus = getOverallStatus(monitors.map((m) => m.status));
+
+		// Get uptime history for the last 90 days
+		const days = statusPage?.daysToShow ?? 90;
+		const startDate = new Date();
+		startDate.setDate(startDate.getDate() - days);
+		startDate.setHours(0, 0, 0, 0);
+
+		// Group checks by day - initialize all days first
+		const dailyData: Record<
+			string,
+			{ up: number; down: number; degraded: number; incidents: number }
+		> = {};
+
+		// Initialize all days
+		for (let i = 0; i < days; i++) {
+			const date = new Date();
+			date.setDate(date.getDate() - (days - 1 - i));
+			const dayKey = date.toISOString().split("T")[0]!;
+			dailyData[dayKey] = { up: 0, down: 0, degraded: 0, incidents: 0 };
+		}
+
+		if (monitorIds.length > 0) {
+			// Get all checks for all monitors in the date range
+			const checks = await ctx.db.monitorCheck.findMany({
+				where: {
+					monitorId: { in: monitorIds },
+					createdAt: { gte: startDate },
+				},
+				select: {
+					status: true,
+					createdAt: true,
+				},
+				orderBy: { createdAt: "asc" },
+			});
+
+			// Get incidents in the date range
+			const allIncidents = await ctx.db.incident.findMany({
+				where: {
+					monitorId: { in: monitorIds },
+					startedAt: { gte: startDate },
+				},
+				select: {
+					startedAt: true,
+					resolvedAt: true,
+				},
+			});
+
+			// Count checks per day
+			for (const check of checks) {
+				const day = check.createdAt.toISOString().split("T")[0]!;
+				if (!dailyData[day]) continue;
+
+				if (check.status === "UP") {
+					dailyData[day].up++;
+				} else if (check.status === "DOWN") {
+					dailyData[day].down++;
+				} else if (check.status === "DEGRADED") {
+					dailyData[day].degraded++;
+				}
+			}
+
+			// Count incidents per day
+			for (const incident of allIncidents) {
+				const day = incident.startedAt.toISOString().split("T")[0]!;
+				if (dailyData[day]) {
+					dailyData[day].incidents++;
+				}
+			}
+		}
+
+		const uptimeHistory = Object.entries(dailyData)
+			.sort(([a], [b]) => a.localeCompare(b))
+			.map(([date, counts]) => {
+				const total = counts.up + counts.down + counts.degraded;
+				let status: "UP" | "DOWN" | "DEGRADED" | "PENDING" = "PENDING";
+
+				if (total > 0) {
+					if (counts.down > 0) {
+						status = "DOWN";
+					} else if (counts.degraded > 0) {
+						status = "DEGRADED";
+					} else {
+						status = "UP";
+					}
+				}
+
+				// Calculate downtime in minutes (rough estimate based on check ratio)
+				const downtimeRatio =
+					total > 0 ? (counts.down + counts.degraded * 0.5) / total : 0;
+				const downtimeMinutes = Math.round(downtimeRatio * 24 * 60);
+
+				return {
+					date,
+					status,
+					incidents: counts.incidents,
+					downtimeMinutes,
+				};
+			});
 
 		return {
 			statusPage: statusPage
@@ -87,6 +186,7 @@ export const statusPageRouter = createTRPCRouter({
 			overallStatus,
 			activeIncidents: incidents,
 			recentResolvedIncidents,
+			uptimeHistory,
 		};
 	}),
 

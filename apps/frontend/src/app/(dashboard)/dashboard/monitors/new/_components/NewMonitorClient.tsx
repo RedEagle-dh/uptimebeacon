@@ -45,8 +45,43 @@ type HttpMethod =
 	| "OPTIONS";
 type AuthMethod = "none" | "basic" | "bearer";
 
-export function NewMonitorClient() {
+interface MonitorData {
+	id: string;
+	name: string;
+	description: string | null;
+	type: string;
+	url: string | null;
+	hostname: string | null;
+	port: number | null;
+	method: string | null;
+	interval: number;
+	timeout: number;
+	retries: number;
+	retryInterval: number;
+	expectedStatusCodes: number[];
+	headers: unknown;
+	body: string | null;
+	keyword: string | null;
+	keywordType: string | null;
+	jsonPath: string | null;
+	expectedValue: string | null;
+	ignoreTls: boolean;
+	tlsExpiry: boolean;
+	tlsExpiryDays: number;
+	authMethod: string | null;
+	authUser: string | null;
+	authPass: string | null;
+	authToken: string | null;
+}
+
+interface MonitorFormClientProps {
+	monitor?: MonitorData;
+}
+
+export function MonitorFormClient({ monitor }: MonitorFormClientProps) {
 	const router = useRouter();
+	const isEditMode = !!monitor;
+
 	const createMutation = api.monitor.create.useMutation({
 		onSuccess: () => {
 			toast.success("Monitor created successfully");
@@ -57,47 +92,74 @@ export function NewMonitorClient() {
 		},
 	});
 
+	const updateMutation = api.monitor.update.useMutation({
+		onSuccess: () => {
+			toast.success("Monitor updated successfully");
+			router.push(`/dashboard/monitors/${monitor?.id}`);
+		},
+		onError: (error) => {
+			toast.error(error.message || "Failed to update monitor");
+		},
+	});
+
 	// Basic info
-	const [name, setName] = useState("");
-	const [description, setDescription] = useState("");
-	const [type, setType] = useState<MonitorType>("HTTP");
+	const [name, setName] = useState(monitor?.name ?? "");
+	const [description, setDescription] = useState(monitor?.description ?? "");
+	const [type, setType] = useState<MonitorType>(
+		(monitor?.type as MonitorType) ?? "HTTP",
+	);
 
 	// Connection settings
-	const [url, setUrl] = useState("");
-	const [hostname, setHostname] = useState("");
-	const [port, setPort] = useState<number | undefined>(undefined);
-	const [method, setMethod] = useState<HttpMethod>("GET");
+	const [url, setUrl] = useState(monitor?.url ?? "");
+	const [hostname, setHostname] = useState(monitor?.hostname ?? "");
+	const [port, setPort] = useState<number | undefined>(
+		monitor?.port ?? undefined,
+	);
+	const [method, setMethod] = useState<HttpMethod>(
+		(monitor?.method as HttpMethod) ?? "GET",
+	);
 
 	// Check settings
-	const [interval, setInterval] = useState(60);
-	const [timeout, setTimeout] = useState(30);
-	const [retries, setRetries] = useState(3);
-	const [retryInterval, setRetryInterval] = useState(60);
+	const [interval, setInterval] = useState(monitor?.interval ?? 60);
+	const [timeout, setTimeout] = useState(monitor?.timeout ?? 30);
+	const [retries, setRetries] = useState(monitor?.retries ?? 3);
+	const [retryInterval, setRetryInterval] = useState(
+		monitor?.retryInterval ?? 60,
+	);
 
 	// HTTP settings
-	const [expectedStatusCodes, setExpectedStatusCodes] =
-		useState("200, 201, 204");
-	const [headers, setHeaders] = useState("");
-	const [body, setBody] = useState("");
+	const [expectedStatusCodes, setExpectedStatusCodes] = useState(
+		monitor?.expectedStatusCodes?.join(", ") ?? "200, 201, 204",
+	);
+	const [headers, setHeaders] = useState(
+		monitor?.headers ? JSON.stringify(monitor.headers, null, 2) : "",
+	);
+	const [body, setBody] = useState(monitor?.body ?? "");
 
 	// Keyword/JSON settings
-	const [keyword, setKeyword] = useState("");
+	const [keyword, setKeyword] = useState(monitor?.keyword ?? "");
 	const [keywordType, setKeywordType] = useState<"present" | "absent">(
-		"present",
+		(monitor?.keywordType as "present" | "absent") ?? "present",
 	);
-	const [jsonPath, setJsonPath] = useState("");
-	const [expectedValue, setExpectedValue] = useState("");
+	const [jsonPath, setJsonPath] = useState(monitor?.jsonPath ?? "");
+	const [expectedValue, setExpectedValue] = useState(
+		monitor?.expectedValue ?? "",
+	);
 
 	// TLS settings
-	const [ignoreTls, setIgnoreTls] = useState(false);
-	const [tlsExpiry, setTlsExpiry] = useState(true);
-	const [tlsExpiryDays, setTlsExpiryDays] = useState(7);
+	const [ignoreTls, setIgnoreTls] = useState(monitor?.ignoreTls ?? false);
+	const [tlsExpiry, setTlsExpiry] = useState(monitor?.tlsExpiry ?? true);
+	const [tlsExpiryDays, setTlsExpiryDays] = useState(
+		monitor?.tlsExpiryDays ?? 7,
+	);
 
 	// Authentication
-	const [authMethod, setAuthMethod] = useState<AuthMethod>("none");
-	const [authUser, setAuthUser] = useState("");
-	const [authPass, setAuthPass] = useState("");
-	const [authToken, setAuthToken] = useState("");
+	const [authMethod, setAuthMethod] = useState<AuthMethod>(
+		(monitor?.authMethod as AuthMethod) ?? "none",
+	);
+	const [authUser, setAuthUser] = useState(monitor?.authUser ?? "");
+	const [authPass, setAuthPass] = useState(monitor?.authPass ?? "");
+	const [authToken, setAuthToken] = useState(monitor?.authToken ?? "");
 
 	const isHttpType =
 		type === "HTTP" ||
@@ -132,7 +194,7 @@ export function NewMonitorClient() {
 			}
 		}
 
-		createMutation.mutate({
+		const data = {
 			name,
 			description: description || undefined,
 			type,
@@ -158,22 +220,37 @@ export function NewMonitorClient() {
 			authUser: authMethod === "basic" ? authUser : undefined,
 			authPass: authMethod === "basic" ? authPass : undefined,
 			authToken: authMethod === "bearer" ? authToken : undefined,
-		});
+		};
+
+		if (isEditMode && monitor) {
+			updateMutation.mutate({ id: monitor.id, data });
+		} else {
+			createMutation.mutate(data);
+		}
 	};
+
+	const isPending = createMutation.isPending || updateMutation.isPending;
+	const backLink = isEditMode
+		? `/dashboard/monitors/${monitor?.id}`
+		: "/dashboard/monitors";
 
 	return (
 		<div className="space-y-6">
 			{/* Page header */}
 			<div className="flex items-center gap-4">
 				<Button asChild size="icon" variant="ghost">
-					<Link href="/dashboard/monitors">
+					<Link href={backLink}>
 						<ArrowLeft className="size-4" />
 					</Link>
 				</Button>
 				<div>
-					<h1 className="font-bold text-2xl tracking-tight">Add Monitor</h1>
+					<h1 className="font-bold text-2xl tracking-tight">
+						{isEditMode ? "Edit Monitor" : "Add Monitor"}
+					</h1>
 					<p className="mt-1 text-muted-foreground">
-						Create a new monitor to track your service uptime
+						{isEditMode
+							? `Update the configuration for ${monitor?.name}`
+							: "Create a new monitor to track your service uptime"}
 					</p>
 				</div>
 			</div>
@@ -650,13 +727,22 @@ export function NewMonitorClient() {
 				{/* Submit */}
 				<div className="flex justify-end gap-3">
 					<Button asChild variant="outline">
-						<Link href="/dashboard/monitors">Cancel</Link>
+						<Link href={backLink}>Cancel</Link>
 					</Button>
-					<Button disabled={createMutation.isPending} type="submit">
-						{createMutation.isPending ? "Creating..." : "Create Monitor"}
+					<Button disabled={isPending} type="submit">
+						{isPending
+							? isEditMode
+								? "Saving..."
+								: "Creating..."
+							: isEditMode
+								? "Save Changes"
+								: "Create Monitor"}
 					</Button>
 				</div>
 			</form>
 		</div>
 	);
 }
+
+/** @deprecated Use MonitorFormClient instead */
+export const NewMonitorClient = MonitorFormClient;

@@ -12,7 +12,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { type Status, StatusDot, UptimeBar } from "@/components/shared";
+import {
+	type Status,
+	StatusDot,
+	UptimeBar,
+	type UptimeBarDayData,
+} from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -212,6 +217,9 @@ export function DashboardClient() {
 	const [stats] = api.monitor.getStats.useSuspenseQuery();
 	const [monitors] = api.monitor.getAll.useSuspenseQuery();
 	const [incidents] = api.incident.getAll.useSuspenseQuery();
+	const [uptimeHistory] = api.monitor.getDailyUptimeHistory.useSuspenseQuery({
+		days: 90,
+	});
 
 	const activeIncidents = incidents.filter((i) => i.status !== "resolved");
 	const displayMonitors = monitors.slice(0, 4);
@@ -222,6 +230,14 @@ export function DashboardClient() {
 			? monitors.reduce((acc, m) => acc + (m.uptimePercentage ?? 0), 0) /
 				monitors.length
 			: 100;
+
+	// Transform uptime history for the UptimeBar component
+	const uptimeBarData: UptimeBarDayData[] = uptimeHistory.map((day) => ({
+		status: day.status,
+		date: day.date,
+		incidents: day.incidents,
+		downtimeMinutes: day.downtimeMinutes,
+	}));
 
 	return (
 		<div className="space-y-8">
@@ -288,7 +304,11 @@ export function DashboardClient() {
 					</div>
 				</CardHeader>
 				<CardContent>
-					<UptimeBar className="w-full justify-between" days={90} />
+					<UptimeBar
+						className="w-full justify-between"
+						data={uptimeBarData}
+						days={90}
+					/>
 					<div className="mt-3 flex items-center justify-between text-muted-foreground text-xs">
 						<span>90 days ago</span>
 						<span>Today</span>

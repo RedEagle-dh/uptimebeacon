@@ -29,4 +29,5 @@ export {
 	StatusDot,
 	StatusText,
 	UptimeBar,
+	type UptimeBarDayData,
 } from "./status-indicator";

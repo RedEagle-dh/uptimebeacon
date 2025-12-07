@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
 
-import { type Status, StatusDot, UptimeBar } from "@/components/shared";
+import { type Status, StatusDot } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,19 +74,11 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 					</div>
 				</div>
 
-				{/* Uptime bar - hidden on mobile */}
-				<div className="hidden w-48 flex-col items-center lg:flex">
-					<UptimeBar className="h-5 w-full" days={30} />
-					<p className="mt-1 text-center text-[10px] text-muted-foreground">
-						30 days
-					</p>
-				</div>
-
 				{/* Stats */}
-				<div className="hidden w-20 flex-col items-end md:flex">
+				<div className="hidden flex-col items-end md:flex">
 					<p
 						className={cn(
-							"font-medium font-mono text-sm",
+							"whitespace-nowrap font-medium font-mono text-sm",
 							status === "UP" && "text-status-up",
 							status === "DOWN" && "text-status-down",
 							status === "DEGRADED" && "text-status-degraded",
@@ -98,7 +90,7 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 							? `${Math.round(responseTime)}ms`
 							: status}
 					</p>
-					<p className="text-muted-foreground text-xs">
+					<p className="whitespace-nowrap text-muted-foreground text-xs">
 						{uptime.toFixed(2)}% uptime
 					</p>
 				</div>
@@ -124,13 +116,11 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-48">
-							<DropdownMenuItem
-								onClick={(e) => {
-									e.preventDefault();
-								}}
-							>
-								<Settings className="mr-2 size-4" />
-								Edit Monitor
+							<DropdownMenuItem asChild>
+								<Link href={`/dashboard/monitors/${monitor.id}/edit`}>
+									<Settings className="mr-2 size-4" />
+									Edit Monitor
+								</Link>
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								disabled={pauseMutation.isPending || resumeMutation.isPending}

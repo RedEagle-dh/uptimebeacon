@@ -366,4 +366,121 @@ export const monitorRouter = createTRPCRouter({
 				uptime: (counts.up / (counts.up + counts.down + counts.degraded)) * 100,
 			}));
 		}),
+
+	getDailyUptimeHistory: protectedProcedure
+		.input(
+			z
+				.object({
+					days: z.number().int().min(1).max(90).default(90),
+				})
+				.optional(),
+		)
+		.query(async ({ ctx, input }) => {
+			const days = input?.days ?? 90;
+			const startDate = new Date();
+			startDate.setDate(startDate.getDate() - days);
+			startDate.setHours(0, 0, 0, 0);
+
+			// Get all monitors for this user
+			const monitors = await ctx.db.monitor.findMany({
+				where: { userId: ctx.session.user.id },
+				select: { id: true },
+			});
+
+			if (monitors.length === 0) {
+				return [];
+			}
+
+			const monitorIds = monitors.map((m) => m.id);
+
+			// Get all checks for all monitors in the date range
+			const checks = await ctx.db.monitorCheck.findMany({
+				where: {
+					monitorId: { in: monitorIds },
+					createdAt: { gte: startDate },
+				},
+				select: {
+					status: true,
+					createdAt: true,
+				},
+				orderBy: { createdAt: "asc" },
+			});
+
+			// Get incidents in the date range
+			const incidents = await ctx.db.incident.findMany({
+				where: {
+					monitorId: { in: monitorIds },
+					startedAt: { gte: startDate },
+				},
+				select: {
+					startedAt: true,
+					resolvedAt: true,
+				},
+			});
+
+			// Group checks by day
+			const dailyData: Record<
+				string,
+				{ up: number; down: number; degraded: number; incidents: number }
+			> = {};
+
+			// Initialize all days
+			for (let i = 0; i < days; i++) {
+				const date = new Date();
+				date.setDate(date.getDate() - (days - 1 - i));
+				const dayKey = date.toISOString().split("T")[0]!;
+				dailyData[dayKey] = { up: 0, down: 0, degraded: 0, incidents: 0 };
+			}
+
+			// Count checks per day
+			for (const check of checks) {
+				const day = check.createdAt.toISOString().split("T")[0]!;
+				if (!dailyData[day]) continue;
+
+				if (check.status === "UP") {
+					dailyData[day].up++;
+				} else if (check.status === "DOWN") {
+					dailyData[day].down++;
+				} else if (check.status === "DEGRADED") {
+					dailyData[day].degraded++;
+				}
+			}
+
+			// Count incidents per day
+			for (const incident of incidents) {
+				const day = incident.startedAt.toISOString().split("T")[0]!;
+				if (dailyData[day]) {
+					dailyData[day].incidents++;
+				}
+			}
+
+			return Object.entries(dailyData)
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([date, counts]) => {
+					const total = counts.up + counts.down + counts.degraded;
+					let status: "UP" | "DOWN" | "DEGRADED" | "PENDING" = "PENDING";
+
+					if (total > 0) {
+						if (counts.down > 0) {
+							status = "DOWN";
+						} else if (counts.degraded > 0) {
+							status = "DEGRADED";
+						} else {
+							status = "UP";
+						}
+					}
+
+					// Calculate downtime in minutes (rough estimate based on check ratio)
+					const downtimeRatio =
+						total > 0 ? (counts.down + counts.degraded * 0.5) / total : 0;
+					const downtimeMinutes = Math.round(downtimeRatio * 24 * 60);
+
+					return {
+						date,
+						status,
+						incidents: counts.incidents,
+						downtimeMinutes,
+					};
+				});
+		}),
 });
