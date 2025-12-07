@@ -346,6 +346,37 @@ function BrandingPageSkeleton() {
 	);
 }
 
+// Status page detail skeleton
+function StatusPageDetailSkeleton() {
+	return (
+		<div className="space-y-6">
+			{/* Header */}
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+				<div className="flex items-start gap-4">
+					<Skeleton className="mt-1 size-9 rounded-lg" />
+					<div>
+						<div className="flex flex-wrap items-center gap-2">
+							<Skeleton className="h-7 w-48" />
+							<Skeleton className="h-5 w-16 rounded-full" />
+						</div>
+						<Skeleton className="mt-2 h-4 w-32" />
+					</div>
+				</div>
+				<div className="flex items-center gap-2">
+					<Skeleton className="h-9 w-28" />
+					<Skeleton className="h-9 w-9 rounded-lg" />
+				</div>
+			</div>
+			{/* Settings Card */}
+			<CardSkeleton className="min-h-[400px]" />
+			{/* Monitors Card */}
+			<CardSkeleton className="min-h-[200px]" />
+			{/* Danger Zone */}
+			<CardSkeleton className="min-h-[100px]" />
+		</div>
+	);
+}
+
 // Monitor detail page skeleton
 function MonitorDetailSkeleton() {
 	return (
@@ -492,6 +523,7 @@ export {
 	Skeleton,
 	StatCardSkeleton,
 	StatusPageCardSkeleton,
+	StatusPageDetailSkeleton,
 	StatusPagesPageSkeleton,
 	TableSkeleton,
 	UptimeBarSkeleton,

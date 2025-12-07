@@ -2,12 +2,14 @@
 
 import { ExternalLink, Globe, Plus } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { type Status, StatusDot } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api, type RouterOutputs } from "@/trpc/react";
+import { CreateStatusPageDialog } from "./CreateStatusPageDialog";
 
 type StatusPage = RouterOutputs["statusPage"]["getAll"][number];
 
@@ -52,7 +54,7 @@ function StatusPageCard({ page }: { page: StatusPage }) {
 						</Button>
 						<Button asChild size="sm" variant="ghost">
 							<Link
-								href={domain ? `https://${domain}` : `/${page.slug}`}
+								href={domain ? `https://${domain}` : `/status/${page.slug}`}
 								rel="noopener noreferrer"
 								target="_blank"
 							>
@@ -68,6 +70,7 @@ function StatusPageCard({ page }: { page: StatusPage }) {
 
 export function StatusPagesClient() {
 	const [statusPages] = api.statusPage.getAll.useSuspenseQuery();
+	const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
 	return (
 		<div className="space-y-6">
@@ -78,7 +81,7 @@ export function StatusPagesClient() {
 						Manage public status pages for your services
 					</p>
 				</div>
-				<Button>
+				<Button onClick={() => setCreateDialogOpen(true)}>
 					<Plus className="mr-2 size-4" />
 					Create Status Page
 				</Button>
@@ -92,7 +95,7 @@ export function StatusPagesClient() {
 						<p className="mb-4 text-center text-muted-foreground text-sm">
 							Create a public status page to keep your users informed
 						</p>
-						<Button>
+						<Button onClick={() => setCreateDialogOpen(true)}>
 							<Plus className="mr-2 size-4" />
 							Create your first status page
 						</Button>
@@ -105,6 +108,11 @@ export function StatusPagesClient() {
 					))}
 				</div>
 			)}
+
+			<CreateStatusPageDialog
+				onOpenChange={setCreateDialogOpen}
+				open={createDialogOpen}
+			/>
 		</div>
 	);
 }
