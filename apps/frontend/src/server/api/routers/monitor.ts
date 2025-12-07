@@ -4,8 +4,8 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 const monitorCreateSchema = z.object({
-	name: z.string().min(1, "Name is required"),
-	description: z.string().optional(),
+	name: z.string().min(1, "Name is required").max(255, "Name is too long"),
+	description: z.string().max(1000, "Description is too long").optional(),
 	type: z.enum([
 		"HTTP",
 		"HTTPS",
@@ -15,9 +15,9 @@ const monitorCreateSchema = z.object({
 		"KEYWORD",
 		"JSON_QUERY",
 	]),
-	url: z.string().url().optional(),
-	hostname: z.string().optional(),
-	port: z.number().int().positive().optional(),
+	url: z.string().url().max(2048, "URL is too long").optional(),
+	hostname: z.string().max(253, "Hostname is too long").optional(),
+	port: z.number().int().min(1).max(65535).optional(),
 	method: z
 		.enum(["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
 		.default("GET"),
@@ -25,20 +25,23 @@ const monitorCreateSchema = z.object({
 	timeout: z.number().int().min(1).max(120).default(30),
 	retries: z.number().int().min(0).max(10).default(3),
 	retryInterval: z.number().int().min(10).max(300).default(60),
-	expectedStatusCodes: z.array(z.number().int()).default([200, 201, 204]),
-	headers: z.record(z.string(), z.string()).optional(),
-	body: z.string().optional(),
-	keyword: z.string().optional(),
+	expectedStatusCodes: z
+		.array(z.number().int().min(100).max(599))
+		.max(20)
+		.default([200, 201, 204]),
+	headers: z.record(z.string().max(256), z.string().max(4096)).optional(),
+	body: z.string().max(65536, "Request body is too large").optional(),
+	keyword: z.string().max(1000, "Keyword is too long").optional(),
 	keywordType: z.enum(["present", "absent"]).optional(),
-	jsonPath: z.string().optional(),
-	expectedValue: z.string().optional(),
+	jsonPath: z.string().max(500, "JSON path is too long").optional(),
+	expectedValue: z.string().max(1000, "Expected value is too long").optional(),
 	ignoreTls: z.boolean().default(false),
 	tlsExpiry: z.boolean().default(true),
 	tlsExpiryDays: z.number().int().min(1).max(90).default(7),
 	authMethod: z.enum(["none", "basic", "bearer"]).optional(),
-	authUser: z.string().optional(),
-	authPass: z.string().optional(),
-	authToken: z.string().optional(),
+	authUser: z.string().max(256, "Auth user is too long").optional(),
+	authPass: z.string().max(256, "Auth password is too long").optional(),
+	authToken: z.string().max(4096, "Auth token is too long").optional(),
 });
 
 const monitorUpdateSchema = monitorCreateSchema.partial().extend({
@@ -125,9 +128,8 @@ export const monitorRouter = createTRPCRouter({
 			const monitor = await ctx.db.monitor.create({
 				data: {
 					...input,
-					headers: input.headers
-						? JSON.parse(JSON.stringify(input.headers))
-						: undefined,
+					// Prisma handles JSON serialization automatically, no need for parse/stringify
+					headers: input.headers ?? undefined,
 					userId: ctx.session.user.id,
 				},
 			});
@@ -161,9 +163,8 @@ export const monitorRouter = createTRPCRouter({
 				where: { id: input.id },
 				data: {
 					...input.data,
-					headers: input.data.headers
-						? JSON.parse(JSON.stringify(input.data.headers))
-						: undefined,
+					// Prisma handles JSON serialization automatically, no need for parse/stringify
+					headers: input.data.headers ?? undefined,
 				},
 			});
 

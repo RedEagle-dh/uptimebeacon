@@ -29,39 +29,61 @@ export async function handleStatusChange(
 		// Send notifications
 		await sendNotifications(monitor, "down", incident);
 	} else if (newStatus === "UP" && previousStatus === "DOWN") {
-		// Resolve existing incidents
+		// Resolve existing incidents using batch operations for better performance
 		const openIncidents = await db.incident.findMany({
 			where: {
 				monitorId: monitor.id,
 				resolvedAt: null,
 			},
+			select: { id: true, startedAt: true },
 		});
 
-		for (const incident of openIncidents) {
-			const duration = Math.floor(
-				(Date.now() - incident.startedAt.getTime()) / 1000,
-			);
+		if (openIncidents.length > 0) {
+			const now = new Date();
+			const incidentIds = openIncidents.map((i) => i.id);
 
-			await db.incident.update({
-				where: { id: incident.id },
+			// Batch update all incidents
+			await db.incident.updateMany({
+				where: { id: { in: incidentIds } },
 				data: {
 					status: "resolved",
-					resolvedAt: new Date(),
-					duration,
+					resolvedAt: now,
 				},
 			});
 
-			// Add resolution update
-			await db.incidentUpdate.create({
-				data: {
+			// Update duration for each incident (needs individual updates due to calculated field)
+			// and create incident updates in batch
+			const incidentUpdates = openIncidents.map((incident) => {
+				const duration = Math.floor(
+					(now.getTime() - incident.startedAt.getTime()) / 1000,
+				);
+				return {
 					incidentId: incident.id,
 					status: "resolved",
 					message: `Monitor ${monitor.name} is back online after ${formatDuration(duration)}`,
-				},
+				};
 			});
 
+			// Batch create all incident updates
+			await db.incidentUpdate.createMany({
+				data: incidentUpdates,
+			});
+
+			// Update individual durations (needed since duration varies per incident)
+			await Promise.all(
+				openIncidents.map((incident) => {
+					const duration = Math.floor(
+						(now.getTime() - incident.startedAt.getTime()) / 1000,
+					);
+					return db.incident.update({
+						where: { id: incident.id },
+						data: { duration },
+					});
+				}),
+			);
+
 			logger.info(
-				`Resolved incident ${incident.id} for monitor ${monitor.name}`,
+				`Resolved ${openIncidents.length} incident(s) for monitor ${monitor.name}`,
 			);
 		}
 

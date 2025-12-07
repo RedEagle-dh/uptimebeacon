@@ -64,7 +64,7 @@ export const webhookRoutes = new Elysia({ prefix: "/api/webhooks" })
 	// External webhook for integrations
 	.post(
 		"/external/:channelId",
-		async ({ params, body, headers }) => {
+		async ({ params, body: _body, headers }) => {
 			const channel = await db.notificationChannel.findUnique({
 				where: { id: params.channelId },
 			});
@@ -73,10 +73,27 @@ export const webhookRoutes = new Elysia({ prefix: "/api/webhooks" })
 				return { error: "Invalid webhook channel" };
 			}
 
-			// Log incoming webhook for debugging
+			// Log incoming webhook for debugging (sanitize sensitive data)
 			logger.info(`External webhook received for channel: ${channel.name}`);
-			logger.debug("Webhook body:", body);
-			logger.debug("Webhook headers:", headers);
+			// Only log in development, and sanitize sensitive headers
+			if (process.env.NODE_ENV === "development") {
+				const sanitizedHeaders = { ...headers };
+				// Remove sensitive headers
+				const sensitiveHeaders = [
+					"authorization",
+					"x-api-key",
+					"cookie",
+					"x-auth-token",
+				];
+				for (const key of Object.keys(sanitizedHeaders)) {
+					if (sensitiveHeaders.includes(key.toLowerCase())) {
+						sanitizedHeaders[key] = "[REDACTED]";
+					}
+				}
+				logger.debug("Webhook headers:", sanitizedHeaders);
+				// Don't log body as it may contain sensitive data
+				logger.debug("Webhook body received (content not logged for security)");
+			}
 
 			// Process based on source (could be GitHub, GitLab, etc.)
 			// This is a placeholder for custom integrations

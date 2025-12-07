@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { CHANNEL_COLORS } from "@/lib/constants";
 import { api, type RouterOutputs } from "@/trpc/react";
 
 type NotificationChannel = RouterOutputs["notification"]["getAll"][number];
@@ -18,14 +19,6 @@ const channelIcons = {
 	TELEGRAM: MessageSquare,
 };
 
-const channelColors = {
-	DISCORD: "bg-indigo-500/10 text-indigo-500",
-	SLACK: "bg-green-500/10 text-green-500",
-	EMAIL: "bg-blue-500/10 text-blue-500",
-	WEBHOOK: "bg-orange-500/10 text-orange-500",
-	TELEGRAM: "bg-sky-500/10 text-sky-500",
-};
-
 function ChannelCard({ channel }: { channel: NotificationChannel }) {
 	const utils = api.useUtils();
 	const updateMutation = api.notification.update.useMutation({
@@ -35,9 +28,11 @@ function ChannelCard({ channel }: { channel: NotificationChannel }) {
 	});
 
 	const Icon = channelIcons[channel.type as keyof typeof channelIcons] ?? Bell;
-	const colorClass =
-		channelColors[channel.type as keyof typeof channelColors] ??
-		"bg-muted text-muted-foreground";
+	const channelColor =
+		CHANNEL_COLORS[channel.type as keyof typeof CHANNEL_COLORS];
+	const colorClass = channelColor
+		? `${channelColor.bgClass} ${channelColor.textClass}`
+		: "bg-muted text-muted-foreground";
 	const monitorsCount = channel._count.monitors;
 
 	return (
