@@ -63,6 +63,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { INCIDENT_STATUS_CONFIG } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 
@@ -584,19 +585,18 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 												<div className="flex items-start justify-between gap-2">
 													<h4 className="font-medium">{incident.title}</h4>
 													<Badge
-														className={cn(
-															incident.status === "resolved" &&
-																"bg-green-500/10 text-green-500",
-															incident.status === "investigating" &&
-																"bg-red-500/10 text-red-500",
-															incident.status === "identified" &&
-																"bg-orange-500/10 text-orange-500",
-															incident.status === "monitoring" &&
-																"bg-yellow-500/10 text-yellow-500",
-														)}
+														className={
+															INCIDENT_STATUS_CONFIG[
+																incident.status as keyof typeof INCIDENT_STATUS_CONFIG
+															]?.badgeClass
+														}
 														variant="secondary"
 													>
-														{incident.status}
+														{
+															INCIDENT_STATUS_CONFIG[
+																incident.status as keyof typeof INCIDENT_STATUS_CONFIG
+															]?.label
+														}
 													</Badge>
 												</div>
 												<p className="mt-1 text-muted-foreground text-sm">

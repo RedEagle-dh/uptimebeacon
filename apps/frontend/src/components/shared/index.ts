@@ -3,6 +3,7 @@ export {
 	CardSkeleton,
 	DashboardPageSkeleton,
 	DashboardStatsSkeleton,
+	IncidentDetailSkeleton,
 	IncidentListSkeleton,
 	IncidentSkeleton,
 	IncidentsPageSkeleton,

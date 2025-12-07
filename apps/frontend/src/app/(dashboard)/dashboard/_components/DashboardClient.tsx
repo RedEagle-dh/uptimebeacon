@@ -28,10 +28,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { INCIDENT_STATUS_CONFIG } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 
-type MonitorStats = RouterOutputs["monitor"]["getStats"];
 type Monitor = RouterOutputs["monitor"]["getAll"][number];
 type Incident = RouterOutputs["incident"]["getAll"][number];
 
@@ -189,18 +189,23 @@ function IncidentCard({ incident }: { incident: Incident }) {
 				</div>
 				<div className="min-w-0 flex-1">
 					<div className="flex items-start justify-between gap-2">
-						<p className="font-medium transition-colors duration-200 group-hover:text-foreground">
+						<p className="truncate font-medium transition-colors duration-200 group-hover:text-foreground">
 							{incident.title}
 						</p>
 						<Badge
-							className="shrink-0"
-							variant={
-								incident.status === "investigating"
-									? "destructive"
-									: "secondary"
-							}
+							className={cn(
+								"shrink-0",
+								INCIDENT_STATUS_CONFIG[
+									incident.status as keyof typeof INCIDENT_STATUS_CONFIG
+								]?.badgeClass,
+							)}
+							variant="secondary"
 						>
-							{incident.status}
+							{
+								INCIDENT_STATUS_CONFIG[
+									incident.status as keyof typeof INCIDENT_STATUS_CONFIG
+								]?.label
+							}
 						</Badge>
 					</div>
 					<p className="mt-1 text-muted-foreground text-sm">

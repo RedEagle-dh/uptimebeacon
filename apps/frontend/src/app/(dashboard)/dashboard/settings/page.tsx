@@ -157,25 +157,6 @@ export default async function SettingsPage() {
 					</div>
 				</CardContent>
 			</Card>
-
-			{/* Danger Zone */}
-			<Card className="border-destructive/50">
-				<CardHeader>
-					<CardTitle className="text-destructive">Danger Zone</CardTitle>
-					<CardDescription>Irreversible actions</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="font-medium">Delete Account</p>
-							<p className="text-muted-foreground text-sm">
-								Permanently delete your account and all data
-							</p>
-						</div>
-						<Button variant="destructive">Delete Account</Button>
-					</div>
-				</CardContent>
-			</Card>
 		</div>
 	);
 }

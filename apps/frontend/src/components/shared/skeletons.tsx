@@ -377,6 +377,61 @@ function MonitorDetailSkeleton() {
 	);
 }
 
+// Incident detail page skeleton
+function IncidentDetailSkeleton() {
+	return (
+		<div className="space-y-6">
+			{/* Header */}
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+				<div className="flex items-start gap-4">
+					<Skeleton className="mt-1 size-9 rounded-lg" />
+					<div>
+						<div className="flex flex-wrap items-center gap-2">
+							<Skeleton className="h-7 w-48" />
+							<Skeleton className="h-5 w-16 rounded-full" />
+							<Skeleton className="h-5 w-20 rounded-full" />
+						</div>
+						<Skeleton className="mt-2 h-4 w-32" />
+					</div>
+				</div>
+				<div className="flex items-center gap-2">
+					<Skeleton className="h-9 w-28" />
+					<Skeleton className="h-9 w-24" />
+				</div>
+			</div>
+			{/* Stats grid */}
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+				{Array.from({ length: 4 }).map((_, i) => (
+					<StatCardSkeleton key={`incident-detail-stat-${i}`} />
+				))}
+			</div>
+			{/* Timeline card */}
+			<div className="rounded-xl border border-border/50 bg-card">
+				<div className="border-border/50 border-b px-6 py-4">
+					<Skeleton className="mb-2 h-5 w-24" />
+					<Skeleton className="h-3 w-40" />
+				</div>
+				<div className="p-6">
+					<div className="space-y-6">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div className="flex gap-4" key={`timeline-item-${i}`}>
+								<Skeleton className="size-6 shrink-0 rounded-full" />
+								<div className="flex-1 space-y-2">
+									<div className="flex items-center gap-2">
+										<Skeleton className="h-5 w-20 rounded-full" />
+										<Skeleton className="h-3 w-24" />
+									</div>
+									<Skeleton className="h-4 w-full" />
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 // Public status page skeleton
 function PublicStatusPageSkeleton() {
 	return (
@@ -422,6 +477,7 @@ export {
 	CardSkeleton,
 	DashboardPageSkeleton,
 	DashboardStatsSkeleton,
+	IncidentDetailSkeleton,
 	IncidentListSkeleton,
 	IncidentSkeleton,
 	IncidentsPageSkeleton,

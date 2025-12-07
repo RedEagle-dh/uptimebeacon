@@ -119,18 +119,22 @@ export const SEVERITY_CONFIG = {
 export const INCIDENT_STATUS_CONFIG = {
 	investigating: {
 		label: "Investigating",
+		badgeClass: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
 		dotClass: "bg-yellow-500",
 	},
 	identified: {
 		label: "Identified",
+		badgeClass: "bg-orange-500/10 text-orange-500 border-orange-500/20",
 		dotClass: "bg-orange-500",
 	},
 	monitoring: {
 		label: "Monitoring",
+		badgeClass: "bg-blue-500/10 text-blue-500 border-blue-500/20",
 		dotClass: "bg-blue-500",
 	},
 	resolved: {
 		label: "Resolved",
+		badgeClass: "bg-green-500/10 text-green-500 border-green-500/20",
 		dotClass: "bg-green-500",
 	},
 } as const;

@@ -19,6 +19,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { INCIDENT_STATUS_CONFIG } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 
@@ -60,35 +61,39 @@ function formatTimeAgo(date: Date): string {
 }
 
 function IncidentCard({ incident }: { incident: Incident }) {
-	const isOngoing = incident.status !== "resolved";
+	const isResolved = incident.status === "resolved";
+	const statusConfig =
+		INCIDENT_STATUS_CONFIG[
+			incident.status as keyof typeof INCIDENT_STATUS_CONFIG
+		];
 
 	return (
 		<div
 			className={cn(
 				"rounded-lg border p-4 transition-all duration-200",
-				isOngoing
-					? "border-status-degraded/30 bg-status-degraded/5"
-					: "border-border/30 bg-card/30",
+				isResolved
+					? "border-border/30 bg-card/30"
+					: "border-yellow-500/30 bg-yellow-500/5",
 			)}
 		>
 			<div className="flex items-start justify-between gap-4">
-				<div className="flex items-start gap-3">
+				<div className="flex min-w-0 flex-1 items-start gap-3">
 					<div
 						className={cn(
 							"mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
-							isOngoing
-								? "bg-status-degraded/10 text-status-degraded"
-								: "bg-muted/50 text-muted-foreground",
+							isResolved
+								? "bg-green-500/10 text-green-500"
+								: "bg-yellow-500/10 text-yellow-500",
 						)}
 					>
-						{isOngoing ? (
-							<AlertTriangle className="size-4" />
-						) : (
+						{isResolved ? (
 							<CheckCircle2 className="size-4" />
+						) : (
+							<AlertTriangle className="size-4" />
 						)}
 					</div>
-					<div>
-						<h3 className="font-medium">{incident.title}</h3>
+					<div className="min-w-0">
+						<h3 className="break-words font-medium">{incident.title}</h3>
 						<p className="mt-1 text-muted-foreground text-sm">
 							{incident.description ??
 								`Incident affecting ${incident.monitor.name}`}
@@ -100,13 +105,10 @@ function IncidentCard({ incident }: { incident: Incident }) {
 					</div>
 				</div>
 				<Badge
-					className={cn(
-						"shrink-0 capitalize",
-						isOngoing && "bg-status-degraded/10 text-status-degraded",
-					)}
-					variant={isOngoing ? "secondary" : "outline"}
+					className={cn("shrink-0", statusConfig?.badgeClass)}
+					variant="secondary"
 				>
-					{incident.status}
+					{statusConfig?.label}
 				</Badge>
 			</div>
 		</div>
