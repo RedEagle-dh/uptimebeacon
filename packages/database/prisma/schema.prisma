@@ -66,8 +66,6 @@ model Session {
     expires      DateTime
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    @@index([userId])
 }
 
 model VerificationToken {
@@ -229,8 +227,6 @@ model MonitorCheck {
     @@index([monitorId])
     @@index([createdAt])
     @@index([monitorId, createdAt])
-    @@index([status])
-    @@index([monitorId, status, createdAt])
 }
 
 model Incident {
@@ -256,9 +252,6 @@ model Incident {
     @@index([monitorId])
     @@index([status])
     @@index([startedAt])
-    @@index([status, startedAt])
-    @@index([monitorId, status])
-    @@index([monitorId, resolvedAt])
 }
 
 model IncidentUpdate {

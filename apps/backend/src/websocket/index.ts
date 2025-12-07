@@ -31,15 +31,11 @@ interface MonitorUpdate {
 
 export type WSMessage = CheckUpdate | IncidentUpdate | MonitorUpdate;
 
-interface ClientData {
+// Store connected clients
+const clients = new Set<{
 	send: (data: string) => void;
-	subscribedMonitors: Set<string>;
-}
-
-// Store connected clients with WeakMap for proper cleanup
-const clients = new Set<ClientData>();
-// Map WebSocket instances to their client data for proper subscription handling
-const wsToClient = new WeakMap<object, ClientData>();
+	subscribedMonitors?: Set<string>;
+}>();
 
 export function broadcastUpdate(message: WSMessage): void {
 	const data = JSON.stringify(message);
@@ -67,12 +63,11 @@ export function getConnectedClientsCount(): number {
 
 export const websocketHandler = new Elysia().ws("/ws", {
 	open(ws) {
-		const client: ClientData = {
+		const client = {
 			send: (data: string) => ws.send(data),
 			subscribedMonitors: new Set<string>(),
 		};
 		clients.add(client);
-		wsToClient.set(ws, client);
 		logger.info(`WebSocket client connected. Total clients: ${clients.size}`);
 
 		// Send welcome message
@@ -85,12 +80,12 @@ export const websocketHandler = new Elysia().ws("/ws", {
 		);
 	},
 
-	close(ws) {
-		// Find and remove the client using the WeakMap
-		const client = wsToClient.get(ws);
-		if (client) {
+	close(_ws) {
+		// Find and remove the client
+		for (const client of clients) {
+			// We can't directly compare ws objects, so we remove based on the close event
 			clients.delete(client);
-			wsToClient.delete(ws);
+			break;
 		}
 		logger.info(
 			`WebSocket client disconnected. Total clients: ${clients.size}`,
@@ -100,18 +95,14 @@ export const websocketHandler = new Elysia().ws("/ws", {
 	message(ws, message) {
 		try {
 			const data = typeof message === "string" ? JSON.parse(message) : message;
-			const client = wsToClient.get(ws);
 
-			if (!client) {
-				logger.warn("Received message from unknown WebSocket client");
-				return;
-			}
-
-			// Handle subscription messages - only update THIS client's subscriptions
-			if (data.type === "subscribe" && Array.isArray(data.monitorIds)) {
-				for (const id of data.monitorIds) {
-					if (typeof id === "string") {
-						client.subscribedMonitors.add(id);
+			// Handle subscription messages
+			if (data.type === "subscribe" && data.monitorIds) {
+				// Find the client and update subscriptions
+				for (const client of clients) {
+					// Add monitor IDs to subscription
+					for (const id of data.monitorIds) {
+						client.subscribedMonitors?.add(id);
 					}
 				}
 				ws.send(
@@ -122,10 +113,10 @@ export const websocketHandler = new Elysia().ws("/ws", {
 				);
 			}
 
-			if (data.type === "unsubscribe" && Array.isArray(data.monitorIds)) {
-				for (const id of data.monitorIds) {
-					if (typeof id === "string") {
-						client.subscribedMonitors.delete(id);
+			if (data.type === "unsubscribe" && data.monitorIds) {
+				for (const client of clients) {
+					for (const id of data.monitorIds) {
+						client.subscribedMonitors?.delete(id);
 					}
 				}
 				ws.send(
