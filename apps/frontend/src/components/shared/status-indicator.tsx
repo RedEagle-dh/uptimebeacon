@@ -12,10 +12,10 @@ import {
 import type * as React from "react";
 
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 // Status types
@@ -187,6 +187,7 @@ export interface UptimeBarDayData {
 
 interface UptimeBarProps {
 	days?: number;
+	mobileDays?: number;
 	data?: Array<UptimeBarDayData>;
 	className?: string;
 }
@@ -231,7 +232,12 @@ function getTooltipContent(day: UptimeBarDayData, daysAgo: number): string {
 	return parts.join("\n");
 }
 
-export function UptimeBar({ days = 30, data, className }: UptimeBarProps) {
+export function UptimeBar({
+	days = 30,
+	mobileDays = 14,
+	data,
+	className,
+}: UptimeBarProps) {
 	// Build a map of provided data by date string
 	const dataByDate = new Map<string, UptimeBarDayData>();
 	if (data) {
@@ -267,31 +273,37 @@ export function UptimeBar({ days = 30, data, className }: UptimeBarProps) {
 		};
 	});
 
+	// Calculate how many bars to hide on mobile (show only the most recent mobileDays)
+	const hiddenOnMobile = days - mobileDays;
+
 	return (
-		<div className={cn("flex items-center gap-[3px]", className)}>
+		<div
+			className={cn("flex flex-1 items-center gap-1.5 sm:gap-[3px]", className)}
+		>
 			{uptimeData.map((day, index) => {
 				const config = STATUS_CONFIG[day.status];
 				const daysAgo = days - index;
+				const hideOnMobile = index < hiddenOnMobile;
 
 				return (
-					<Tooltip
-						key={`uptime-${
-							// biome-ignore lint/suspicious/noArrayIndexKey: ShadCN UI pattern
-							index
-						}`}
-					>
-						<TooltipTrigger asChild>
-							<div
+					<Popover key={`uptime-${index}`}>
+						<PopoverTrigger asChild>
+							<button
 								className={cn(
-									"h-8 w-1 cursor-pointer rounded-sm transition-shadow duration-200",
+									"h-8 w-2 cursor-pointer rounded-sm transition-shadow duration-200 sm:h-8 sm:w-1",
 									config.barClass,
+									hideOnMobile && "hidden sm:block",
 								)}
+								type="button"
 							/>
-						</TooltipTrigger>
-						<TooltipContent className="whitespace-pre-line text-center">
+						</PopoverTrigger>
+						<PopoverContent
+							className="w-auto whitespace-pre-line rounded-md border-neutral-800 bg-neutral-900 px-3 py-1.5 text-center text-neutral-100 text-xs"
+							sideOffset={4}
+						>
 							{getTooltipContent(day, daysAgo)}
-						</TooltipContent>
-					</Tooltip>
+						</PopoverContent>
+					</Popover>
 				);
 			})}
 		</div>

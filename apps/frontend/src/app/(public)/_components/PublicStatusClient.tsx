@@ -204,7 +204,12 @@ export function PublicStatusClient() {
 					<div className="flex items-center justify-between">
 						<div>
 							<CardTitle>Uptime History</CardTitle>
-							<CardDescription>Last 90 days performance</CardDescription>
+							<CardDescription className="hidden sm:block">
+								Last 90 days performance
+							</CardDescription>
+							<CardDescription className="sm:hidden">
+								Last 30 days performance
+							</CardDescription>
 						</div>
 						<div className="text-right">
 							<span className="font-bold text-2xl text-status-up">
@@ -216,12 +221,14 @@ export function PublicStatusClient() {
 				</CardHeader>
 				<CardContent>
 					<UptimeBar
-						className="w-full justify-between"
+						className="w-full"
 						data={uptimeBarData}
 						days={uptimeBarData.length || 90}
+						mobileDays={30}
 					/>
 					<div className="mt-3 flex justify-between text-muted-foreground text-xs">
-						<span>90 days ago</span>
+						<span className="hidden sm:inline">90 days ago</span>
+						<span className="sm:hidden">30 days ago</span>
 						<span>Today</span>
 					</div>
 				</CardContent>

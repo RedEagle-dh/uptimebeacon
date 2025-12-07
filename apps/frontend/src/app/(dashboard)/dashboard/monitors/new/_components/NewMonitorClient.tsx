@@ -403,7 +403,7 @@ export function MonitorFormClient({ monitor }: MonitorFormClientProps) {
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
-						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+						<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 							<div className="space-y-2">
 								<Label htmlFor="interval">Check Interval (seconds)</Label>
 								<Input
@@ -725,7 +725,7 @@ export function MonitorFormClient({ monitor }: MonitorFormClientProps) {
 				)}
 
 				{/* Submit */}
-				<div className="flex justify-end gap-3">
+				<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
 					<Button asChild variant="outline">
 						<Link href={backLink}>Cancel</Link>
 					</Button>

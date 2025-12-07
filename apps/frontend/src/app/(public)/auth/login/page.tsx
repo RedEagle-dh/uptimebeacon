@@ -29,20 +29,24 @@ export default async function LoginPage() {
 	}
 
 	return (
-		<div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-4 py-12">
+		<div className="flex min-h-[calc(100dvh-4rem)] flex-col items-center justify-center px-4 py-6 sm:py-12">
 			{/* Background gradient */}
 			<div className="pointer-events-none absolute inset-0 overflow-hidden">
 				<div className="-translate-x-1/2 -translate-y-1/2 absolute top-0 left-1/2">
-					<div className="h-[500px] w-[800px] rounded-full bg-primary/5 blur-3xl" />
+					<div className="h-[300px] w-[400px] rounded-full bg-primary/5 blur-3xl sm:h-[500px] sm:w-[800px]" />
 				</div>
 			</div>
 
-			<Card className="relative w-[440px] max-w-full border-border/50 shadow-xl">
-				<CardHeader className="space-y-1 pb-4 text-center">
-					<CardTitle className="font-bold text-2xl">Welcome back</CardTitle>
-					<CardDescription>Sign in to your account to continue</CardDescription>
+			<Card className="relative w-full max-w-[440px] gap-4 border-border/50 py-4 shadow-xl sm:gap-6 sm:py-6">
+				<CardHeader className="space-y-1 px-4 pb-0 text-center sm:px-6">
+					<CardTitle className="font-bold text-xl sm:text-2xl">
+						Welcome back
+					</CardTitle>
+					<CardDescription className="text-sm">
+						Sign in to your account to continue
+					</CardDescription>
 				</CardHeader>
-				<CardContent className="pb-4">
+				<CardContent className="px-4 pb-2 sm:px-6 sm:pb-4">
 					<LoginForm />
 				</CardContent>
 			</Card>

@@ -53,7 +53,7 @@ export function LoginForm() {
 					autoCapitalize="none"
 					autoComplete="email"
 					autoCorrect="off"
-					className="h-10"
+					className="h-11 text-base sm:h-10 sm:text-sm"
 					disabled={isLoading}
 					id="email"
 					name="email"
@@ -68,7 +68,7 @@ export function LoginForm() {
 				</Label>
 				<Input
 					autoComplete="current-password"
-					className="h-10"
+					className="h-11 text-base sm:h-10 sm:text-sm"
 					disabled={isLoading}
 					id="password"
 					name="password"
@@ -79,12 +79,16 @@ export function LoginForm() {
 			</div>
 
 			{error && (
-				<div className="rounded-lg bg-destructive/10 px-3 py-2 text-destructive text-sm">
+				<div className="rounded-lg bg-destructive/10 px-3 py-2.5 text-destructive text-sm">
 					{error}
 				</div>
 			)}
 
-			<Button className="h-10" disabled={isLoading} type="submit">
+			<Button
+				className="h-11 text-base sm:h-10 sm:text-sm"
+				disabled={isLoading}
+				type="submit"
+			>
 				{isLoading ? (
 					<>
 						<Loader2 className="mr-2 size-4 animate-spin" />

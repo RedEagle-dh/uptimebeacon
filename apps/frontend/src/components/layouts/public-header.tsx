@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { PublicMobileMenu } from "@/components/layouts/public-mobile-menu";
 import { Button } from "@/components/ui/button";
 import { type FooterLink, getSiteSettings } from "@/lib/get-site-settings";
 import { auth } from "@/server/auth";
@@ -112,19 +113,31 @@ export async function PublicHeader() {
 					)}
 
 					{session ? (
-						<Button asChild size="sm">
+						<Button asChild className="hidden sm:inline-flex" size="sm">
 							<Link href="/dashboard">Dashboard</Link>
 						</Button>
 					) : (
 						<>
-							<Button asChild size="sm" variant="ghost">
+							<Button
+								asChild
+								className="hidden sm:inline-flex"
+								size="sm"
+								variant="ghost"
+							>
 								<Link href="/auth/login">Sign in</Link>
 							</Button>
-							<Button asChild size="sm">
+							<Button asChild className="hidden sm:inline-flex" size="sm">
 								<Link href="/auth/register">Get Started</Link>
 							</Button>
 						</>
 					)}
+
+					{/* Mobile menu */}
+					<PublicMobileMenu
+						githubUrl={settings.githubUrl}
+						headerNavigation={headerNavigation}
+						isAuthenticated={!!session}
+					/>
 				</nav>
 			</div>
 		</header>

@@ -19,12 +19,12 @@ function Skeleton({
 function StatCardSkeleton() {
 	return (
 		<div className="flex flex-col gap-6 rounded-xl border border-border/50 bg-card py-6">
-			<div className="flex items-center justify-between px-6">
-				<Skeleton className="h-4 w-24" />
-				<Skeleton className="size-9 rounded-lg" />
+			<div className="flex items-center justify-between px-4 sm:px-6">
+				<Skeleton className="h-4 w-20 sm:w-24" />
+				<Skeleton className="size-8 rounded-lg sm:size-9" />
 			</div>
-			<div className="px-6">
-				<Skeleton className="mb-2 h-8 w-20" />
+			<div className="px-4 sm:px-6">
+				<Skeleton className="mb-2 h-7 w-16 sm:h-8 sm:w-20" />
 				<Skeleton className="h-3 w-16" />
 			</div>
 		</div>
@@ -67,7 +67,7 @@ function MonitorListSkeleton({ count = 4 }: { count?: number }) {
 // Dashboard stats skeleton
 function DashboardStatsSkeleton() {
 	return (
-		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+		<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 			{Array.from({ length: 4 }).map((_, i) => (
 				<StatCardSkeleton key={`stat-skeleton-${i}`} />
 			))}
@@ -157,7 +157,7 @@ function CardSkeleton({
 // Page header skeleton
 function PageHeaderSkeleton() {
 	return (
-		<div className="flex items-end justify-between">
+		<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 			<div>
 				<Skeleton className="mb-2 h-7 w-32" />
 				<Skeleton className="h-4 w-56" />
@@ -360,7 +360,7 @@ function MonitorDetailSkeleton() {
 				<Skeleton className="h-9 w-24" />
 			</div>
 			{/* Stats grid */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 				{Array.from({ length: 4 }).map((_, i) => (
 					<StatCardSkeleton key={`detail-stat-${i}`} />
 				))}
@@ -368,7 +368,7 @@ function MonitorDetailSkeleton() {
 			{/* Tabs */}
 			<Skeleton className="h-9 w-80 rounded-lg" />
 			{/* Content */}
-			<div className="grid gap-6 lg:grid-cols-2">
+			<div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
 				<CardSkeleton />
 				<CardSkeleton />
 			</div>
@@ -400,7 +400,7 @@ function IncidentDetailSkeleton() {
 				</div>
 			</div>
 			{/* Stats grid */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 				{Array.from({ length: 4 }).map((_, i) => (
 					<StatCardSkeleton key={`incident-detail-stat-${i}`} />
 				))}

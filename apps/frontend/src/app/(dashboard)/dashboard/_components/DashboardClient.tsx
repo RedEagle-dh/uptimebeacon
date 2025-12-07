@@ -65,12 +65,12 @@ function StatCard({
 			)}
 		>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
-				<CardTitle className="font-medium text-muted-foreground text-sm">
+				<CardTitle className="font-medium text-muted-foreground text-xs sm:text-sm">
 					{title}
 				</CardTitle>
 				<div
 					className={cn(
-						"flex size-9 items-center justify-center rounded-lg",
+						"flex size-8 items-center justify-center rounded-lg sm:size-9",
 						variant === "default" && "bg-muted/50",
 						variant === "success" && "bg-status-up/10",
 						variant === "danger" && "bg-status-down/10",
@@ -79,7 +79,7 @@ function StatCard({
 				>
 					<Icon
 						className={cn(
-							"size-4",
+							"size-3.5 sm:size-4",
 							variant === "default" && "text-muted-foreground",
 							variant === "success" && "text-status-up",
 							variant === "danger" && "text-status-down",
@@ -90,7 +90,9 @@ function StatCard({
 			</CardHeader>
 			<CardContent>
 				<div className="flex items-baseline gap-2">
-					<span className="font-bold text-3xl tracking-tight">{value}</span>
+					<span className="font-bold text-2xl tracking-tight sm:text-3xl">
+						{value}
+					</span>
 					{trend && (
 						<span
 							className={cn(
@@ -144,11 +146,11 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
 						</p>
 					</div>
 				</div>
-				<div className="flex items-center gap-6">
-					<div className="hidden text-right md:block">
+				<div className="flex items-center gap-3 sm:gap-6">
+					<div className="text-right">
 						<p
 							className={cn(
-								"font-medium font-mono text-sm",
+								"font-medium font-mono text-xs sm:text-sm",
 								status === "UP" && "text-status-up",
 								status === "DOWN" && "text-status-down",
 								status === "DEGRADED" && "text-status-degraded",
@@ -156,7 +158,7 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
 						>
 							{status === "UP" ? `${Math.round(responseTime)}ms` : status}
 						</p>
-						<p className="text-muted-foreground text-xs">
+						<p className="hidden text-muted-foreground text-xs sm:block">
 							{uptime.toFixed(2)}% uptime
 						</p>
 					</div>
@@ -247,7 +249,7 @@ export function DashboardClient() {
 	return (
 		<div className="space-y-8">
 			{/* Page header */}
-			<div className="flex items-end justify-between">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 				<div>
 					<h1 className="font-bold text-2xl tracking-tight">Dashboard</h1>
 					<p className="mt-1 text-muted-foreground">
@@ -263,7 +265,7 @@ export function DashboardClient() {
 			</div>
 
 			{/* Stats Grid */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 				<StatCard
 					description="Active monitors"
 					icon={Activity}
@@ -298,10 +300,15 @@ export function DashboardClient() {
 					<div className="flex items-center justify-between">
 						<div>
 							<CardTitle>Uptime Overview</CardTitle>
-							<CardDescription>Last 30 days performance</CardDescription>
+							<CardDescription className="hidden sm:block">
+								Last 90 days performance
+							</CardDescription>
+							<CardDescription className="sm:hidden">
+								Last 30 days performance
+							</CardDescription>
 						</div>
 						<div className="flex items-center gap-2">
-							<span className="font-bold text-3xl text-status-up">
+							<span className="font-bold text-2xl text-status-up sm:text-3xl">
 								{avgUptime.toFixed(2)}%
 							</span>
 							<span className="text-muted-foreground text-sm">uptime</span>
@@ -310,12 +317,14 @@ export function DashboardClient() {
 				</CardHeader>
 				<CardContent>
 					<UptimeBar
-						className="w-full justify-between"
+						className="w-full"
 						data={uptimeBarData}
 						days={90}
+						mobileDays={30}
 					/>
 					<div className="mt-3 flex items-center justify-between text-muted-foreground text-xs">
-						<span>90 days ago</span>
+						<span className="hidden sm:inline">90 days ago</span>
+						<span className="sm:hidden">30 days ago</span>
 						<span>Today</span>
 					</div>
 				</CardContent>

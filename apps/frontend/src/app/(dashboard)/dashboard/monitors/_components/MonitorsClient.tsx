@@ -75,10 +75,10 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 				</div>
 
 				{/* Stats */}
-				<div className="hidden flex-col items-end md:flex">
+				<div className="flex flex-col items-end">
 					<p
 						className={cn(
-							"whitespace-nowrap font-medium font-mono text-sm",
+							"whitespace-nowrap font-medium font-mono text-xs sm:text-sm",
 							status === "UP" && "text-status-up",
 							status === "DOWN" && "text-status-down",
 							status === "DEGRADED" && "text-status-degraded",
@@ -90,7 +90,7 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 							? `${Math.round(responseTime)}ms`
 							: status}
 					</p>
-					<p className="whitespace-nowrap text-muted-foreground text-xs">
+					<p className="hidden whitespace-nowrap text-muted-foreground text-xs md:block">
 						{uptime.toFixed(2)}% uptime
 					</p>
 				</div>
@@ -107,7 +107,7 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
-								className="size-8 opacity-0 transition-opacity group-hover:opacity-100"
+								className="size-8 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
 								onClick={(e) => e.preventDefault()}
 								size="icon-sm"
 								variant="ghost"
@@ -275,7 +275,7 @@ export function MonitorsClient() {
 
 					{/* Filters and search */}
 					<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-						<div className="relative max-w-sm flex-1">
+						<div className="relative w-full sm:max-w-sm sm:flex-1">
 							<Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
 							<input
 								className="input-modern h-9 w-full pl-9"

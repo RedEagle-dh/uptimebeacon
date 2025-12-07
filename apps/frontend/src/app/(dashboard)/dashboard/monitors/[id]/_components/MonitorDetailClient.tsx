@@ -239,7 +239,7 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 			</div>
 
 			{/* Stats Cards */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="font-medium text-sm">Status</CardTitle>
@@ -347,7 +347,7 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 
 				{/* Overview Tab */}
 				<TabsContent className="space-y-6" value="overview">
-					<div className="grid gap-6 lg:grid-cols-2">
+					<div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
 						{/* Uptime Chart */}
 						<Card>
 							<CardHeader>
@@ -508,8 +508,12 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 											<TableHead>Time</TableHead>
 											<TableHead>Status</TableHead>
 											<TableHead>Response Time</TableHead>
-											<TableHead>Status Code</TableHead>
-											<TableHead>Message</TableHead>
+											<TableHead className="hidden sm:table-cell">
+												Status Code
+											</TableHead>
+											<TableHead className="hidden md:table-cell">
+												Message
+											</TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody>
@@ -532,10 +536,10 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 														? `${check.responseTime}ms`
 														: "-"}
 												</TableCell>
-												<TableCell className="font-mono">
+												<TableCell className="hidden font-mono sm:table-cell">
 													{check.statusCode ?? "-"}
 												</TableCell>
-												<TableCell className="max-w-xs truncate text-muted-foreground text-xs">
+												<TableCell className="hidden max-w-xs truncate text-muted-foreground text-xs md:table-cell">
 													{check.message || check.error || "-"}
 												</TableCell>
 											</TableRow>
