@@ -75,7 +75,7 @@ export function RegisterForm() {
 					disabled={isLoading}
 					id="name"
 					name="name"
-					placeholder="Admin"
+					placeholder="John Doe"
 					required
 					type="text"
 				/>
@@ -90,7 +90,7 @@ export function RegisterForm() {
 					disabled={isLoading}
 					id="email"
 					name="email"
-					placeholder="admin@example.com"
+					placeholder="johndoe@example.com"
 					required
 					type="email"
 				/>

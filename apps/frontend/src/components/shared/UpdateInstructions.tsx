@@ -46,7 +46,7 @@ docker compose up -d`;
 
 	return (
 		<Dialog onOpenChange={onOpenChange} open={open}>
-			<DialogContent className="max-w-2xl">
+			<DialogContent className="max-h-[85vh] max-w-2xl">
 				<DialogHeader>
 					<DialogTitle>How to Update UptimeBeacon</DialogTitle>
 					<DialogDescription>
@@ -54,7 +54,7 @@ docker compose up -d`;
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="space-y-6">
+				<div className="space-y-6 overflow-y-auto">
 					{/* Warning */}
 					<div className="flex items-start gap-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
 						<AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500" />
