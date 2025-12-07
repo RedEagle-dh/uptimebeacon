@@ -97,3 +97,63 @@ export const CHECK_INTERVALS = [
 	{ value: 1800, label: "30 minutes" },
 	{ value: 3600, label: "1 hour" },
 ] as const;
+
+export const SEVERITY_CONFIG = {
+	minor: {
+		label: "Minor",
+		badgeClass: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+		dotClass: "bg-yellow-500",
+	},
+	major: {
+		label: "Major",
+		badgeClass: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+		dotClass: "bg-orange-500",
+	},
+	critical: {
+		label: "Critical",
+		badgeClass: "bg-red-500/10 text-red-500 border-red-500/20",
+		dotClass: "bg-red-500",
+	},
+} as const;
+
+export const INCIDENT_STATUS_CONFIG = {
+	investigating: {
+		label: "Investigating",
+		dotClass: "bg-yellow-500",
+	},
+	identified: {
+		label: "Identified",
+		dotClass: "bg-orange-500",
+	},
+	monitoring: {
+		label: "Monitoring",
+		dotClass: "bg-blue-500",
+	},
+	resolved: {
+		label: "Resolved",
+		dotClass: "bg-green-500",
+	},
+} as const;
+
+export const CHANNEL_COLORS = {
+	DISCORD: {
+		bgClass: "bg-indigo-500/10",
+		textClass: "text-indigo-500",
+	},
+	SLACK: {
+		bgClass: "bg-green-500/10",
+		textClass: "text-green-500",
+	},
+	EMAIL: {
+		bgClass: "bg-blue-500/10",
+		textClass: "text-blue-500",
+	},
+	WEBHOOK: {
+		bgClass: "bg-orange-500/10",
+		textClass: "text-orange-500",
+	},
+	TELEGRAM: {
+		bgClass: "bg-sky-500/10",
+		textClass: "text-sky-500",
+	},
+} as const;

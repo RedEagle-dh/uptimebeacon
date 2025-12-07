@@ -136,21 +136,20 @@ export const protectedProcedure = t.procedure
  *
  * Only accessible to users with ADMIN role. Use this for administrative
  * operations like managing site settings.
+ *
+ * Note: Uses the role from JWT token (set in auth callbacks) to avoid
+ * database lookup on every admin request.
  */
 export const adminProcedure = t.procedure
 	.use(timingMiddleware)
-	.use(async ({ ctx, next }) => {
+	.use(({ ctx, next }) => {
 		if (!ctx.session?.user) {
 			throw new TRPCError({ code: "UNAUTHORIZED" });
 		}
 
-		// Check if user is admin
-		const user = await ctx.db.user.findUnique({
-			where: { id: ctx.session.user.id },
-			select: { role: true },
-		});
-
-		if (user?.role !== "ADMIN") {
+		// Use role from JWT token (already validated in auth callbacks)
+		// This avoids N+1 database queries on admin procedures
+		if (ctx.session.user.role !== "ADMIN") {
 			throw new TRPCError({
 				code: "FORBIDDEN",
 				message: "Admin access required",
