@@ -2,6 +2,8 @@ import { db } from "@uptimebeacon/database";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 import {
 	Card,
 	CardContent,
