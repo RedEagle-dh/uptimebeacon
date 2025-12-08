@@ -99,7 +99,7 @@ export function CreateIncidentDialog({
 				</DialogHeader>
 
 				<form onSubmit={handleSubmit}>
-					<ScrollArea className="max-h-[60vh]">
+					<ScrollArea className="h-[60vh]">
 						<div className="space-y-4 py-4 pr-4">
 							<div className="space-y-2">
 								<Label htmlFor="monitor">Monitor *</Label>

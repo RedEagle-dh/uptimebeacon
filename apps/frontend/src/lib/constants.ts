@@ -161,3 +161,135 @@ export const CHANNEL_COLORS = {
 		textClass: "text-sky-500",
 	},
 } as const;
+
+export const NOTIFICATION_CHANNEL_TYPES = [
+	"EMAIL",
+	"SLACK",
+	"DISCORD",
+	"TELEGRAM",
+	"WEBHOOK",
+] as const;
+
+export type NotificationChannelType =
+	(typeof NOTIFICATION_CHANNEL_TYPES)[number];
+
+interface ChannelFieldConfig {
+	name: string;
+	label: string;
+	placeholder: string;
+	required: boolean;
+	type: "text" | "url" | "email" | "textarea";
+	description?: string;
+}
+
+export const NOTIFICATION_CHANNEL_FIELDS: Record<
+	NotificationChannelType,
+	{
+		label: string;
+		description: string;
+		fields: ChannelFieldConfig[];
+	}
+> = {
+	EMAIL: {
+		label: "Email",
+		description: "Send notifications via email",
+		fields: [
+			{
+				name: "email",
+				label: "Email Address",
+				placeholder: "alerts@example.com",
+				required: true,
+				type: "email",
+				description: "Email address to receive notifications",
+			},
+		],
+	},
+	SLACK: {
+		label: "Slack",
+		description: "Send notifications to a Slack channel",
+		fields: [
+			{
+				name: "slackWebhookUrl",
+				label: "Webhook URL",
+				placeholder: "https://hooks.slack.com/services/...",
+				required: true,
+				type: "url",
+				description: "Slack incoming webhook URL",
+			},
+			{
+				name: "slackChannel",
+				label: "Channel",
+				placeholder: "#alerts",
+				required: false,
+				type: "text",
+				description: "Override the default channel (optional)",
+			},
+		],
+	},
+	DISCORD: {
+		label: "Discord",
+		description: "Send notifications to a Discord channel",
+		fields: [
+			{
+				name: "discordWebhookUrl",
+				label: "Webhook URL",
+				placeholder: "https://discord.com/api/webhooks/...",
+				required: true,
+				type: "url",
+				description: "Discord webhook URL",
+			},
+		],
+	},
+	TELEGRAM: {
+		label: "Telegram",
+		description: "Send notifications via Telegram bot",
+		fields: [
+			{
+				name: "telegramBotToken",
+				label: "Bot Token",
+				placeholder: "123456789:ABCdefGHIjklMNOpqrSTUvwxYZ",
+				required: true,
+				type: "text",
+				description: "Telegram bot token from @BotFather",
+			},
+			{
+				name: "telegramChatId",
+				label: "Chat ID",
+				placeholder: "-1001234567890",
+				required: true,
+				type: "text",
+				description: "Telegram chat or group ID",
+			},
+		],
+	},
+	WEBHOOK: {
+		label: "Webhook",
+		description: "Send notifications to a custom webhook",
+		fields: [
+			{
+				name: "webhookUrl",
+				label: "Webhook URL",
+				placeholder: "https://api.example.com/webhook",
+				required: true,
+				type: "url",
+				description: "URL to receive webhook POST requests",
+			},
+			{
+				name: "webhookMethod",
+				label: "HTTP Method",
+				placeholder: "POST",
+				required: false,
+				type: "text",
+				description: "HTTP method (GET or POST, defaults to POST)",
+			},
+			{
+				name: "webhookHeaders",
+				label: "Custom Headers",
+				placeholder: '{"Authorization": "Bearer token"}',
+				required: false,
+				type: "textarea",
+				description: "Custom headers as JSON (optional)",
+			},
+		],
+	},
+} as const;
