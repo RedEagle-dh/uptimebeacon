@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.0...frontend-v1.3.1) (2025-12-08)
+
+
+### Bug Fixes
+
+* frontend build fails because of db calls fix: Adding missing db ([d322f57](https://github.com/RedEagle-dh/uptimebeacon/commit/d322f573da1093d3526acd5caf1bff55c2b84a06))
+
 # [1.3.0](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.2.1...frontend-v1.3.0) (2025-12-08)
 
 
