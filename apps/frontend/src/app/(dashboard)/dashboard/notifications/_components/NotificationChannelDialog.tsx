@@ -1,10 +1,8 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -289,9 +287,9 @@ export function NotificationChannelDialog({
 
 	return (
 		<Dialog onOpenChange={onOpenChange} open={open}>
-			<DialogContent className="sm:max-w-[550px]">
+			<DialogContent className="max-h-[90vh] w-[95vw] max-w-[550px] p-4 sm:p-6">
 				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2">
+					<DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
 						{isEditMode && EditIcon && channelColor && (
 							<div className={`rounded-lg p-1.5 ${channelColor.bgClass}`}>
 								<EditIcon className={`size-4 ${channelColor.textClass}`} />
@@ -301,7 +299,7 @@ export function NotificationChannelDialog({
 							? "Edit Notification Channel"
 							: "Add Notification Channel"}
 					</DialogTitle>
-					<DialogDescription>
+					<DialogDescription className="text-sm">
 						{isEditMode
 							? "Update your notification channel settings and linked monitors."
 							: "Configure a new notification channel to receive alerts when your monitors change status."}
@@ -309,22 +307,10 @@ export function NotificationChannelDialog({
 				</DialogHeader>
 
 				<form onSubmit={handleSubmit}>
-					<ScrollArea className="h-[60vh]">
+					<ScrollArea className="h-[50vh] sm:h-[60vh]">
 						<div className="space-y-4 py-4 pr-4">
 							{!isEditMode && (
 								<ChannelTypeSelector onChange={handleTypeChange} value={type} />
-							)}
-
-							{(isEditMode ? channel?.type === "EMAIL" : type === "EMAIL") && (
-								<Alert>
-									<AlertCircle className="size-4" />
-									<AlertDescription>
-										Email notifications require additional backend configuration
-										(e.g., SMTP or email service).
-										{!isEditMode &&
-											" The channel will be saved but emails may not be sent until configured."}
-									</AlertDescription>
-								</Alert>
 							)}
 
 							<div className="space-y-2">
@@ -338,22 +324,25 @@ export function NotificationChannelDialog({
 							</div>
 
 							<ChannelConfigFields
+								channelId={channel?.id}
 								config={config}
+								isEditMode={isEditMode}
 								onConfigChange={handleConfigChange}
 								type={
 									isEditMode ? (channel?.type as NotificationChannelType) : type
 								}
 							/>
 
-							<div className="flex items-center justify-between">
-								<div className="space-y-0.5">
+							<div className="flex items-center justify-between gap-4">
+								<div className="min-w-0 space-y-0.5">
 									<Label htmlFor="default">Set as default</Label>
-									<p className="text-muted-foreground text-sm">
+									<p className="text-muted-foreground text-xs sm:text-sm">
 										New monitors will use this channel by default
 									</p>
 								</div>
 								<Switch
 									checked={isDefault}
+									className="shrink-0"
 									id="default"
 									onCheckedChange={setIsDefault}
 								/>
@@ -369,15 +358,20 @@ export function NotificationChannelDialog({
 						</div>
 					</ScrollArea>
 
-					<DialogFooter className="mt-4">
+					<DialogFooter className="mt-4 flex-col gap-2 sm:flex-row sm:gap-0">
 						<Button
+							className="w-full sm:w-auto"
 							onClick={() => onOpenChange(false)}
 							type="button"
 							variant="outline"
 						>
 							Cancel
 						</Button>
-						<Button disabled={isPending} type="submit">
+						<Button
+							className="w-full sm:w-auto"
+							disabled={isPending}
+							type="submit"
+						>
 							{isPending
 								? isEditMode
 									? "Saving..."

@@ -23,7 +23,7 @@ export function ChannelTypeSelector({
 	return (
 		<div className="space-y-3">
 			<Label>Channel Type</Label>
-			<div className="flex gap-2">
+			<div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
 				{NOTIFICATION_CHANNEL_TYPES.map((channelType) => {
 					const Icon = CHANNEL_ICONS[channelType];
 					const colors = CHANNEL_COLORS[channelType];
@@ -33,7 +33,7 @@ export function ChannelTypeSelector({
 					return (
 						<button
 							className={cn(
-								"flex flex-1 flex-col items-center gap-1.5 rounded-lg border-2 py-3 transition-all hover:bg-muted/50",
+								"flex flex-col items-center gap-1.5 rounded-lg border-2 px-2 py-3 transition-all hover:bg-muted/50",
 								isSelected
 									? `border-primary ${colors.bgClass}`
 									: "border-transparent bg-muted/30",
@@ -44,20 +44,20 @@ export function ChannelTypeSelector({
 						>
 							<div
 								className={cn(
-									"flex size-10 items-center justify-center rounded-lg",
+									"flex size-8 items-center justify-center rounded-lg sm:size-10",
 									isSelected ? colors.bgClass : "bg-muted",
 								)}
 							>
 								<Icon
 									className={cn(
-										"size-5",
+										"size-4 sm:size-5",
 										isSelected ? colors.textClass : "text-muted-foreground",
 									)}
 								/>
 							</div>
 							<span
 								className={cn(
-									"font-medium text-xs",
+									"font-medium text-[10px] sm:text-xs",
 									isSelected ? "text-foreground" : "text-muted-foreground",
 								)}
 							>

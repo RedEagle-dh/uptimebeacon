@@ -37,14 +37,14 @@ export function NotificationsClient() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
 					<h1 className="font-bold text-2xl tracking-tight">Notifications</h1>
-					<p className="text-muted-foreground">
+					<p className="text-muted-foreground text-sm sm:text-base">
 						Configure how you receive alerts when your monitors change status
 					</p>
 				</div>
-				<Button onClick={handleCreate}>
+				<Button className="w-full sm:w-auto" onClick={handleCreate}>
 					<Plus className="mr-2 size-4" />
 					Add Channel
 				</Button>

@@ -152,6 +152,10 @@ export const CHANNEL_COLORS = {
 		bgClass: "bg-blue-500/10",
 		textClass: "text-blue-500",
 	},
+	RESEND: {
+		bgClass: "bg-purple-500/10",
+		textClass: "text-purple-500",
+	},
 	WEBHOOK: {
 		bgClass: "bg-orange-500/10",
 		textClass: "text-orange-500",
@@ -164,6 +168,7 @@ export const CHANNEL_COLORS = {
 
 export const NOTIFICATION_CHANNEL_TYPES = [
 	"EMAIL",
+	"RESEND",
 	"SLACK",
 	"DISCORD",
 	"TELEGRAM",
@@ -178,7 +183,7 @@ interface ChannelFieldConfig {
 	label: string;
 	placeholder: string;
 	required: boolean;
-	type: "text" | "url" | "email" | "textarea";
+	type: "text" | "url" | "email" | "textarea" | "password";
 	description?: string;
 }
 
@@ -191,16 +196,102 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 	}
 > = {
 	EMAIL: {
-		label: "Email",
-		description: "Send notifications via email",
+		label: "Email (SMTP)",
+		description: "Send notifications via email using custom SMTP server",
 		fields: [
 			{
 				name: "email",
-				label: "Email Address",
+				label: "Recipient Email",
 				placeholder: "alerts@example.com",
 				required: true,
 				type: "email",
 				description: "Email address to receive notifications",
+			},
+			{
+				name: "smtpHost",
+				label: "SMTP Host",
+				placeholder: "smtp.example.com",
+				required: true,
+				type: "text",
+				description: "SMTP server hostname",
+			},
+			{
+				name: "smtpPort",
+				label: "SMTP Port",
+				placeholder: "587",
+				required: true,
+				type: "text",
+				description: "SMTP server port (usually 587 for TLS or 465 for SSL)",
+			},
+			{
+				name: "smtpUser",
+				label: "SMTP Username",
+				placeholder: "user@example.com",
+				required: true,
+				type: "text",
+				description: "SMTP authentication username",
+			},
+			{
+				name: "smtpPassword",
+				label: "SMTP Password",
+				placeholder: "••••••••",
+				required: true,
+				type: "password",
+				description: "SMTP authentication password (will be encrypted)",
+			},
+			{
+				name: "fromEmail",
+				label: "From Email",
+				placeholder: "notifications@yourdomain.com",
+				required: false,
+				type: "email",
+				description: "Sender email address",
+			},
+			{
+				name: "fromName",
+				label: "From Name",
+				placeholder: "UptimeBeacon",
+				required: false,
+				type: "text",
+				description: "Sender display name",
+			},
+		],
+	},
+	RESEND: {
+		label: "Resend",
+		description: "Send notifications via Resend API",
+		fields: [
+			{
+				name: "email",
+				label: "Recipient Email",
+				placeholder: "alerts@example.com",
+				required: true,
+				type: "email",
+				description: "Email address to receive notifications",
+			},
+			{
+				name: "resendApiKey",
+				label: "API Key",
+				placeholder: "re_xxxxxxxx",
+				required: true,
+				type: "password",
+				description: "Your Resend API key (will be encrypted)",
+			},
+			{
+				name: "fromEmail",
+				label: "From Email",
+				placeholder: "notifications@yourdomain.com",
+				required: false,
+				type: "email",
+				description: "Sender email address (must be verified in Resend)",
+			},
+			{
+				name: "fromName",
+				label: "From Name",
+				placeholder: "UptimeBeacon",
+				required: false,
+				type: "text",
+				description: "Sender display name",
 			},
 		],
 	},
@@ -213,8 +304,8 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				label: "Webhook URL",
 				placeholder: "https://hooks.slack.com/services/...",
 				required: true,
-				type: "url",
-				description: "Slack incoming webhook URL",
+				type: "password",
+				description: "Slack incoming webhook URL (will be encrypted)",
 			},
 			{
 				name: "slackChannel",
@@ -235,8 +326,8 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				label: "Webhook URL",
 				placeholder: "https://discord.com/api/webhooks/...",
 				required: true,
-				type: "url",
-				description: "Discord webhook URL",
+				type: "password",
+				description: "Discord webhook URL (will be encrypted)",
 			},
 		],
 	},
@@ -249,8 +340,8 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				label: "Bot Token",
 				placeholder: "123456789:ABCdefGHIjklMNOpqrSTUvwxYZ",
 				required: true,
-				type: "text",
-				description: "Telegram bot token from @BotFather",
+				type: "password",
+				description: "Telegram bot token from @BotFather (will be encrypted)",
 			},
 			{
 				name: "telegramChatId",
@@ -271,8 +362,8 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				label: "Webhook URL",
 				placeholder: "https://api.example.com/webhook",
 				required: true,
-				type: "url",
-				description: "URL to receive webhook POST requests",
+				type: "password",
+				description: "URL to receive webhook POST requests (will be encrypted)",
 			},
 			{
 				name: "webhookMethod",

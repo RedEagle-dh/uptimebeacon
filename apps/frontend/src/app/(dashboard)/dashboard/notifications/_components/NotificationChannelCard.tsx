@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Pencil, Trash2 } from "lucide-react";
+import { Bell, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -56,6 +56,15 @@ export function NotificationChannelCard({
 		},
 	});
 
+	const testMutation = api.notification.test.useMutation({
+		onSuccess: () => {
+			toast.success("Test notification sent successfully");
+		},
+		onError: (error) => {
+			toast.error(error.message || "Failed to send test notification");
+		},
+	});
+
 	const Icon =
 		CHANNEL_ICONS[channel.type as keyof typeof CHANNEL_ICONS] ?? Bell;
 	const channelColor =
@@ -74,12 +83,12 @@ export function NotificationChannelCard({
 		<>
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-					<CardTitle className="flex items-center gap-3 font-medium text-base">
-						<div className={`rounded-lg p-2 ${colorClass}`}>
+					<CardTitle className="flex min-w-0 flex-1 items-center gap-2 font-medium text-base sm:gap-3">
+						<div className={`shrink-0 rounded-lg p-2 ${colorClass}`}>
 							<Icon className="size-4" />
 						</div>
-						<div className="flex flex-col">
-							<span>{channel.name}</span>
+						<div className="flex min-w-0 flex-col">
+							<span className="truncate">{channel.name}</span>
 							{channel.isDefault && (
 								<Badge className="mt-1 w-fit text-xs" variant="secondary">
 									Default
@@ -89,6 +98,7 @@ export function NotificationChannelCard({
 					</CardTitle>
 					<Switch
 						checked={channel.active}
+						className="shrink-0"
 						disabled={updateMutation.isPending}
 						onCheckedChange={(active) =>
 							updateMutation.mutate({ id: channel.id, active })
@@ -96,7 +106,7 @@ export function NotificationChannelCard({
 					/>
 				</CardHeader>
 				<CardContent>
-					<div className="flex items-center justify-between">
+					<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex items-center gap-2">
 							<Badge variant="outline">{channel.type}</Badge>
 							<span className="text-muted-foreground text-sm">
@@ -104,9 +114,31 @@ export function NotificationChannelCard({
 							</span>
 						</div>
 						<div className="flex items-center gap-1">
-							<Button onClick={() => onEdit(channel)} size="sm" variant="ghost">
+							<Button
+								className="flex-1 sm:flex-none"
+								disabled={testMutation.isPending || !channel.active}
+								onClick={() => testMutation.mutate({ id: channel.id })}
+								size="sm"
+								title={
+									!channel.active
+										? "Enable channel to test"
+										: "Send test notification"
+								}
+								variant="ghost"
+							>
+								<Send className="mr-1 size-3" />
+								<span className="sm:inline">
+									{testMutation.isPending ? "Sending..." : "Test"}
+								</span>
+							</Button>
+							<Button
+								className="flex-1 sm:flex-none"
+								onClick={() => onEdit(channel)}
+								size="sm"
+								variant="ghost"
+							>
 								<Pencil className="mr-1 size-3" />
-								Edit
+								<span className="sm:inline">Edit</span>
 							</Button>
 							<Button
 								className="text-destructive hover:text-destructive"

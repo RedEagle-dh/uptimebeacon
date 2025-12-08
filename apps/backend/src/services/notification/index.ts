@@ -4,16 +4,28 @@ import {
 	type Monitor,
 	type NotificationChannel,
 } from "@uptimebeacon/database";
-import { logger } from "../../utils/logger";
 
-type NotificationEvent = "down" | "up" | "degraded";
+import { logger } from "../../utils/logger";
+import {
+	type ChannelConfig,
+	getEventColor,
+	getStatusEmoji,
+	getStatusText,
+	type NotificationEvent,
+	type NotificationPayload,
+	sendDiscord,
+	sendEmail,
+	sendResend,
+	sendSlack,
+	sendTelegram,
+	sendWebhook,
+} from "./channels";
 
 export async function sendNotifications(
 	monitor: Monitor,
 	event: NotificationEvent,
 	incident?: Incident,
 ): Promise<void> {
-	// Get all notification channels for this monitor
 	const monitorNotifications = await db.monitorNotification.findMany({
 		where: {
 			monitorId: monitor.id,
@@ -21,28 +33,17 @@ export async function sendNotifications(
 			...(event === "up" && { notifyOnUp: true }),
 			...(event === "degraded" && { notifyOnDegraded: true }),
 		},
-		include: {
-			channel: true,
-		},
+		include: { channel: true },
 	});
 
-	// Send notifications in parallel for better performance
 	const results = await Promise.allSettled(
 		monitorNotifications.map(({ channel }) =>
-			sendToChannel(channel, monitor, event, incident).then(() => ({
-				channel,
-				success: true,
-			})),
+			sendToChannel(channel, monitor, event, incident),
 		),
 	);
 
-	// Log results
 	for (const result of results) {
-		if (result.status === "fulfilled") {
-			logger.info(
-				`Sent ${event} notification to ${result.value.channel.type} channel: ${result.value.channel.name}`,
-			);
-		} else {
+		if (result.status === "rejected") {
 			logger.error(`Failed to send notification: ${result.reason}`);
 		}
 	}
@@ -54,159 +55,62 @@ async function sendToChannel(
 	event: NotificationEvent,
 	incident?: Incident,
 ): Promise<void> {
-	const config = channel.config as Record<string, unknown>;
-	const message = formatMessage(monitor, event, incident);
+	const config = channel.config as ChannelConfig;
+	const payload = createPayload(monitor, event, incident);
 
 	switch (channel.type) {
-		case "WEBHOOK":
-			await sendWebhook(config, message, monitor, event);
+		case "SLACK":
+			await sendSlack(config, payload);
 			break;
 		case "DISCORD":
-			await sendDiscord(config, message, monitor, event);
-			break;
-		case "SLACK":
-			await sendSlack(config, message, monitor, event);
+			await sendDiscord(config, payload);
 			break;
 		case "TELEGRAM":
-			await sendTelegram(config, message);
+			await sendTelegram(config, payload);
+			break;
+		case "WEBHOOK":
+			await sendWebhook(config, payload, {
+				monitor: {
+					id: monitor.id,
+					name: monitor.name,
+					url: monitor.url,
+					status: monitor.status,
+				},
+			});
 			break;
 		case "EMAIL":
-			// Email would require an email service like Resend, SendGrid, etc.
-			logger.warn("Email notifications not yet implemented");
+			await sendEmail(config, payload);
+			break;
+		case "RESEND":
+			await sendResend(config, payload);
 			break;
 		default:
 			logger.warn(`Unknown notification type: ${channel.type}`);
 	}
+
+	logger.info(
+		`Sent ${event} notification to ${channel.type} channel: ${channel.name}`,
+	);
 }
 
-function formatMessage(
+function createPayload(
 	monitor: Monitor,
 	event: NotificationEvent,
 	incident?: Incident,
-): string {
-	const statusEmoji = event === "up" ? "✅" : event === "down" ? "🔴" : "🟡";
-	const statusText =
-		event === "up"
-			? "is back online"
-			: event === "down"
-				? "is down"
-				: "is degraded";
+): NotificationPayload {
+	const emoji = getStatusEmoji(event);
+	const statusText = getStatusText(event);
+	const color = getEventColor(event).slack;
 
-	let message = `${statusEmoji} **${monitor.name}** ${statusText}`;
+	let message = `${emoji} **${monitor.name}** ${statusText}`;
+	if (monitor.url) message += `\nURL: ${monitor.url}`;
+	if (incident) message += `\nIncident: ${incident.title}`;
 
-	if (monitor.url) {
-		message += `\nURL: ${monitor.url}`;
-	}
-
-	if (incident) {
-		message += `\nIncident: ${incident.title}`;
-	}
-
-	message += `\nTime: ${new Date().toISOString()}`;
-
-	return message;
-}
-
-async function sendWebhook(
-	config: Record<string, unknown>,
-	message: string,
-	monitor: Monitor,
-	event: NotificationEvent,
-): Promise<void> {
-	const url = config.url as string;
-	if (!url) throw new Error("Webhook URL is required");
-
-	await fetch(url, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			monitor: {
-				id: monitor.id,
-				name: monitor.name,
-				url: monitor.url,
-				status: monitor.status,
-			},
-			event,
-			message,
-			timestamp: new Date().toISOString(),
-		}),
-	});
-}
-
-async function sendDiscord(
-	config: Record<string, unknown>,
-	message: string,
-	monitor: Monitor,
-	event: NotificationEvent,
-): Promise<void> {
-	const webhookUrl = config.webhookUrl as string;
-	if (!webhookUrl) throw new Error("Discord webhook URL is required");
-
-	const color =
-		event === "up" ? 0x00ff00 : event === "down" ? 0xff0000 : 0xffff00;
-
-	await fetch(webhookUrl, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			embeds: [
-				{
-					title: `${monitor.name} Status Update`,
-					description: message,
-					color,
-					timestamp: new Date().toISOString(),
-				},
-			],
-		}),
-	});
-}
-
-async function sendSlack(
-	config: Record<string, unknown>,
-	message: string,
-	monitor: Monitor,
-	event: NotificationEvent,
-): Promise<void> {
-	const webhookUrl = config.webhookUrl as string;
-	if (!webhookUrl) throw new Error("Slack webhook URL is required");
-
-	const color =
-		event === "up" ? "good" : event === "down" ? "danger" : "warning";
-
-	await fetch(webhookUrl, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			attachments: [
-				{
-					color,
-					title: `${monitor.name} Status Update`,
-					text: message,
-					ts: Math.floor(Date.now() / 1000),
-				},
-			],
-		}),
-	});
-}
-
-async function sendTelegram(
-	config: Record<string, unknown>,
-	message: string,
-): Promise<void> {
-	const botToken = config.botToken as string;
-	const chatId = config.chatId as string;
-
-	if (!botToken || !chatId) {
-		throw new Error("Telegram bot token and chat ID are required");
-	}
-
-	await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			chat_id: chatId,
-			text: message,
-			parse_mode: "Markdown",
-		}),
-	});
+	return {
+		title: `${monitor.name} Status Update`,
+		message,
+		event,
+		color,
+		timestamp: new Date().toISOString(),
+	};
 }

@@ -33,6 +33,19 @@ function EmailIcon(props: IconProps) {
 	return <Mail {...props} />;
 }
 
+function ResendIcon(props: IconProps) {
+	return (
+		<svg
+			aria-hidden="true"
+			fill="currentColor"
+			viewBox="0 0 1800 1800"
+			{...props}
+		>
+			<path d="M1000.46 450C1174.77 450 1278.43 553.669 1278.43 691.282C1278.43 828.896 1174.77 932.563 1000.46 932.563H912.382L1350 1350H1040.82L707.794 1033.48C683.944 1011.47 672.936 985.781 672.935 963.765C672.935 932.572 694.959 905.049 737.161 893.122L908.712 847.244C973.85 829.812 1018.81 779.353 1018.81 713.298C1018.8 632.567 952.745 585.78 871.095 585.78H450V450H1000.46Z" />
+		</svg>
+	);
+}
+
 function WebhookIcon(props: IconProps) {
 	return <Webhook {...props} />;
 }
@@ -45,7 +58,15 @@ export const CHANNEL_ICONS: Record<
 	DISCORD: DiscordIcon,
 	TELEGRAM: TelegramIcon,
 	EMAIL: EmailIcon,
+	RESEND: ResendIcon,
 	WEBHOOK: WebhookIcon,
 };
 
-export { SlackIcon, DiscordIcon, TelegramIcon, EmailIcon, WebhookIcon };
+export {
+	SlackIcon,
+	DiscordIcon,
+	TelegramIcon,
+	EmailIcon,
+	ResendIcon,
+	WebhookIcon,
+};

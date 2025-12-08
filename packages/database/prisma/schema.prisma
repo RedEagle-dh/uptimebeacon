@@ -127,6 +127,7 @@ enum HttpMethod {
 
 enum NotificationType {
     EMAIL
+    RESEND
     SLACK
     DISCORD
     TELEGRAM
