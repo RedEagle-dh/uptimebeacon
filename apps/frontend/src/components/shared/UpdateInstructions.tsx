@@ -46,19 +46,21 @@ docker compose up -d`;
 
 	return (
 		<Dialog onOpenChange={onOpenChange} open={open}>
-			<DialogContent className="max-w-2xl">
+			<DialogContent className="max-h-[90vh] sm:max-h-[85vh] sm:max-w-2xl">
 				<DialogHeader>
-					<DialogTitle>How to Update UptimeBeacon</DialogTitle>
-					<DialogDescription>
+					<DialogTitle className="text-base sm:text-lg">
+						How to Update UptimeBeacon
+					</DialogTitle>
+					<DialogDescription className="text-xs sm:text-sm">
 						Update from {currentVersion} to {latestVersion || "latest"}
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="space-y-6">
+				<div className="space-y-4 overflow-y-auto sm:space-y-6">
 					{/* Warning */}
-					<div className="flex items-start gap-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
-						<AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500" />
-						<div className="text-sm">
+					<div className="flex items-start gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 sm:gap-3 sm:p-4">
+						<AlertTriangle className="mt-0.5 size-4 shrink-0 text-yellow-500 sm:size-5" />
+						<div className="text-xs sm:text-sm">
 							<p className="font-medium text-yellow-500">Before updating</p>
 							<p className="mt-1 text-yellow-400/80">
 								Always back up your database before performing an update,
@@ -69,23 +71,23 @@ docker compose up -d`;
 
 					{/* Step 1: Backup */}
 					<div className="space-y-2">
-						<h3 className="font-medium text-neutral-200">
+						<h3 className="font-medium text-neutral-200 text-sm sm:text-base">
 							Step 1: Backup your database (recommended)
 						</h3>
 						<div className="relative">
-							<pre className="overflow-x-auto rounded-lg bg-neutral-900 p-4 text-neutral-300 text-sm">
+							<pre className="overflow-x-auto rounded-lg bg-neutral-900 p-3 pr-10 text-neutral-300 text-xs sm:p-4 sm:text-sm">
 								<code>{backupCommand}</code>
 							</pre>
 							<Button
-								className="absolute top-2 right-2 h-8 w-8"
+								className="absolute top-2 right-2 size-7 sm:size-8"
 								onClick={() => copyToClipboard(backupCommand, "backup")}
 								size="icon"
 								variant="ghost"
 							>
 								{copiedCommand === "backup" ? (
-									<Check className="h-4 w-4 text-green-500" />
+									<Check className="size-3.5 text-green-500 sm:size-4" />
 								) : (
-									<Copy className="h-4 w-4" />
+									<Copy className="size-3.5 sm:size-4" />
 								)}
 							</Button>
 						</div>
@@ -93,23 +95,23 @@ docker compose up -d`;
 
 					{/* Step 2: Update */}
 					<div className="space-y-2">
-						<h3 className="font-medium text-neutral-200">
+						<h3 className="font-medium text-neutral-200 text-sm sm:text-base">
 							Step 2: Pull and restart containers
 						</h3>
 						<div className="relative">
-							<pre className="overflow-x-auto rounded-lg bg-neutral-900 p-4 text-neutral-300 text-sm">
+							<pre className="overflow-x-auto rounded-lg bg-neutral-900 p-3 pr-10 text-neutral-300 text-xs sm:p-4 sm:text-sm">
 								<code>{updateCommands}</code>
 							</pre>
 							<Button
-								className="absolute top-2 right-2 h-8 w-8"
+								className="absolute top-2 right-2 size-7 sm:size-8"
 								onClick={() => copyToClipboard(updateCommands, "update")}
 								size="icon"
 								variant="ghost"
 							>
 								{copiedCommand === "update" ? (
-									<Check className="h-4 w-4 text-green-500" />
+									<Check className="size-3.5 text-green-500 sm:size-4" />
 								) : (
-									<Copy className="h-4 w-4" />
+									<Copy className="size-3.5 sm:size-4" />
 								)}
 							</Button>
 						</div>
@@ -117,25 +119,25 @@ docker compose up -d`;
 
 					{/* Release Notes Link */}
 					{releaseUrl && (
-						<div className="pt-2">
+						<div className="pt-1 sm:pt-2">
 							<a
-								className="inline-flex items-center gap-2 text-blue-400 text-sm hover:text-blue-300"
+								className="inline-flex items-center gap-1.5 text-blue-400 text-xs hover:text-blue-300 sm:gap-2 sm:text-sm"
 								href={releaseUrl}
 								rel="noopener noreferrer"
 								target="_blank"
 							>
-								<ExternalLink className="h-4 w-4" />
+								<ExternalLink className="size-3.5 sm:size-4" />
 								View release notes on GitHub
 							</a>
 						</div>
 					)}
 
 					{/* Watchtower Recommendation */}
-					<div className="rounded-lg border border-neutral-800 p-4">
-						<h3 className="mb-2 font-medium text-neutral-200">
+					<div className="rounded-lg border border-neutral-800 p-3 sm:p-4">
+						<h3 className="mb-1.5 font-medium text-neutral-200 text-sm sm:mb-2 sm:text-base">
 							Automatic Updates with Watchtower
 						</h3>
-						<p className="mb-3 text-neutral-400 text-sm">
+						<p className="mb-2 text-neutral-400 text-xs sm:mb-3 sm:text-sm">
 							For automatic updates, you can use{" "}
 							<a
 								className="text-blue-400 hover:underline"
@@ -148,7 +150,7 @@ docker compose up -d`;
 							, a container that monitors your running containers and
 							automatically updates them when new images are available.
 						</p>
-						<p className="text-neutral-500 text-xs">
+						<p className="text-[11px] text-neutral-500 sm:text-xs">
 							Note: Watchtower requires access to the Docker socket, which has
 							security implications. Only use it in trusted environments.
 						</p>

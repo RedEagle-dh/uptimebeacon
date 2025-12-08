@@ -1,3 +1,18 @@
+# [1.2.0-beta.1](https://github.com/RedEagle-dh/uptimebeacon/compare/backend-v1.1.3...backend-v1.2.0-beta.1) (2025-12-07)
+
+
+### Bug Fixes
+
+* adding /api/health endpoint on the frontend ([f62815c](https://github.com/RedEagle-dh/uptimebeacon/commit/f62815cea8ffc9489e55780e424c9b3e386876f7))
+* get-site-settings.ts retrieving DATABASE_URL during build ([5e7d105](https://github.com/RedEagle-dh/uptimebeacon/commit/5e7d105d2f999dba358c6c982d64c9a301558447))
+* making prepare script optional for docker environments where git ([ac62ff1](https://github.com/RedEagle-dh/uptimebeacon/commit/ac62ff13c334587ffc237a5512f1435edb0e3521))
+
+
+### Features
+
+* add design pattern docs, fix UI inconsistencies, performance and ([136032f](https://github.com/RedEagle-dh/uptimebeacon/commit/136032f79f41209e0e5b45dd9aeb0b12160a6b4e))
+* adding timeout minutes on build workflow ([2a2bd6e](https://github.com/RedEagle-dh/uptimebeacon/commit/2a2bd6e3894733a741845dda24ecc357f30bfa60))
+
 ## [1.1.3](https://github.com/RedEagle-dh/uptimebeacon/compare/backend-v1.1.2...backend-v1.1.3) (2025-12-05)
 
 

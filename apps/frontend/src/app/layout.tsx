@@ -119,7 +119,7 @@ export default async function RootLayout({
 			<body className="min-h-screen bg-background font-sans antialiased">
 				<TRPCReactProvider>
 					{children}
-					<Toaster />
+					<Toaster richColors />
 				</TRPCReactProvider>
 			</body>
 		</html>

@@ -2,42 +2,34 @@
 
 import { ExternalLink, Globe, Plus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
+import { type Status, StatusDot } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api, type RouterOutputs } from "@/trpc/react";
+import { CreateStatusPageDialog } from "./CreateStatusPageDialog";
 
 type StatusPage = RouterOutputs["statusPage"]["getAll"][number];
 
-function StatusDot({ status }: { status: string }) {
-	const colors = {
-		UP: "bg-green-500",
-		DOWN: "bg-red-500",
-		DEGRADED: "bg-yellow-500",
-		PENDING: "bg-zinc-500",
-		MAINTENANCE: "bg-blue-500",
-	};
-
-	return (
-		<span
-			className={`size-2.5 rounded-full ${colors[status as keyof typeof colors] ?? "bg-zinc-500"}`}
-		/>
-	);
-}
-
 function StatusPageCard({ page }: { page: StatusPage }) {
+	const router = useRouter();
 	const domain = page.customDomain;
 	const monitorsCount = page._count.monitors;
 
 	return (
-		<Card>
+		<Card
+			className="group cursor-pointer transition-colors hover:bg-muted/50"
+			onClick={() => router.push(`/dashboard/status-pages/${page.id}`)}
+		>
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="flex items-center gap-2 font-medium text-base">
+				<CardTitle className="flex items-center gap-2 font-medium text-base group-hover:underline">
 					<Globe className="size-4" />
 					{page.name}
 				</CardTitle>
-				<StatusDot status={page.overallStatus} />
+				<StatusDot status={page.overallStatus as Status} />
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">
@@ -62,16 +54,19 @@ function StatusPageCard({ page }: { page: StatusPage }) {
 					</div>
 
 					<div className="flex gap-2 pt-2">
-						<Button asChild className="flex-1" size="sm" variant="outline">
-							<Link href={`/dashboard/status-pages/${page.id}`}>Edit</Link>
-						</Button>
-						<Button asChild size="sm" variant="ghost">
+						<Button
+							asChild
+							onClick={(e) => e.stopPropagation()}
+							size="sm"
+							variant="ghost"
+						>
 							<Link
-								href={domain ? `https://${domain}` : `/${page.slug}`}
+								href={domain ? `https://${domain}` : `/status/${page.slug}`}
 								rel="noopener noreferrer"
 								target="_blank"
 							>
-								<ExternalLink className="size-4" />
+								<ExternalLink className="mr-2 size-4" />
+								View
 							</Link>
 						</Button>
 					</div>
@@ -83,17 +78,18 @@ function StatusPageCard({ page }: { page: StatusPage }) {
 
 export function StatusPagesClient() {
 	const [statusPages] = api.statusPage.getAll.useSuspenseQuery();
+	const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
 					<h1 className="font-bold text-2xl tracking-tight">Status Pages</h1>
 					<p className="text-muted-foreground">
 						Manage public status pages for your services
 					</p>
 				</div>
-				<Button>
+				<Button onClick={() => setCreateDialogOpen(true)}>
 					<Plus className="mr-2 size-4" />
 					Create Status Page
 				</Button>
@@ -107,7 +103,7 @@ export function StatusPagesClient() {
 						<p className="mb-4 text-center text-muted-foreground text-sm">
 							Create a public status page to keep your users informed
 						</p>
-						<Button>
+						<Button onClick={() => setCreateDialogOpen(true)}>
 							<Plus className="mr-2 size-4" />
 							Create your first status page
 						</Button>
@@ -120,6 +116,11 @@ export function StatusPagesClient() {
 					))}
 				</div>
 			)}
+
+			<CreateStatusPageDialog
+				onOpenChange={setCreateDialogOpen}
+				open={createDialogOpen}
+			/>
 		</div>
 	);
 }

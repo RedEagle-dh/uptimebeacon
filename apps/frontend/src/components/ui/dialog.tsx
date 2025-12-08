@@ -59,7 +59,7 @@ function DialogContent({
 			<DialogOverlay />
 			<DialogPrimitive.Content
 				className={cn(
-					"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-6 shadow-2xl shadow-black/50 duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in sm:max-w-lg",
+					"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-4 shadow-2xl shadow-black/50 duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in sm:max-w-lg sm:p-6",
 					className,
 				)}
 				data-slot="dialog-content"
@@ -68,7 +68,7 @@ function DialogContent({
 				{children}
 				{showCloseButton && (
 					<DialogPrimitive.Close
-						className="absolute top-4 right-4 rounded-md p-1 text-neutral-500 transition-colors hover:bg-neutral-900 hover:text-neutral-300 focus:outline-hidden focus:ring-2 focus:ring-neutral-700 disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+						className="absolute top-3 right-3 rounded-md p-1 text-neutral-500 transition-colors hover:bg-neutral-900 hover:text-neutral-300 focus:outline-hidden focus:ring-2 focus:ring-neutral-700 disabled:pointer-events-none sm:top-4 sm:right-4 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0"
 						data-slot="dialog-close"
 					>
 						<XIcon />

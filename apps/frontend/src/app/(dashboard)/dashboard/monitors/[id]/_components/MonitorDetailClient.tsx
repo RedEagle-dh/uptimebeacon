@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 
@@ -63,7 +63,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { INCIDENT_STATUS_CONFIG } from "@/lib/constants";
+import { cn, formatUptime } from "@/lib/utils";
 import { api } from "@/trpc/react";
 
 interface MonitorDetailClientProps {
@@ -122,24 +123,29 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 	const checks = monitor.checks;
 	const incidents = monitor.incidents;
 
-	// Prepare chart data with response time averages
-	const chartData = uptimeData.map((day) => ({
-		date: day.date,
-		uptime: day.uptime,
-		up: day.up,
-		down: day.down,
-		degraded: day.degraded,
-	}));
+	// Memoize chart data to avoid recalculation on every render
+	const chartData = useMemo(
+		() =>
+			uptimeData.map((day) => ({
+				date: day.date,
+				uptime: day.uptime,
+				up: day.up,
+				down: day.down,
+				degraded: day.degraded,
+			})),
+		[uptimeData],
+	);
 
-	// Calculate average response time from recent checks
-	const recentResponseTimes = checks
-		.filter((c) => c.responseTime != null)
-		.slice(0, 50);
-	const avgResponseTime =
-		recentResponseTimes.length > 0
+	// Memoize average response time calculation
+	const avgResponseTime = useMemo(() => {
+		const recentResponseTimes = checks
+			.filter((c) => c.responseTime != null)
+			.slice(0, 50);
+		return recentResponseTimes.length > 0
 			? recentResponseTimes.reduce((acc, c) => acc + (c.responseTime ?? 0), 0) /
-				recentResponseTimes.length
+					recentResponseTimes.length
 			: 0;
+	}, [checks]);
 
 	return (
 		<div className="space-y-6">
@@ -233,7 +239,7 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 			</div>
 
 			{/* Stats Cards */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="font-medium text-sm">Status</CardTitle>
@@ -294,7 +300,7 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 										: "text-red-500",
 							)}
 						>
-							{monitor.uptimePercentage.toFixed(2)}%
+							{formatUptime(monitor.uptimePercentage)}%
 						</div>
 						<p className="mt-1 text-muted-foreground text-xs">Last 30 days</p>
 					</CardContent>
@@ -341,7 +347,7 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 
 				{/* Overview Tab */}
 				<TabsContent className="space-y-6" value="overview">
-					<div className="grid gap-6 lg:grid-cols-2">
+					<div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
 						{/* Uptime Chart */}
 						<Card>
 							<CardHeader>
@@ -399,7 +405,7 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 												content={
 													<ChartTooltipContent
 														formatter={(value) => [
-															`${Number(value).toFixed(2)}%`,
+															`${formatUptime(Number(value))}%`,
 															"Uptime",
 														]}
 													/>
@@ -502,8 +508,12 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 											<TableHead>Time</TableHead>
 											<TableHead>Status</TableHead>
 											<TableHead>Response Time</TableHead>
-											<TableHead>Status Code</TableHead>
-											<TableHead>Message</TableHead>
+											<TableHead className="hidden sm:table-cell">
+												Status Code
+											</TableHead>
+											<TableHead className="hidden md:table-cell">
+												Message
+											</TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody>
@@ -526,10 +536,10 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 														? `${check.responseTime}ms`
 														: "-"}
 												</TableCell>
-												<TableCell className="font-mono">
+												<TableCell className="hidden font-mono sm:table-cell">
 													{check.statusCode ?? "-"}
 												</TableCell>
-												<TableCell className="max-w-xs truncate text-muted-foreground text-xs">
+												<TableCell className="hidden max-w-xs truncate text-muted-foreground text-xs md:table-cell">
 													{check.message || check.error || "-"}
 												</TableCell>
 											</TableRow>
@@ -579,19 +589,18 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 												<div className="flex items-start justify-between gap-2">
 													<h4 className="font-medium">{incident.title}</h4>
 													<Badge
-														className={cn(
-															incident.status === "resolved" &&
-																"bg-green-500/10 text-green-500",
-															incident.status === "investigating" &&
-																"bg-red-500/10 text-red-500",
-															incident.status === "identified" &&
-																"bg-orange-500/10 text-orange-500",
-															incident.status === "monitoring" &&
-																"bg-yellow-500/10 text-yellow-500",
-														)}
+														className={
+															INCIDENT_STATUS_CONFIG[
+																incident.status as keyof typeof INCIDENT_STATUS_CONFIG
+															]?.badgeClass
+														}
 														variant="secondary"
 													>
-														{incident.status}
+														{
+															INCIDENT_STATUS_CONFIG[
+																incident.status as keyof typeof INCIDENT_STATUS_CONFIG
+															]?.label
+														}
 													</Badge>
 												</div>
 												<p className="mt-1 text-muted-foreground text-sm">

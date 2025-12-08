@@ -66,40 +66,46 @@ export function RegisterForm() {
 	}
 
 	return (
-		<form className="grid gap-4" onSubmit={onSubmit}>
-			<div className="grid gap-2">
-				<Label htmlFor="name">Name</Label>
+		<form className="grid gap-3 sm:gap-4" onSubmit={onSubmit}>
+			<div className="grid gap-1.5 sm:gap-2">
+				<Label className="font-medium text-sm" htmlFor="name">
+					Name
+				</Label>
 				<Input
 					autoComplete="name"
-					className="h-10"
+					className="h-10 text-base sm:text-sm"
 					disabled={isLoading}
 					id="name"
 					name="name"
-					placeholder="Admin"
+					placeholder="John Doe"
 					required
 					type="text"
 				/>
 			</div>
-			<div className="grid gap-2">
-				<Label htmlFor="email">Email</Label>
+			<div className="grid gap-1.5 sm:gap-2">
+				<Label className="font-medium text-sm" htmlFor="email">
+					Email
+				</Label>
 				<Input
 					autoCapitalize="none"
 					autoComplete="email"
 					autoCorrect="off"
-					className="h-10"
+					className="h-10 text-base sm:text-sm"
 					disabled={isLoading}
 					id="email"
 					name="email"
-					placeholder="admin@example.com"
+					placeholder="johndoe@example.com"
 					required
 					type="email"
 				/>
 			</div>
-			<div className="grid gap-2">
-				<Label htmlFor="password">Password</Label>
+			<div className="grid gap-1.5 sm:gap-2">
+				<Label className="font-medium text-sm" htmlFor="password">
+					Password
+				</Label>
 				<Input
 					autoComplete="new-password"
-					className="h-10"
+					className="h-10 text-base sm:text-sm"
 					disabled={isLoading}
 					id="password"
 					name="password"
@@ -108,11 +114,13 @@ export function RegisterForm() {
 					type="password"
 				/>
 			</div>
-			<div className="grid gap-2">
-				<Label htmlFor="confirmPassword">Confirm Password</Label>
+			<div className="grid gap-1.5 sm:gap-2">
+				<Label className="font-medium text-sm" htmlFor="confirmPassword">
+					Confirm Password
+				</Label>
 				<Input
 					autoComplete="new-password"
-					className="h-10"
+					className="h-10 text-base sm:text-sm"
 					disabled={isLoading}
 					id="confirmPassword"
 					name="confirmPassword"

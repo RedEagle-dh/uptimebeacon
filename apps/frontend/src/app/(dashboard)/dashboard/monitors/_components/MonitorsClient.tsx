@@ -12,9 +12,9 @@ import {
 	Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
-import { type Status, StatusDot, UptimeBar } from "@/components/shared";
+import { type Status, StatusDot } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +24,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, formatUptime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 
 type Monitor = RouterOutputs["monitor"]["getAll"][number];
@@ -74,19 +74,11 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 					</div>
 				</div>
 
-				{/* Uptime bar - hidden on mobile */}
-				<div className="hidden w-48 flex-col items-center lg:flex">
-					<UptimeBar className="h-5 w-full" days={30} />
-					<p className="mt-1 text-center text-[10px] text-muted-foreground">
-						30 days
-					</p>
-				</div>
-
 				{/* Stats */}
-				<div className="hidden w-20 flex-col items-end md:flex">
+				<div className="flex flex-col items-end">
 					<p
 						className={cn(
-							"font-medium font-mono text-sm",
+							"whitespace-nowrap font-medium font-mono text-xs sm:text-sm",
 							status === "UP" && "text-status-up",
 							status === "DOWN" && "text-status-down",
 							status === "DEGRADED" && "text-status-degraded",
@@ -98,8 +90,8 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 							? `${Math.round(responseTime)}ms`
 							: status}
 					</p>
-					<p className="text-muted-foreground text-xs">
-						{uptime.toFixed(2)}% uptime
+					<p className="hidden whitespace-nowrap text-muted-foreground text-xs md:block">
+						{formatUptime(uptime)}% uptime
 					</p>
 				</div>
 
@@ -115,7 +107,7 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
-								className="size-8 opacity-0 transition-opacity group-hover:opacity-100"
+								className="size-8 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
 								onClick={(e) => e.preventDefault()}
 								size="icon-sm"
 								variant="ghost"
@@ -124,13 +116,11 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-48">
-							<DropdownMenuItem
-								onClick={(e) => {
-									e.preventDefault();
-								}}
-							>
-								<Settings className="mr-2 size-4" />
-								Edit Monitor
+							<DropdownMenuItem asChild>
+								<Link href={`/dashboard/monitors/${monitor.id}/edit`}>
+									<Settings className="mr-2 size-4" />
+									Edit Monitor
+								</Link>
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								disabled={pauseMutation.isPending || resumeMutation.isPending}
@@ -179,7 +169,7 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 function EmptyState() {
 	return (
 		<div className="flex flex-col items-center justify-center rounded-xl border border-border/50 border-dashed bg-muted/10 py-16">
-			<div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted/50">
+			<div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted/50">
 				<Plus className="size-6 text-muted-foreground" />
 			</div>
 			<h3 className="font-semibold">No monitors yet</h3>
@@ -197,27 +187,31 @@ function EmptyState() {
 }
 
 export function MonitorsClient() {
-	const [monitors] = api.monitor.getAll.useSuspenseQuery();
 	const [searchQuery, setSearchQuery] = useState("");
+	// Use deferred value to prevent excessive re-renders while typing
+	const deferredSearch = useDeferredValue(searchQuery);
 
-	const filteredMonitors = monitors.filter((monitor) => {
-		if (!searchQuery) return true;
-		const query = searchQuery.toLowerCase();
-		return (
-			monitor.name.toLowerCase().includes(query) ||
-			monitor.url?.toLowerCase().includes(query) ||
-			monitor.hostname?.toLowerCase().includes(query)
-		);
-	});
+	// Get all monitors for stats (without search filter)
+	const [allMonitors] = api.monitor.getAll.useSuspenseQuery(undefined);
 
-	const stats = {
-		total: monitors.length,
-		up: monitors.filter((m) => m.status === "UP").length,
-		down: monitors.filter((m) => m.status === "DOWN").length,
-		degraded: monitors.filter((m) => m.status === "DEGRADED").length,
-	};
+	// Pass search to server for server-side filtering (more efficient for large datasets)
+	const [monitors] = api.monitor.getAll.useSuspenseQuery(
+		deferredSearch ? { search: deferredSearch } : undefined,
+	);
 
-	const hasMonitors = monitors.length > 0;
+	// Memoize stats calculation to prevent unnecessary recalculations (use all monitors for stats)
+	const stats = useMemo(
+		() => ({
+			total: allMonitors.length,
+			up: allMonitors.filter((m) => m.status === "UP").length,
+			down: allMonitors.filter((m) => m.status === "DOWN").length,
+			degraded: allMonitors.filter((m) => m.status === "DEGRADED").length,
+		}),
+		[allMonitors],
+	);
+
+	// Show empty state only if user has no monitors at all
+	const hasMonitors = allMonitors.length > 0;
 
 	return (
 		<div className="space-y-6">
@@ -281,7 +275,7 @@ export function MonitorsClient() {
 
 					{/* Filters and search */}
 					<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-						<div className="relative max-w-sm flex-1">
+						<div className="relative w-full sm:max-w-sm sm:flex-1">
 							<Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
 							<input
 								className="input-modern h-9 w-full pl-9"
@@ -301,10 +295,10 @@ export function MonitorsClient() {
 
 					{/* Monitors list */}
 					<div className="space-y-3">
-						{filteredMonitors.map((monitor) => (
+						{monitors.map((monitor) => (
 							<MonitorRow key={monitor.id} monitor={monitor} />
 						))}
-						{filteredMonitors.length === 0 && searchQuery && (
+						{monitors.length === 0 && searchQuery && (
 							<div className="py-8 text-center text-muted-foreground">
 								No monitors match your search
 							</div>

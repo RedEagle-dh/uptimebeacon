@@ -11,8 +11,16 @@ import {
 	Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
-import { type Status, StatusDot, UptimeBar } from "@/components/shared";
+import {
+	MonitorSelector,
+	ResponseTimeChart,
+	type Status,
+	StatusDot,
+	UptimeBar,
+	type UptimeBarDayData,
+} from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,10 +31,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { INCIDENT_STATUS_CONFIG } from "@/lib/constants";
+import { cn, formatUptime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 
-type MonitorStats = RouterOutputs["monitor"]["getStats"];
 type Monitor = RouterOutputs["monitor"]["getAll"][number];
 type Incident = RouterOutputs["incident"]["getAll"][number];
 
@@ -60,12 +68,12 @@ function StatCard({
 			)}
 		>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
-				<CardTitle className="font-medium text-muted-foreground text-sm">
+				<CardTitle className="font-medium text-muted-foreground text-xs sm:text-sm">
 					{title}
 				</CardTitle>
 				<div
 					className={cn(
-						"flex size-9 items-center justify-center rounded-lg",
+						"flex size-8 items-center justify-center rounded-lg sm:size-9",
 						variant === "default" && "bg-muted/50",
 						variant === "success" && "bg-status-up/10",
 						variant === "danger" && "bg-status-down/10",
@@ -74,7 +82,7 @@ function StatCard({
 				>
 					<Icon
 						className={cn(
-							"size-4",
+							"size-3.5 sm:size-4",
 							variant === "default" && "text-muted-foreground",
 							variant === "success" && "text-status-up",
 							variant === "danger" && "text-status-down",
@@ -85,7 +93,9 @@ function StatCard({
 			</CardHeader>
 			<CardContent>
 				<div className="flex items-baseline gap-2">
-					<span className="font-bold text-3xl tracking-tight">{value}</span>
+					<span className="font-bold text-2xl tracking-tight sm:text-3xl">
+						{value}
+					</span>
 					{trend && (
 						<span
 							className={cn(
@@ -139,11 +149,11 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
 						</p>
 					</div>
 				</div>
-				<div className="flex items-center gap-6">
-					<div className="hidden text-right md:block">
+				<div className="flex items-center gap-3 sm:gap-6">
+					<div className="text-right">
 						<p
 							className={cn(
-								"font-medium font-mono text-sm",
+								"font-medium font-mono text-xs sm:text-sm",
 								status === "UP" && "text-status-up",
 								status === "DOWN" && "text-status-down",
 								status === "DEGRADED" && "text-status-degraded",
@@ -151,8 +161,8 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
 						>
 							{status === "UP" ? `${Math.round(responseTime)}ms` : status}
 						</p>
-						<p className="text-muted-foreground text-xs">
-							{uptime.toFixed(2)}% uptime
+						<p className="hidden text-muted-foreground text-xs sm:block">
+							{formatUptime(uptime)}% uptime
 						</p>
 					</div>
 					<ArrowRight className="size-4 text-muted-foreground/40 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
@@ -184,18 +194,23 @@ function IncidentCard({ incident }: { incident: Incident }) {
 				</div>
 				<div className="min-w-0 flex-1">
 					<div className="flex items-start justify-between gap-2">
-						<p className="font-medium transition-colors duration-200 group-hover:text-foreground">
+						<p className="truncate font-medium transition-colors duration-200 group-hover:text-foreground">
 							{incident.title}
 						</p>
 						<Badge
-							className="shrink-0"
-							variant={
-								incident.status === "investigating"
-									? "destructive"
-									: "secondary"
-							}
+							className={cn(
+								"shrink-0",
+								INCIDENT_STATUS_CONFIG[
+									incident.status as keyof typeof INCIDENT_STATUS_CONFIG
+								]?.badgeClass,
+							)}
+							variant="secondary"
 						>
-							{incident.status}
+							{
+								INCIDENT_STATUS_CONFIG[
+									incident.status as keyof typeof INCIDENT_STATUS_CONFIG
+								]?.label
+							}
 						</Badge>
 					</div>
 					<p className="mt-1 text-muted-foreground text-sm">
@@ -212,6 +227,36 @@ export function DashboardClient() {
 	const [stats] = api.monitor.getStats.useSuspenseQuery();
 	const [monitors] = api.monitor.getAll.useSuspenseQuery();
 	const [incidents] = api.incident.getAll.useSuspenseQuery();
+	const [uptimeHistory] = api.monitor.getDailyUptimeHistory.useSuspenseQuery({
+		days: 90,
+	});
+
+	// Response time chart state
+	const [selectedMonitorId, setSelectedMonitorId] = useState<string>(
+		monitors[0]?.id ?? "",
+	);
+
+	// Fetch response time history for selected monitor
+	const { data: responseTimeData } =
+		api.monitor.getResponseTimeHistory.useQuery(
+			{ monitorId: selectedMonitorId, days: 7 },
+			{ enabled: !!selectedMonitorId },
+		);
+
+	// Transform response time data for the chart
+	const chartData = useMemo(() => {
+		if (!responseTimeData) return [];
+		return responseTimeData.map((day) => ({
+			date: day.date,
+			avgResponseTime: day.avgResponseTime,
+		}));
+	}, [responseTimeData]);
+
+	// Monitor list for selector
+	const monitorList = useMemo(
+		() => monitors.map((m) => ({ id: m.id, name: m.name })),
+		[monitors],
+	);
 
 	const activeIncidents = incidents.filter((i) => i.status !== "resolved");
 	const displayMonitors = monitors.slice(0, 4);
@@ -223,10 +268,18 @@ export function DashboardClient() {
 				monitors.length
 			: 100;
 
+	// Transform uptime history for the UptimeBar component
+	const uptimeBarData: UptimeBarDayData[] = uptimeHistory.map((day) => ({
+		status: day.status,
+		date: day.date,
+		incidents: day.incidents,
+		downtimeMinutes: day.downtimeMinutes,
+	}));
+
 	return (
 		<div className="space-y-8">
 			{/* Page header */}
-			<div className="flex items-end justify-between">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 				<div>
 					<h1 className="font-bold text-2xl tracking-tight">Dashboard</h1>
 					<p className="mt-1 text-muted-foreground">
@@ -242,7 +295,7 @@ export function DashboardClient() {
 			</div>
 
 			{/* Stats Grid */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 				<StatCard
 					description="Active monitors"
 					icon={Activity}
@@ -271,30 +324,71 @@ export function DashboardClient() {
 				/>
 			</div>
 
-			{/* Uptime Overview */}
-			<Card>
-				<CardHeader>
-					<div className="flex items-center justify-between">
-						<div>
-							<CardTitle>Uptime Overview</CardTitle>
-							<CardDescription>Last 30 days performance</CardDescription>
+			{/* Uptime Overview & Response Time */}
+			<div className="grid gap-6 lg:grid-cols-2">
+				<Card>
+					<CardHeader>
+						<div className="flex items-center justify-between">
+							<div>
+								<CardTitle>Uptime Overview</CardTitle>
+								<CardDescription className="hidden sm:block">
+									Last 90 days performance
+								</CardDescription>
+								<CardDescription className="sm:hidden">
+									Last 30 days performance
+								</CardDescription>
+							</div>
+							<div className="flex items-center gap-2">
+								<span className="font-bold text-2xl text-status-up sm:text-3xl">
+									{formatUptime(avgUptime)}%
+								</span>
+								<span className="text-muted-foreground text-sm">uptime</span>
+							</div>
 						</div>
-						<div className="flex items-center gap-2">
-							<span className="font-bold text-3xl text-status-up">
-								{avgUptime.toFixed(2)}%
-							</span>
-							<span className="text-muted-foreground text-sm">uptime</span>
+					</CardHeader>
+					<CardContent>
+						<UptimeBar
+							className="w-full"
+							data={uptimeBarData}
+							days={90}
+							mobileDays={30}
+						/>
+						<div className="mt-3 flex items-center justify-between text-muted-foreground text-xs">
+							<span className="hidden sm:inline">90 days ago</span>
+							<span className="sm:hidden">30 days ago</span>
+							<span>Today</span>
 						</div>
-					</div>
-				</CardHeader>
-				<CardContent>
-					<UptimeBar className="w-full justify-between" days={90} />
-					<div className="mt-3 flex items-center justify-between text-muted-foreground text-xs">
-						<span>90 days ago</span>
-						<span>Today</span>
-					</div>
-				</CardContent>
-			</Card>
+					</CardContent>
+				</Card>
+
+				{/* Response Time Chart */}
+				<Card>
+					<CardHeader>
+						<div className="flex items-center justify-between">
+							<div>
+								<CardTitle>Response Time</CardTitle>
+								<CardDescription>Last 7 days average</CardDescription>
+							</div>
+							{monitorList.length > 1 && (
+								<MonitorSelector
+									monitors={monitorList}
+									onSelect={setSelectedMonitorId}
+									selectedMonitorId={selectedMonitorId}
+								/>
+							)}
+						</div>
+					</CardHeader>
+					<CardContent>
+						{monitors.length === 0 ? (
+							<div className="flex h-[100px] items-center justify-center text-muted-foreground">
+								No monitors yet
+							</div>
+						) : (
+							<ResponseTimeChart data={chartData} height="h-[100px]" />
+						)}
+					</CardContent>
+				</Card>
+			</div>
 
 			<div className="grid gap-6 lg:grid-cols-2">
 				{/* Monitors List */}

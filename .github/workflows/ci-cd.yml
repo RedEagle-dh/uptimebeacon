@@ -66,7 +66,7 @@ jobs:
         run: bun run typecheck
 
   # ============================================
-  # Detect Changes
+  # Detect Changes (main branch only)
   # ============================================
   detect-changes:
     name: Detect Changes
@@ -76,6 +76,7 @@ jobs:
       always() &&
       (needs.lint-and-typecheck.result == 'success' || needs.lint-and-typecheck.result == 'skipped') &&
       github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/main' &&
       !contains(github.event.head_commit.message, '[skip ci]')
     outputs:
       frontend: ${{ steps.changes.outputs.frontend }}

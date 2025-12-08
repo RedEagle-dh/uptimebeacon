@@ -19,12 +19,12 @@ function Skeleton({
 function StatCardSkeleton() {
 	return (
 		<div className="flex flex-col gap-6 rounded-xl border border-border/50 bg-card py-6">
-			<div className="flex items-center justify-between px-6">
-				<Skeleton className="h-4 w-24" />
-				<Skeleton className="size-9 rounded-lg" />
+			<div className="flex items-center justify-between px-4 sm:px-6">
+				<Skeleton className="h-4 w-20 sm:w-24" />
+				<Skeleton className="size-8 rounded-lg sm:size-9" />
 			</div>
-			<div className="px-6">
-				<Skeleton className="mb-2 h-8 w-20" />
+			<div className="px-4 sm:px-6">
+				<Skeleton className="mb-2 h-7 w-16 sm:h-8 sm:w-20" />
 				<Skeleton className="h-3 w-16" />
 			</div>
 		</div>
@@ -67,7 +67,7 @@ function MonitorListSkeleton({ count = 4 }: { count?: number }) {
 // Dashboard stats skeleton
 function DashboardStatsSkeleton() {
 	return (
-		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+		<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 			{Array.from({ length: 4 }).map((_, i) => (
 				<StatCardSkeleton key={`stat-skeleton-${i}`} />
 			))}
@@ -157,7 +157,7 @@ function CardSkeleton({
 // Page header skeleton
 function PageHeaderSkeleton() {
 	return (
-		<div className="flex items-end justify-between">
+		<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 			<div>
 				<Skeleton className="mb-2 h-7 w-32" />
 				<Skeleton className="h-4 w-56" />
@@ -346,6 +346,37 @@ function BrandingPageSkeleton() {
 	);
 }
 
+// Status page detail skeleton
+function StatusPageDetailSkeleton() {
+	return (
+		<div className="space-y-6">
+			{/* Header */}
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+				<div className="flex items-start gap-4">
+					<Skeleton className="mt-1 size-9 rounded-lg" />
+					<div>
+						<div className="flex flex-wrap items-center gap-2">
+							<Skeleton className="h-7 w-48" />
+							<Skeleton className="h-5 w-16 rounded-full" />
+						</div>
+						<Skeleton className="mt-2 h-4 w-32" />
+					</div>
+				</div>
+				<div className="flex items-center gap-2">
+					<Skeleton className="h-9 w-28" />
+					<Skeleton className="h-9 w-9 rounded-lg" />
+				</div>
+			</div>
+			{/* Settings Card */}
+			<CardSkeleton className="min-h-[400px]" />
+			{/* Monitors Card */}
+			<CardSkeleton className="min-h-[200px]" />
+			{/* Danger Zone */}
+			<CardSkeleton className="min-h-[100px]" />
+		</div>
+	);
+}
+
 // Monitor detail page skeleton
 function MonitorDetailSkeleton() {
 	return (
@@ -360,7 +391,7 @@ function MonitorDetailSkeleton() {
 				<Skeleton className="h-9 w-24" />
 			</div>
 			{/* Stats grid */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 				{Array.from({ length: 4 }).map((_, i) => (
 					<StatCardSkeleton key={`detail-stat-${i}`} />
 				))}
@@ -368,11 +399,84 @@ function MonitorDetailSkeleton() {
 			{/* Tabs */}
 			<Skeleton className="h-9 w-80 rounded-lg" />
 			{/* Content */}
-			<div className="grid gap-6 lg:grid-cols-2">
+			<div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
 				<CardSkeleton />
 				<CardSkeleton />
 			</div>
 			<CardSkeleton />
+		</div>
+	);
+}
+
+// Incident detail page skeleton
+function IncidentDetailSkeleton() {
+	return (
+		<div className="space-y-6">
+			{/* Header */}
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+				<div className="flex items-start gap-4">
+					<Skeleton className="mt-1 size-9 rounded-lg" />
+					<div>
+						<div className="flex flex-wrap items-center gap-2">
+							<Skeleton className="h-7 w-48" />
+							<Skeleton className="h-5 w-16 rounded-full" />
+							<Skeleton className="h-5 w-20 rounded-full" />
+						</div>
+						<Skeleton className="mt-2 h-4 w-32" />
+					</div>
+				</div>
+				<div className="flex items-center gap-2">
+					<Skeleton className="h-9 w-28" />
+					<Skeleton className="h-9 w-24" />
+				</div>
+			</div>
+			{/* Stats grid */}
+			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+				{Array.from({ length: 4 }).map((_, i) => (
+					<StatCardSkeleton key={`incident-detail-stat-${i}`} />
+				))}
+			</div>
+			{/* Timeline card */}
+			<div className="rounded-xl border border-border/50 bg-card">
+				<div className="border-border/50 border-b px-6 py-4">
+					<Skeleton className="mb-2 h-5 w-24" />
+					<Skeleton className="h-3 w-40" />
+				</div>
+				<div className="p-6">
+					<div className="space-y-6">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div className="flex gap-4" key={`timeline-item-${i}`}>
+								<Skeleton className="size-6 shrink-0 rounded-full" />
+								<div className="flex-1 space-y-2">
+									<div className="flex items-center gap-2">
+										<Skeleton className="h-5 w-20 rounded-full" />
+										<Skeleton className="h-3 w-24" />
+									</div>
+									<Skeleton className="h-4 w-full" />
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+// Response time chart skeleton
+function ResponseTimeChartSkeleton() {
+	return (
+		<div className="flex flex-col gap-6 rounded-xl border border-border/50 bg-card py-6">
+			<div className="flex items-center justify-between px-6">
+				<div>
+					<Skeleton className="mb-2 h-5 w-32" />
+					<Skeleton className="h-3 w-56" />
+				</div>
+				<Skeleton className="h-8 w-[180px]" />
+			</div>
+			<div className="px-6">
+				<Skeleton className="h-[200px] w-full" />
+			</div>
 		</div>
 	);
 }
@@ -422,6 +526,7 @@ export {
 	CardSkeleton,
 	DashboardPageSkeleton,
 	DashboardStatsSkeleton,
+	IncidentDetailSkeleton,
 	IncidentListSkeleton,
 	IncidentSkeleton,
 	IncidentsPageSkeleton,
@@ -433,9 +538,11 @@ export {
 	NotificationsPageSkeleton,
 	PageHeaderSkeleton,
 	PublicStatusPageSkeleton,
+	ResponseTimeChartSkeleton,
 	Skeleton,
 	StatCardSkeleton,
 	StatusPageCardSkeleton,
+	StatusPageDetailSkeleton,
 	StatusPagesPageSkeleton,
 	TableSkeleton,
 	UptimeBarSkeleton,

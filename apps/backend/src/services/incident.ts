@@ -2,14 +2,22 @@ import { db, type Monitor, type MonitorStatus } from "@uptimebeacon/database";
 import { logger } from "../utils/logger";
 import { sendNotifications } from "./notification";
 
+export interface StatusChangeOptions {
+	responseTime?: number;
+	statusCode?: number;
+}
+
 export async function handleStatusChange(
 	monitor: Monitor & { notifications?: { channel: { id: string } }[] },
 	previousStatus: MonitorStatus,
 	newStatus: MonitorStatus,
+	options?: StatusChangeOptions,
 ): Promise<void> {
 	logger.info(
 		`Monitor ${monitor.name} status changed: ${previousStatus} -> ${newStatus}`,
 	);
+
+	const { responseTime, statusCode } = options ?? {};
 
 	// Create or resolve incident based on status change
 	if (newStatus === "DOWN" && previousStatus !== "DOWN") {
@@ -21,55 +29,114 @@ export async function handleStatusChange(
 				description: `Monitor ${monitor.name} became unavailable`,
 				status: "investigating",
 				severity: "major",
+				affectedStatus: "DOWN",
 			},
 		});
 
 		logger.info(`Created incident ${incident.id} for monitor ${monitor.name}`);
 
-		// Send notifications
-		await sendNotifications(monitor, "down", incident);
+		// Send notifications with rich data
+		await sendNotifications({
+			monitor,
+			event: "down",
+			incident,
+			previousStatus,
+			responseTime,
+			statusCode,
+		});
 	} else if (newStatus === "UP" && previousStatus === "DOWN") {
-		// Resolve existing incidents
+		// Resolve existing incidents using batch operations for better performance
 		const openIncidents = await db.incident.findMany({
 			where: {
 				monitorId: monitor.id,
 				resolvedAt: null,
 			},
+			select: { id: true, startedAt: true, title: true, severity: true },
 		});
 
-		for (const incident of openIncidents) {
-			const duration = Math.floor(
-				(Date.now() - incident.startedAt.getTime()) / 1000,
-			);
+		// Get the first incident for the notification (to calculate downtime)
+		const resolvedIncident = openIncidents[0];
 
-			await db.incident.update({
-				where: { id: incident.id },
+		if (openIncidents.length > 0) {
+			const now = new Date();
+			const incidentIds = openIncidents.map((i) => i.id);
+
+			// Batch update all incidents
+			await db.incident.updateMany({
+				where: { id: { in: incidentIds } },
 				data: {
 					status: "resolved",
-					resolvedAt: new Date(),
-					duration,
+					resolvedAt: now,
 				},
 			});
 
-			// Add resolution update
-			await db.incidentUpdate.create({
-				data: {
+			// Update duration for each incident (needs individual updates due to calculated field)
+			// and create incident updates in batch
+			const incidentUpdates = openIncidents.map((incident) => {
+				const duration = Math.floor(
+					(now.getTime() - incident.startedAt.getTime()) / 1000,
+				);
+				return {
 					incidentId: incident.id,
 					status: "resolved",
 					message: `Monitor ${monitor.name} is back online after ${formatDuration(duration)}`,
-				},
+				};
 			});
 
+			// Batch create all incident updates
+			await db.incidentUpdate.createMany({
+				data: incidentUpdates,
+			});
+
+			// Update individual durations (needed since duration varies per incident)
+			await Promise.all(
+				openIncidents.map((incident) => {
+					const duration = Math.floor(
+						(now.getTime() - incident.startedAt.getTime()) / 1000,
+					);
+					return db.incident.update({
+						where: { id: incident.id },
+						data: { duration },
+					});
+				}),
+			);
+
 			logger.info(
-				`Resolved incident ${incident.id} for monitor ${monitor.name}`,
+				`Resolved ${openIncidents.length} incident(s) for monitor ${monitor.name}`,
 			);
 		}
 
-		// Send recovery notifications
-		await sendNotifications(monitor, "up");
+		// Send recovery notifications with incident data for downtime calculation
+		await sendNotifications({
+			monitor,
+			event: "up",
+			incident: resolvedIncident
+				? {
+						...resolvedIncident,
+						description: null,
+						status: "resolved",
+						monitorId: monitor.id,
+						resolvedAt: new Date(),
+						acknowledgedAt: null,
+						duration: null,
+						affectedStatus: "DOWN",
+						createdAt: resolvedIncident.startedAt,
+						updatedAt: new Date(),
+					}
+				: undefined,
+			previousStatus,
+			responseTime,
+			statusCode,
+		});
 	} else if (newStatus === "DEGRADED") {
 		// Handle degraded state
-		await sendNotifications(monitor, "degraded");
+		await sendNotifications({
+			monitor,
+			event: "degraded",
+			previousStatus,
+			responseTime,
+			statusCode,
+		});
 	}
 }
 

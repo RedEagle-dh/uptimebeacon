@@ -2,6 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db, type UserRole } from "@uptimebeacon/database";
 import bcrypt from "bcryptjs";
 import type { DefaultSession, NextAuthConfig } from "next-auth";
+import { decode as defaultDecode } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 
 /**
@@ -67,6 +68,18 @@ export const authConfig = {
 	adapter: PrismaAdapter(db),
 	session: {
 		strategy: "jwt",
+	},
+	jwt: {
+		// Custom decode that handles decryption errors gracefully
+		// This happens when AUTH_SECRET changes and old cookies become invalid
+		decode: async (params) => {
+			try {
+				return await defaultDecode(params);
+			} catch {
+				// Return null to invalidate the session (logs user out)
+				return null;
+			}
+		},
 	},
 	pages: {
 		signIn: "/auth/login",
