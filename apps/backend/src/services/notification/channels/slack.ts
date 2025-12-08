@@ -11,7 +11,6 @@ export async function sendSlack(
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({
-			text: `${payload.title}\n\n${payload.message}`,
 			attachments: [
 				{
 					color: payload.color,

@@ -14,6 +14,14 @@ const config = {
 	// Required for monorepo: tells Next.js where the root is for dependency tracing
 	outputFileTracingRoot: path.join(__dirname, "../../"),
 	transpilePackages: ["@uptimebeacon/database"],
+	images: {
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "**",
+			},
+		],
+	},
 };
 
 export default config;

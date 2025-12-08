@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock, ExternalLink } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -11,7 +11,6 @@ import {
 	type UptimeBarDayData,
 } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -281,21 +280,6 @@ export function PublicStatusClient() {
 							))}
 						</div>
 					)}
-				</CardContent>
-			</Card>
-
-			{/* Subscribe CTA */}
-			<Card className="border-dashed bg-muted/20">
-				<CardContent className="flex flex-col items-center justify-center py-8 text-center">
-					<h3 className="mb-2 font-semibold">Stay Updated</h3>
-					<p className="mb-4 max-w-md text-muted-foreground text-sm">
-						Subscribe to receive notifications about incidents and scheduled
-						maintenance.
-					</p>
-					<Button size="sm" variant="outline">
-						<ExternalLink className="mr-2 size-4" />
-						Subscribe to Updates
-					</Button>
 				</CardContent>
 			</Card>
 		</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Pencil, Send, Trash2 } from "lucide-react";
+import { Bell, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -81,14 +81,19 @@ export function NotificationChannelCard({
 
 	return (
 		<>
-			<Card>
+			<Card
+				className="group cursor-pointer transition-colors hover:bg-muted/50"
+				onClick={() => onEdit(channel)}
+			>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle className="flex min-w-0 flex-1 items-center gap-2 font-medium text-base sm:gap-3">
 						<div className={`shrink-0 rounded-lg p-2 ${colorClass}`}>
 							<Icon className="size-4" />
 						</div>
 						<div className="flex min-w-0 flex-col">
-							<span className="truncate">{channel.name}</span>
+							<span className="truncate group-hover:underline">
+								{channel.name}
+							</span>
 							{channel.isDefault && (
 								<Badge className="mt-1 w-fit text-xs" variant="secondary">
 									Default
@@ -103,6 +108,7 @@ export function NotificationChannelCard({
 						onCheckedChange={(active) =>
 							updateMutation.mutate({ id: channel.id, active })
 						}
+						onClick={(e) => e.stopPropagation()}
 					/>
 				</CardHeader>
 				<CardContent>
@@ -117,7 +123,10 @@ export function NotificationChannelCard({
 							<Button
 								className="flex-1 sm:flex-none"
 								disabled={testMutation.isPending || !channel.active}
-								onClick={() => testMutation.mutate({ id: channel.id })}
+								onClick={(e) => {
+									e.stopPropagation();
+									testMutation.mutate({ id: channel.id });
+								}}
 								size="sm"
 								title={
 									!channel.active
@@ -132,17 +141,11 @@ export function NotificationChannelCard({
 								</span>
 							</Button>
 							<Button
-								className="flex-1 sm:flex-none"
-								onClick={() => onEdit(channel)}
-								size="sm"
-								variant="ghost"
-							>
-								<Pencil className="mr-1 size-3" />
-								<span className="sm:inline">Edit</span>
-							</Button>
-							<Button
 								className="text-destructive hover:text-destructive"
-								onClick={() => setDeleteDialogOpen(true)}
+								onClick={(e) => {
+									e.stopPropagation();
+									setDeleteDialogOpen(true);
+								}}
 								size="sm"
 								variant="ghost"
 							>

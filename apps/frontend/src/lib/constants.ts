@@ -167,11 +167,11 @@ export const CHANNEL_COLORS = {
 } as const;
 
 export const NOTIFICATION_CHANNEL_TYPES = [
-	"EMAIL",
 	"RESEND",
 	"SLACK",
 	"DISCORD",
 	"TELEGRAM",
+	"EMAIL",
 	"WEBHOOK",
 ] as const;
 
@@ -196,7 +196,7 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 	}
 > = {
 	EMAIL: {
-		label: "Email (SMTP)",
+		label: "Email",
 		description: "Send notifications via email using custom SMTP server",
 		fields: [
 			{
@@ -237,7 +237,7 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				placeholder: "••••••••",
 				required: true,
 				type: "password",
-				description: "SMTP authentication password (will be encrypted)",
+				description: "SMTP authentication password",
 			},
 			{
 				name: "fromEmail",
@@ -275,7 +275,7 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				placeholder: "re_xxxxxxxx",
 				required: true,
 				type: "password",
-				description: "Your Resend API key (will be encrypted)",
+				description: "Your Resend API key",
 			},
 			{
 				name: "fromEmail",
@@ -305,7 +305,7 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				placeholder: "https://hooks.slack.com/services/...",
 				required: true,
 				type: "password",
-				description: "Slack incoming webhook URL (will be encrypted)",
+				description: "Slack incoming webhook URL",
 			},
 			{
 				name: "slackChannel",
@@ -327,7 +327,7 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				placeholder: "https://discord.com/api/webhooks/...",
 				required: true,
 				type: "password",
-				description: "Discord webhook URL (will be encrypted)",
+				description: "Discord webhook URL",
 			},
 		],
 	},
@@ -341,7 +341,7 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				placeholder: "123456789:ABCdefGHIjklMNOpqrSTUvwxYZ",
 				required: true,
 				type: "password",
-				description: "Telegram bot token from @BotFather (will be encrypted)",
+				description: "Telegram bot token from @BotFather",
 			},
 			{
 				name: "telegramChatId",
@@ -363,7 +363,7 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				placeholder: "https://api.example.com/webhook",
 				required: true,
 				type: "password",
-				description: "URL to receive webhook POST requests (will be encrypted)",
+				description: "URL to receive webhook POST requests",
 			},
 			{
 				name: "webhookMethod",

@@ -280,11 +280,183 @@ export const statusPageRouter = createTRPCRouter({
 				});
 			}
 
+			const monitorIds = statusPage.monitors.map((m) => m.monitor.id);
+			const overallStatus = getOverallStatus(
+				statusPage.monitors.map((m) => m.monitor.status),
+			);
+
+			// Get uptime history if enabled
+			let uptimeHistory: {
+				date: string;
+				status: "UP" | "DOWN" | "DEGRADED" | "PENDING";
+				incidents: number;
+				downtimeMinutes: number;
+			}[] = [];
+
+			if (statusPage.showUptimeGraph && monitorIds.length > 0) {
+				const days = statusPage.daysToShow;
+				const startDate = new Date();
+				startDate.setDate(startDate.getDate() - days);
+				startDate.setHours(0, 0, 0, 0);
+
+				// Initialize daily data
+				const dailyData: Record<
+					string,
+					{ up: number; down: number; degraded: number; incidents: number }
+				> = {};
+
+				for (let i = 0; i < days; i++) {
+					const date = new Date();
+					date.setDate(date.getDate() - (days - 1 - i));
+					const dayKey = date.toISOString().split("T")[0]!;
+					dailyData[dayKey] = { up: 0, down: 0, degraded: 0, incidents: 0 };
+				}
+
+				// Get all checks for monitors in the date range
+				const checks = await ctx.db.monitorCheck.findMany({
+					where: {
+						monitorId: { in: monitorIds },
+						createdAt: { gte: startDate },
+					},
+					select: {
+						status: true,
+						createdAt: true,
+					},
+					orderBy: { createdAt: "asc" },
+				});
+
+				// Get incidents in the date range
+				const allIncidents = await ctx.db.incident.findMany({
+					where: {
+						monitorId: { in: monitorIds },
+						startedAt: { gte: startDate },
+					},
+					select: {
+						startedAt: true,
+					},
+				});
+
+				// Count checks per day
+				for (const check of checks) {
+					const day = check.createdAt.toISOString().split("T")[0]!;
+					if (!dailyData[day]) continue;
+
+					if (check.status === "UP") {
+						dailyData[day].up++;
+					} else if (check.status === "DOWN") {
+						dailyData[day].down++;
+					} else if (check.status === "DEGRADED") {
+						dailyData[day].degraded++;
+					}
+				}
+
+				// Count incidents per day
+				for (const incident of allIncidents) {
+					const day = incident.startedAt.toISOString().split("T")[0]!;
+					if (dailyData[day]) {
+						dailyData[day].incidents++;
+					}
+				}
+
+				uptimeHistory = Object.entries(dailyData)
+					.sort(([a], [b]) => a.localeCompare(b))
+					.map(([date, counts]) => {
+						const total = counts.up + counts.down + counts.degraded;
+						let status: "UP" | "DOWN" | "DEGRADED" | "PENDING" = "PENDING";
+
+						if (total > 0) {
+							if (counts.down > 0) {
+								status = "DOWN";
+							} else if (counts.degraded > 0) {
+								status = "DEGRADED";
+							} else {
+								status = "UP";
+							}
+						}
+
+						const downtimeRatio =
+							total > 0 ? (counts.down + counts.degraded * 0.5) / total : 0;
+						const downtimeMinutes = Math.round(downtimeRatio * 24 * 60);
+
+						return {
+							date,
+							status,
+							incidents: counts.incidents,
+							downtimeMinutes,
+						};
+					});
+			}
+
+			// Get incidents if enabled
+			let activeIncidents: {
+				id: string;
+				title: string;
+				description: string | null;
+				status: string;
+				severity: string;
+				startedAt: Date;
+				monitor: { id: string; name: string };
+			}[] = [];
+
+			let recentResolvedIncidents: typeof activeIncidents = [];
+
+			if (statusPage.showIncidentHistory && monitorIds.length > 0) {
+				activeIncidents = await ctx.db.incident.findMany({
+					where: {
+						monitorId: { in: monitorIds },
+						status: { not: "resolved" },
+					},
+					take: 10,
+					orderBy: { startedAt: "desc" },
+					select: {
+						id: true,
+						title: true,
+						description: true,
+						status: true,
+						severity: true,
+						startedAt: true,
+						monitor: {
+							select: {
+								id: true,
+								name: true,
+							},
+						},
+					},
+				});
+
+				recentResolvedIncidents = await ctx.db.incident.findMany({
+					where: {
+						monitorId: { in: monitorIds },
+						status: "resolved",
+						resolvedAt: {
+							gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+						},
+					},
+					take: 5,
+					orderBy: { resolvedAt: "desc" },
+					select: {
+						id: true,
+						title: true,
+						description: true,
+						status: true,
+						severity: true,
+						startedAt: true,
+						monitor: {
+							select: {
+								id: true,
+								name: true,
+							},
+						},
+					},
+				});
+			}
+
 			return {
 				...statusPage,
-				overallStatus: getOverallStatus(
-					statusPage.monitors.map((m) => m.monitor.status),
-				),
+				overallStatus,
+				uptimeHistory,
+				activeIncidents,
+				recentResolvedIncidents,
 			};
 		}),
 

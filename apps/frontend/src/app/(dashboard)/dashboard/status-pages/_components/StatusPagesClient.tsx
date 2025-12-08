@@ -18,53 +18,58 @@ function StatusPageCard({ page }: { page: StatusPage }) {
 	const monitorsCount = page._count.monitors;
 
 	return (
-		<Card>
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="flex items-center gap-2 font-medium text-base">
-					<Globe className="size-4" />
-					{page.name}
-				</CardTitle>
-				<StatusDot status={page.overallStatus as Status} />
-			</CardHeader>
-			<CardContent>
-				<div className="space-y-3">
-					<div className="flex items-center gap-2">
-						<Badge variant={page.isPublic ? "default" : "secondary"}>
-							{page.isPublic ? "Public" : "Private"}
-						</Badge>
-						<span className="text-muted-foreground text-sm">
-							{monitorsCount} monitor{monitorsCount !== 1 ? "s" : ""}
-						</span>
-					</div>
-
-					<div className="text-muted-foreground text-sm">
-						{domain ? (
-							<span className="flex items-center gap-1">
-								<ExternalLink className="size-3" />
-								{domain}
+		<Link className="group block" href={`/dashboard/status-pages/${page.id}`}>
+			<Card className="transition-colors hover:bg-muted/50">
+				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+					<CardTitle className="flex items-center gap-2 font-medium text-base group-hover:underline">
+						<Globe className="size-4" />
+						{page.name}
+					</CardTitle>
+					<StatusDot status={page.overallStatus as Status} />
+				</CardHeader>
+				<CardContent>
+					<div className="space-y-3">
+						<div className="flex items-center gap-2">
+							<Badge variant={page.isPublic ? "default" : "secondary"}>
+								{page.isPublic ? "Public" : "Private"}
+							</Badge>
+							<span className="text-muted-foreground text-sm">
+								{monitorsCount} monitor{monitorsCount !== 1 ? "s" : ""}
 							</span>
-						) : (
-							<span>/{page.slug}</span>
-						)}
-					</div>
+						</div>
 
-					<div className="flex gap-2 pt-2">
-						<Button asChild className="flex-1" size="sm" variant="outline">
-							<Link href={`/dashboard/status-pages/${page.id}`}>Edit</Link>
-						</Button>
-						<Button asChild size="sm" variant="ghost">
-							<Link
-								href={domain ? `https://${domain}` : `/status/${page.slug}`}
-								rel="noopener noreferrer"
-								target="_blank"
+						<div className="text-muted-foreground text-sm">
+							{domain ? (
+								<span className="flex items-center gap-1">
+									<ExternalLink className="size-3" />
+									{domain}
+								</span>
+							) : (
+								<span>/{page.slug}</span>
+							)}
+						</div>
+
+						<div className="flex gap-2 pt-2">
+							<Button
+								asChild
+								onClick={(e) => e.stopPropagation()}
+								size="sm"
+								variant="ghost"
 							>
-								<ExternalLink className="size-4" />
-							</Link>
-						</Button>
+								<Link
+									href={domain ? `https://${domain}` : `/status/${page.slug}`}
+									rel="noopener noreferrer"
+									target="_blank"
+								>
+									<ExternalLink className="mr-2 size-4" />
+									View
+								</Link>
+							</Button>
+						</div>
 					</div>
-				</div>
-			</CardContent>
-		</Card>
+				</CardContent>
+			</Card>
+		</Link>
 	);
 }
 

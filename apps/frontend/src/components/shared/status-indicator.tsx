@@ -9,7 +9,7 @@ import {
 	Wrench,
 	XCircle,
 } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 
 import {
 	Popover,
@@ -232,6 +232,65 @@ function getTooltipContent(day: UptimeBarDayData, daysAgo: number): string {
 	return parts.join("\n");
 }
 
+interface UptimeBarDayProps {
+	day: UptimeBarDayData;
+	daysAgo: number;
+	hideOnMobile: boolean;
+}
+
+function UptimeBarDay({ day, daysAgo, hideOnMobile }: UptimeBarDayProps) {
+	const [open, setOpen] = React.useState(false);
+	const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+	const config = STATUS_CONFIG[day.status];
+
+	const handleMouseEnter = () => {
+		timeoutRef.current = setTimeout(() => {
+			setOpen(true);
+		}, 200);
+	};
+
+	const handleMouseLeave = () => {
+		if (timeoutRef.current) {
+			clearTimeout(timeoutRef.current);
+			timeoutRef.current = null;
+		}
+		setOpen(false);
+	};
+
+	React.useEffect(() => {
+		return () => {
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+			}
+		};
+	}, []);
+
+	return (
+		<Popover onOpenChange={setOpen} open={open}>
+			<PopoverTrigger asChild>
+				<button
+					className={cn(
+						"h-8 w-2 min-w-1 flex-1 rounded-sm transition-shadow duration-200 sm:h-8",
+						config.barClass,
+						hideOnMobile && "hidden sm:block",
+					)}
+					onMouseEnter={handleMouseEnter}
+					onMouseLeave={handleMouseLeave}
+					type="button"
+				/>
+			</PopoverTrigger>
+			<PopoverContent
+				className="w-auto whitespace-pre-line rounded-md border-neutral-800 bg-neutral-900 px-3 py-1.5 text-center text-neutral-100 text-xs"
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
+				sideOffset={4}
+			>
+				{getTooltipContent(day, daysAgo)}
+			</PopoverContent>
+		</Popover>
+	);
+}
+
 export function UptimeBar({
 	days = 30,
 	mobileDays = 14,
@@ -281,29 +340,16 @@ export function UptimeBar({
 			className={cn("flex flex-1 items-center gap-1.5 sm:gap-[3px]", className)}
 		>
 			{uptimeData.map((day, index) => {
-				const config = STATUS_CONFIG[day.status];
 				const daysAgo = days - index;
 				const hideOnMobile = index < hiddenOnMobile;
 
 				return (
-					<Popover key={`uptime-${index}`}>
-						<PopoverTrigger asChild>
-							<button
-								className={cn(
-									"h-8 w-2 cursor-pointer rounded-sm transition-shadow duration-200 sm:h-8 sm:w-1",
-									config.barClass,
-									hideOnMobile && "hidden sm:block",
-								)}
-								type="button"
-							/>
-						</PopoverTrigger>
-						<PopoverContent
-							className="w-auto whitespace-pre-line rounded-md border-neutral-800 bg-neutral-900 px-3 py-1.5 text-center text-neutral-100 text-xs"
-							sideOffset={4}
-						>
-							{getTooltipContent(day, daysAgo)}
-						</PopoverContent>
-					</Popover>
+					<UptimeBarDay
+						day={day}
+						daysAgo={daysAgo}
+						hideOnMobile={hideOnMobile}
+						key={`uptime-${index}`}
+					/>
 				);
 			})}
 		</div>

@@ -49,7 +49,7 @@ export function NotificationChannelDialog({
 	const utils = api.useUtils();
 	const isEditMode = !!channel;
 
-	const [type, setType] = useState<NotificationChannelType>("SLACK");
+	const [type, setType] = useState<NotificationChannelType>("RESEND");
 	const [name, setName] = useState("");
 	const [isDefault, setIsDefault] = useState(false);
 	const [config, setConfig] = useState<Record<string, string>>({});
@@ -109,7 +109,7 @@ export function NotificationChannelDialog({
 			setMonitorLinks(initialLinks);
 		} else if (!isEditMode) {
 			// Create mode: reset form
-			setType("SLACK");
+			setType("RESEND");
 			setName("");
 			setIsDefault(false);
 			setConfig({});
@@ -358,7 +358,7 @@ export function NotificationChannelDialog({
 						</div>
 					</ScrollArea>
 
-					<DialogFooter className="mt-4 flex-col gap-2 sm:flex-row sm:gap-0">
+					<DialogFooter className="mt-4 flex-col gap-2 sm:flex-row sm:gap-2">
 						<Button
 							className="w-full sm:w-auto"
 							onClick={() => onOpenChange(false)}
