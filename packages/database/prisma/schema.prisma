@@ -241,8 +241,9 @@ model Incident {
 
     title       String
     description String? @db.Text
-    status      String  @default("investigating") // investigating, identified, monitoring, resolved
-    severity    String  @default("minor") // minor, major, critical
+    status         String  @default("investigating") // investigating, identified, monitoring, resolved
+    severity       String  @default("minor") // minor, major, critical
+    affectedStatus String  @default("DEGRADED") // DOWN, DEGRADED, MAINTENANCE - status shown on status page
 
     startedAt      DateTime  @default(now())
     acknowledgedAt DateTime?
@@ -359,10 +360,16 @@ model MonitorNotification {
     channelId String
     channel   NotificationChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
-    // Notification settings per monitor
+    // Status change notifications
     notifyOnDown     Boolean @default(true)
     notifyOnUp       Boolean @default(true)
     notifyOnDegraded Boolean @default(false)
+
+    // Operational event notifications
+    notifyOnSslExpiry   Boolean @default(true)
+    notifyOnMaintenance Boolean @default(true)
+    notifyOnFirstCheck  Boolean @default(false)
+    notifyOnPauseResume Boolean @default(false)
 
     createdAt DateTime @default(now())
 

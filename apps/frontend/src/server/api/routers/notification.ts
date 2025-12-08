@@ -10,31 +10,45 @@ import { z } from "zod";
 import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
-const notificationConfigSchema = z.object({
-	// Common email fields
-	email: z.string().email().optional(),
-	fromEmail: z.string().email().optional(),
-	fromName: z.string().optional(),
-	// Email (SMTP)
-	smtpHost: z.string().optional(),
-	smtpPort: z.string().optional(),
-	smtpUser: z.string().optional(),
-	smtpPassword: z.string().optional(),
-	// Resend
-	resendApiKey: z.string().optional(),
-	// Slack
-	slackWebhookUrl: z.string().url().optional(),
-	slackChannel: z.string().optional(),
-	// Discord
-	discordWebhookUrl: z.string().url().optional(),
-	// Telegram
-	telegramBotToken: z.string().optional(),
-	telegramChatId: z.string().optional(),
-	// Generic Webhook
-	webhookUrl: z.string().url().optional(),
-	webhookMethod: z.enum(["GET", "POST"]).optional(),
-	webhookHeaders: z.record(z.string(), z.string()).optional(),
-});
+// Custom URL validator that accepts masked values (starting with ****)
+const urlOrMasked = z
+	.string()
+	.refine(
+		(val) => val.startsWith("****") || z.string().url().safeParse(val).success,
+		{
+			message: "Invalid URL",
+		},
+	)
+	.optional();
+
+const notificationConfigSchema = z
+	.object({
+		// Common email fields
+		email: z.string().email().optional(),
+		fromEmail: z.string().email().optional(),
+		fromName: z.string().optional(),
+		// Email (SMTP)
+		smtpHost: z.string().optional(),
+		smtpPort: z.string().optional(),
+		smtpUser: z.string().optional(),
+		smtpPassword: z.string().optional(),
+		// Resend
+		resendApiKey: z.string().optional(),
+		// Slack
+		slackWebhookUrl: urlOrMasked,
+		slackChannel: z.string().optional(),
+		// Discord
+		discordWebhookUrl: urlOrMasked,
+		// Telegram
+		telegramBotToken: z.string().optional(),
+		telegramChatId: z.string().optional(),
+		// Generic Webhook
+		webhookUrl: urlOrMasked,
+		webhookMethod: z.enum(["GET", "POST"]).optional(),
+		// webhookHeaders is now stored as individual webhookHeader_* fields
+	})
+	// Allow webhookHeader_* fields to pass through
+	.catchall(z.string().optional());
 
 // Fields that contain sensitive data requiring encryption
 const SENSITIVE_FIELDS = [
@@ -53,14 +67,29 @@ function getSecret(): string {
 	return env.AUTH_SECRET;
 }
 
+function isSensitiveField(fieldName: string): boolean {
+	// Check static sensitive fields
+	if ((SENSITIVE_FIELDS as readonly string[]).includes(fieldName)) {
+		return true;
+	}
+	// Check dynamic webhook header fields
+	if (fieldName.startsWith("webhookHeader_")) {
+		return true;
+	}
+	return false;
+}
+
 function processConfigFields(
 	config: Record<string, unknown>,
 	processor: (value: string) => string,
 ): Record<string, unknown> {
 	const result = { ...config };
-	for (const field of SENSITIVE_FIELDS) {
-		const value = result[field];
-		if (typeof value === "string" && value.length > 0) {
+	for (const [field, value] of Object.entries(result)) {
+		if (
+			isSensitiveField(field) &&
+			typeof value === "string" &&
+			value.length > 0
+		) {
 			result[field] = processor(value);
 		}
 	}
@@ -72,7 +101,10 @@ function encryptConfig(
 ): Record<string, unknown> {
 	const secret = getSecret();
 	return processConfigFields(config, (value) =>
-		value.startsWith("****") ? value : encrypt(value, secret),
+		// Skip if already masked or already encrypted (to avoid double-encryption on update)
+		value.startsWith("****") || isEncrypted(value)
+			? value
+			: encrypt(value, secret),
 	);
 }
 
@@ -103,6 +135,32 @@ function maskConfig(config: Record<string, unknown>): Record<string, unknown> {
 		}
 		return maskSensitiveValue(decrypted);
 	});
+}
+
+// Convert webhookHeader_* fields to webhookHeaders object for backend
+function convertHeadersForBackend(
+	config: Record<string, unknown>,
+): Record<string, unknown> {
+	const result: Record<string, unknown> = {};
+	const webhookHeaders: Record<string, string> = {};
+
+	for (const [key, value] of Object.entries(config)) {
+		if (key.startsWith("webhookHeader_")) {
+			const headerKey = key.replace("webhookHeader_", "");
+			if (typeof value === "string" && value.length > 0) {
+				webhookHeaders[headerKey] = value;
+			}
+		} else {
+			result[key] = value;
+		}
+	}
+
+	// Only add webhookHeaders if there are any
+	if (Object.keys(webhookHeaders).length > 0) {
+		result.webhookHeaders = webhookHeaders;
+	}
+
+	return result;
 }
 
 export const notificationRouter = createTRPCRouter({
@@ -247,11 +305,24 @@ export const notificationRouter = createTRPCRouter({
 
 				// Merge configs: keep existing encrypted values for masked fields
 				const mergedConfig: Record<string, unknown> = { ...newConfig };
-				for (const field of SENSITIVE_FIELDS) {
-					const newValue = newConfig[field];
-					// If the new value is masked (starts with ****), keep the existing encrypted value
-					if (typeof newValue === "string" && newValue.startsWith("****")) {
-						mergedConfig[field] = existingConfig[field];
+
+				// Handle all sensitive fields (static + dynamic webhookHeader_*)
+				for (const [field, newValue] of Object.entries(newConfig)) {
+					if (isSensitiveField(field)) {
+						// If the new value is masked (starts with ****), keep the existing encrypted value
+						if (typeof newValue === "string" && newValue.startsWith("****")) {
+							mergedConfig[field] = existingConfig[field];
+						}
+					}
+				}
+
+				// Remove empty webhookHeader_ fields (they've been deleted in UI)
+				for (const field of Object.keys(mergedConfig)) {
+					if (
+						field.startsWith("webhookHeader_") &&
+						mergedConfig[field] === ""
+					) {
+						delete mergedConfig[field];
 					}
 				}
 
@@ -322,8 +393,14 @@ export const notificationRouter = createTRPCRouter({
 			// Decrypt sensitive fields before sending to backend
 			const decryptedConfig = decryptConfig(rawConfig);
 
-			// Debug: log decrypted config
-			console.log("[TEST] Decrypted config:", JSON.stringify(decryptedConfig));
+			// Convert webhookHeader_* fields to webhookHeaders object for backend
+			const finalConfig = convertHeadersForBackend(decryptedConfig);
+
+			// Debug: log final config
+			console.log(
+				"[TEST] Final config for backend:",
+				JSON.stringify(finalConfig),
+			);
 
 			// Call backend to send test notification
 			const backendUrl = env.BACKEND_URL ?? "http://localhost:3001";
@@ -334,7 +411,7 @@ export const notificationRouter = createTRPCRouter({
 					channelId: channel.id,
 					channelType: channel.type,
 					channelName: channel.name,
-					config: decryptedConfig,
+					config: finalConfig,
 				}),
 			});
 
@@ -356,9 +433,15 @@ export const notificationRouter = createTRPCRouter({
 			z.object({
 				channelId: z.string(),
 				monitorId: z.string(),
+				// Status change notifications
 				notifyOnDown: z.boolean().default(true),
 				notifyOnUp: z.boolean().default(true),
 				notifyOnDegraded: z.boolean().default(false),
+				// Operational event notifications
+				notifyOnSslExpiry: z.boolean().default(true),
+				notifyOnMaintenance: z.boolean().default(true),
+				notifyOnFirstCheck: z.boolean().default(false),
+				notifyOnPauseResume: z.boolean().default(false),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -404,11 +487,19 @@ export const notificationRouter = createTRPCRouter({
 					notifyOnDown: input.notifyOnDown,
 					notifyOnUp: input.notifyOnUp,
 					notifyOnDegraded: input.notifyOnDegraded,
+					notifyOnSslExpiry: input.notifyOnSslExpiry,
+					notifyOnMaintenance: input.notifyOnMaintenance,
+					notifyOnFirstCheck: input.notifyOnFirstCheck,
+					notifyOnPauseResume: input.notifyOnPauseResume,
 				},
 				update: {
 					notifyOnDown: input.notifyOnDown,
 					notifyOnUp: input.notifyOnUp,
 					notifyOnDegraded: input.notifyOnDegraded,
+					notifyOnSslExpiry: input.notifyOnSslExpiry,
+					notifyOnMaintenance: input.notifyOnMaintenance,
+					notifyOnFirstCheck: input.notifyOnFirstCheck,
+					notifyOnPauseResume: input.notifyOnPauseResume,
 				},
 			});
 

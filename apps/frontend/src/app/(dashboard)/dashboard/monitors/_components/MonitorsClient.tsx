@@ -24,7 +24,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, formatUptime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 
 type Monitor = RouterOutputs["monitor"]["getAll"][number];
@@ -91,7 +91,7 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 							: status}
 					</p>
 					<p className="hidden whitespace-nowrap text-muted-foreground text-xs md:block">
-						{uptime.toFixed(2)}% uptime
+						{formatUptime(uptime)}% uptime
 					</p>
 				</div>
 

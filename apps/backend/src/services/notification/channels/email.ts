@@ -1,12 +1,21 @@
 import nodemailer from "nodemailer";
 
 import { logger } from "../../../utils/logger";
-import type { ChannelConfig, NotificationPayload } from "./types";
-import { getEventColor, validateSmtpConfig } from "./types";
+import type {
+	ChannelConfig,
+	NotificationPayload,
+	RichNotificationPayload,
+} from "./types";
+import {
+	getEventColor,
+	getStatusEmoji,
+	getStatusText,
+	validateSmtpConfig,
+} from "./types";
 
 export async function sendEmail(
 	rawConfig: ChannelConfig,
-	payload: NotificationPayload,
+	payload: NotificationPayload | RichNotificationPayload,
 ): Promise<void> {
 	const config = validateSmtpConfig(rawConfig);
 	const {
@@ -44,8 +53,94 @@ export async function sendEmail(
 	logger.info(`SMTP email sent successfully to ${email}`);
 }
 
-function formatHtmlEmail(payload: NotificationPayload): string {
+// Format message with HTML (uses <strong>bold</strong>)
+function formatHtmlMessage(payload: RichNotificationPayload): string {
+	const emoji = getStatusEmoji(payload.event);
+	const statusText = getStatusText(payload.event);
+
+	let message = `${emoji} <strong>${payload.monitor.name}</strong> ${statusText}`;
+	if (payload.monitor.url) {
+		message += `<br>URL: <a href="${payload.monitor.url}">${payload.monitor.url}</a>`;
+	}
+	if (payload.eventData?.responseTime !== undefined) {
+		message += `<br>Response time: ${payload.eventData.responseTime}ms`;
+	}
+	if (payload.eventData?.downtimeFormatted) {
+		message += `<br>Downtime: ${payload.eventData.downtimeFormatted}`;
+	}
+	if (payload.incident) {
+		message += `<br>Incident: ${payload.incident.title}`;
+	}
+	return message;
+}
+
+function formatHtmlEmail(
+	payload: NotificationPayload | RichNotificationPayload,
+): string {
 	const color = getEventColor(payload.event).css;
+
+	const isRichPayload = (
+		p: NotificationPayload,
+	): p is RichNotificationPayload => "monitor" in p;
+
+	// Build details section for rich payloads
+	let detailsHtml = "";
+	let messageHtml = payload.message.replace(/\n/g, "<br>");
+
+	if (isRichPayload(payload)) {
+		// Use HTML-formatted message
+		messageHtml = formatHtmlMessage(payload);
+
+		const details: Array<{ label: string; value: string }> = [];
+
+		if (payload.monitor.previousStatus) {
+			details.push({
+				label: "Previous Status",
+				value: payload.monitor.previousStatus,
+			});
+		}
+		details.push({
+			label: "Current Status",
+			value: payload.monitor.currentStatus,
+		});
+
+		if (payload.eventData?.responseTime !== undefined) {
+			details.push({
+				label: "Response Time",
+				value: `${payload.eventData.responseTime}ms`,
+			});
+		}
+
+		if (payload.eventData?.downtimeFormatted) {
+			details.push({
+				label: "Downtime Duration",
+				value: payload.eventData.downtimeFormatted,
+			});
+		}
+
+		if (payload.eventData?.sslDaysRemaining !== undefined) {
+			details.push({
+				label: "SSL Expiry",
+				value: `${payload.eventData.sslDaysRemaining} days remaining`,
+			});
+		}
+
+		if (details.length > 0) {
+			detailsHtml = `
+      <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+        ${details
+					.map(
+						(d) => `
+          <tr>
+            <td style="padding: 8px 0; color: #666; border-bottom: 1px solid #eee; width: 40%;">${d.label}</td>
+            <td style="padding: 8px 0; color: #333; border-bottom: 1px solid #eee; font-weight: 500;">${d.value}</td>
+          </tr>
+        `,
+					)
+					.join("")}
+      </table>`;
+		}
+	}
 
 	return `<!DOCTYPE html>
 <html>
@@ -59,8 +154,9 @@ function formatHtmlEmail(payload: NotificationPayload): string {
       <h1 style="margin: 0; color: #fff; font-size: 24px;">${payload.title}</h1>
     </div>
     <div style="padding: 24px;">
-      <p style="margin: 0 0 16px; color: #333; white-space: pre-line;">${payload.message}</p>
-      <p style="margin: 0; color: #999; font-size: 14px;">Time: ${new Date(payload.timestamp).toLocaleString()}</p>
+      <p style="margin: 0 0 16px; color: #333;">${messageHtml}</p>
+      ${detailsHtml}
+      <p style="margin: 16px 0 0; color: #999; font-size: 14px;">Time: ${new Date(payload.timestamp).toLocaleString()}</p>
     </div>
     <div style="padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e5e5; text-align: center;">
       <p style="margin: 0; color: #666; font-size: 12px;">Sent by UptimeBeacon</p>

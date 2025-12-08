@@ -1,17 +1,13 @@
-import type { ChannelConfig, NotificationPayload } from "./types";
+import type {
+	ChannelConfig,
+	NotificationPayload,
+	RichNotificationPayload,
+} from "./types";
 import { validateWebhookConfig } from "./types";
-
-interface MonitorData {
-	id: string;
-	name: string;
-	url: string | null;
-	status: string;
-}
 
 export async function sendWebhook(
 	rawConfig: ChannelConfig,
-	payload: NotificationPayload,
-	extraData?: { monitor: MonitorData },
+	payload: NotificationPayload | RichNotificationPayload,
 ): Promise<void> {
 	const config = validateWebhookConfig(rawConfig);
 	const method = config.webhookMethod ?? "POST";
@@ -20,15 +16,31 @@ export async function sendWebhook(
 		...(config.webhookHeaders ?? {}),
 	};
 
+	// Send the full rich payload for maximum integration flexibility
+	const isRichPayload = (
+		p: NotificationPayload,
+	): p is RichNotificationPayload => "monitor" in p;
+
+	const body = isRichPayload(payload)
+		? {
+				title: payload.title,
+				message: payload.message,
+				event: payload.event,
+				timestamp: payload.timestamp,
+				monitor: payload.monitor,
+				eventData: payload.eventData,
+				incident: payload.incident,
+			}
+		: {
+				title: payload.title,
+				message: payload.message,
+				event: payload.event,
+				timestamp: payload.timestamp,
+			};
+
 	await fetch(config.webhookUrl, {
 		method,
 		headers,
-		body: JSON.stringify({
-			title: payload.title,
-			message: payload.message,
-			event: payload.event,
-			timestamp: payload.timestamp,
-			...extraData,
-		}),
+		body: JSON.stringify(body),
 	});
 }

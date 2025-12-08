@@ -1,9 +1,10 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Wrench } from "lucide-react";
 import Image from "next/image";
 
 import {
+	ResponseTimeCard,
 	type Status,
 	StatusBadge,
 	StatusDot,
@@ -19,7 +20,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { INCIDENT_STATUS_CONFIG } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, formatUptime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 
 type StatusPageBySlug = RouterOutputs["statusPage"]["getBySlug"];
@@ -39,7 +40,7 @@ function ServiceRow({ monitor }: { monitor: StatusPageMonitor }) {
 			</div>
 			<div className="flex items-center gap-4">
 				<span className="font-mono text-muted-foreground text-sm">
-					{uptime.toFixed(2)}%
+					{formatUptime(uptime)}%
 				</span>
 				<StatusBadge showDot={false} size="sm" status={status} />
 			</div>
@@ -136,6 +137,7 @@ export function PublicStatusBySlugClient({
 		uptimeHistory,
 		activeIncidents,
 		recentResolvedIncidents,
+		responseTimeHistory,
 	} = data;
 	const status = overallStatus as Status;
 
@@ -176,6 +178,7 @@ export function PublicStatusBySlugClient({
 							status === "UP" && "bg-status-up/10",
 							status === "DOWN" && "bg-status-down/10",
 							status === "DEGRADED" && "bg-status-degraded/10",
+							status === "MAINTENANCE" && "bg-blue-500/10",
 							status === "PENDING" && "bg-muted/50",
 						)}
 					>
@@ -194,6 +197,8 @@ export function PublicStatusBySlugClient({
 								className="size-10 text-status-degraded"
 								strokeWidth={1.5}
 							/>
+						) : status === "MAINTENANCE" ? (
+							<Wrench className="size-10 text-blue-500" strokeWidth={1.5} />
 						) : (
 							<CheckCircle2
 								className="size-10 text-muted-foreground"
@@ -212,6 +217,7 @@ export function PublicStatusBySlugClient({
 						status === "UP" && "text-status-up",
 						status === "DOWN" && "text-status-down",
 						status === "DEGRADED" && "text-status-degraded",
+						status === "MAINTENANCE" && "text-blue-500",
 						status === "PENDING" && "text-muted-foreground",
 					)}
 				>
@@ -221,7 +227,9 @@ export function PublicStatusBySlugClient({
 							? "Major System Outage"
 							: status === "DEGRADED"
 								? "Partial System Outage"
-								: "Status Unknown"}
+								: status === "MAINTENANCE"
+									? "Scheduled Maintenance"
+									: "Status Unknown"}
 				</p>
 			</div>
 
@@ -241,7 +249,7 @@ export function PublicStatusBySlugClient({
 							</div>
 							<div className="text-right">
 								<span className="font-bold text-2xl text-status-up">
-									{uptimePercentage.toFixed(2)}%
+									{formatUptime(uptimePercentage)}%
 								</span>
 								<p className="text-muted-foreground text-xs">avg uptime</p>
 							</div>
@@ -263,6 +271,15 @@ export function PublicStatusBySlugClient({
 				</Card>
 			)}
 
+			{/* Response Time */}
+			{showUptimeGraph && responseTimeHistory.length > 0 && (
+				<ResponseTimeCard
+					className="mb-8"
+					daysToShow={daysToShow}
+					responseTimeHistory={responseTimeHistory}
+				/>
+			)}
+
 			{/* Services List */}
 			<Card className="mb-8">
 				<CardHeader>
@@ -276,7 +293,7 @@ export function PublicStatusBySlugClient({
 						{!showUptimeGraph && (
 							<div className="text-right">
 								<span className="font-bold text-2xl text-status-up">
-									{uptimePercentage.toFixed(2)}%
+									{formatUptime(uptimePercentage)}%
 								</span>
 								<p className="text-muted-foreground text-xs">avg uptime</p>
 							</div>

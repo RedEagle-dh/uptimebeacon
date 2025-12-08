@@ -11,8 +11,11 @@ import {
 	Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 import {
+	MonitorSelector,
+	ResponseTimeChart,
 	type Status,
 	StatusDot,
 	UptimeBar,
@@ -29,7 +32,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { INCIDENT_STATUS_CONFIG } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, formatUptime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 
 type Monitor = RouterOutputs["monitor"]["getAll"][number];
@@ -159,7 +162,7 @@ function MonitorCard({ monitor }: { monitor: Monitor }) {
 							{status === "UP" ? `${Math.round(responseTime)}ms` : status}
 						</p>
 						<p className="hidden text-muted-foreground text-xs sm:block">
-							{uptime.toFixed(2)}% uptime
+							{formatUptime(uptime)}% uptime
 						</p>
 					</div>
 					<ArrowRight className="size-4 text-muted-foreground/40 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
@@ -228,6 +231,33 @@ export function DashboardClient() {
 		days: 90,
 	});
 
+	// Response time chart state
+	const [selectedMonitorId, setSelectedMonitorId] = useState<string>(
+		monitors[0]?.id ?? "",
+	);
+
+	// Fetch response time history for selected monitor
+	const { data: responseTimeData } =
+		api.monitor.getResponseTimeHistory.useQuery(
+			{ monitorId: selectedMonitorId, days: 7 },
+			{ enabled: !!selectedMonitorId },
+		);
+
+	// Transform response time data for the chart
+	const chartData = useMemo(() => {
+		if (!responseTimeData) return [];
+		return responseTimeData.map((day) => ({
+			date: day.date,
+			avgResponseTime: day.avgResponseTime,
+		}));
+	}, [responseTimeData]);
+
+	// Monitor list for selector
+	const monitorList = useMemo(
+		() => monitors.map((m) => ({ id: m.id, name: m.name })),
+		[monitors],
+	);
+
 	const activeIncidents = incidents.filter((i) => i.status !== "resolved");
 	const displayMonitors = monitors.slice(0, 4);
 
@@ -294,41 +324,71 @@ export function DashboardClient() {
 				/>
 			</div>
 
-			{/* Uptime Overview */}
-			<Card>
-				<CardHeader>
-					<div className="flex items-center justify-between">
-						<div>
-							<CardTitle>Uptime Overview</CardTitle>
-							<CardDescription className="hidden sm:block">
-								Last 90 days performance
-							</CardDescription>
-							<CardDescription className="sm:hidden">
-								Last 30 days performance
-							</CardDescription>
+			{/* Uptime Overview & Response Time */}
+			<div className="grid gap-6 lg:grid-cols-2">
+				<Card>
+					<CardHeader>
+						<div className="flex items-center justify-between">
+							<div>
+								<CardTitle>Uptime Overview</CardTitle>
+								<CardDescription className="hidden sm:block">
+									Last 90 days performance
+								</CardDescription>
+								<CardDescription className="sm:hidden">
+									Last 30 days performance
+								</CardDescription>
+							</div>
+							<div className="flex items-center gap-2">
+								<span className="font-bold text-2xl text-status-up sm:text-3xl">
+									{formatUptime(avgUptime)}%
+								</span>
+								<span className="text-muted-foreground text-sm">uptime</span>
+							</div>
 						</div>
-						<div className="flex items-center gap-2">
-							<span className="font-bold text-2xl text-status-up sm:text-3xl">
-								{avgUptime.toFixed(2)}%
-							</span>
-							<span className="text-muted-foreground text-sm">uptime</span>
+					</CardHeader>
+					<CardContent>
+						<UptimeBar
+							className="w-full"
+							data={uptimeBarData}
+							days={90}
+							mobileDays={30}
+						/>
+						<div className="mt-3 flex items-center justify-between text-muted-foreground text-xs">
+							<span className="hidden sm:inline">90 days ago</span>
+							<span className="sm:hidden">30 days ago</span>
+							<span>Today</span>
 						</div>
-					</div>
-				</CardHeader>
-				<CardContent>
-					<UptimeBar
-						className="w-full"
-						data={uptimeBarData}
-						days={90}
-						mobileDays={30}
-					/>
-					<div className="mt-3 flex items-center justify-between text-muted-foreground text-xs">
-						<span className="hidden sm:inline">90 days ago</span>
-						<span className="sm:hidden">30 days ago</span>
-						<span>Today</span>
-					</div>
-				</CardContent>
-			</Card>
+					</CardContent>
+				</Card>
+
+				{/* Response Time Chart */}
+				<Card>
+					<CardHeader>
+						<div className="flex items-center justify-between">
+							<div>
+								<CardTitle>Response Time</CardTitle>
+								<CardDescription>Last 7 days average</CardDescription>
+							</div>
+							{monitorList.length > 1 && (
+								<MonitorSelector
+									monitors={monitorList}
+									onSelect={setSelectedMonitorId}
+									selectedMonitorId={selectedMonitorId}
+								/>
+							)}
+						</div>
+					</CardHeader>
+					<CardContent>
+						{monitors.length === 0 ? (
+							<div className="flex h-[100px] items-center justify-center text-muted-foreground">
+								No monitors yet
+							</div>
+						) : (
+							<ResponseTimeChart data={chartData} height="h-[100px]" />
+						)}
+					</CardContent>
+				</Card>
+			</div>
 
 			<div className="grid gap-6 lg:grid-cols-2">
 				{/* Monitors List */}

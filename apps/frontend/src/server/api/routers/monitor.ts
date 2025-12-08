@@ -1,7 +1,39 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+
+// Helper to call backend scheduler
+async function notifyBackendScheduler(
+	monitorId: string,
+	action: "schedule" | "unschedule",
+): Promise<void> {
+	const backendUrl = env.BACKEND_URL ?? "http://localhost:3001";
+	try {
+		await fetch(`${backendUrl}/api/monitors/${monitorId}/${action}`, {
+			method: "POST",
+		});
+	} catch (error) {
+		console.error(`Failed to ${action} monitor in backend:`, error);
+		// Don't throw - the monitor is already saved, scheduler will pick it up on restart
+	}
+}
+
+// Helper to call backend pause/resume (which also handles notifications)
+async function notifyBackendPauseResume(
+	monitorId: string,
+	action: "pause" | "resume",
+): Promise<void> {
+	const backendUrl = env.BACKEND_URL ?? "http://localhost:3001";
+	try {
+		await fetch(`${backendUrl}/api/monitors/${monitorId}/${action}`, {
+			method: "POST",
+		});
+	} catch (error) {
+		console.error(`Failed to ${action} monitor in backend:`, error);
+	}
+}
 
 const monitorCreateSchema = z.object({
 	name: z.string().min(1, "Name is required").max(255, "Name is too long"),
@@ -134,6 +166,9 @@ export const monitorRouter = createTRPCRouter({
 				},
 			});
 
+			// Notify backend to schedule the monitor
+			await notifyBackendScheduler(monitor.id, "schedule");
+
 			return monitor;
 		}),
 
@@ -188,6 +223,9 @@ export const monitorRouter = createTRPCRouter({
 				});
 			}
 
+			// Unschedule the monitor in the backend first
+			await notifyBackendScheduler(input.id, "unschedule");
+
 			await ctx.db.monitor.delete({
 				where: { id: input.id },
 			});
@@ -217,6 +255,9 @@ export const monitorRouter = createTRPCRouter({
 				data: { paused: true },
 			});
 
+			// Notify backend to pause (unschedule) the monitor
+			await notifyBackendPauseResume(input.id, "pause");
+
 			return monitor;
 		}),
 
@@ -241,6 +282,9 @@ export const monitorRouter = createTRPCRouter({
 				where: { id: input.id },
 				data: { paused: false },
 			});
+
+			// Notify backend to resume (reschedule) the monitor
+			await notifyBackendPauseResume(input.id, "resume");
 
 			return monitor;
 		}),
@@ -480,6 +524,95 @@ export const monitorRouter = createTRPCRouter({
 						status,
 						incidents: counts.incidents,
 						downtimeMinutes,
+					};
+				});
+		}),
+
+	getResponseTimeHistory: protectedProcedure
+		.input(
+			z.object({
+				monitorId: z.string(),
+				days: z.number().int().min(1).max(90).default(7),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			// Verify the monitor belongs to the user
+			const monitor = await ctx.db.monitor.findFirst({
+				where: {
+					id: input.monitorId,
+					userId: ctx.session.user.id,
+				},
+			});
+
+			if (!monitor) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Monitor not found",
+				});
+			}
+
+			const startDate = new Date();
+			startDate.setDate(startDate.getDate() - input.days);
+			startDate.setHours(0, 0, 0, 0);
+
+			// Get all checks with response times for this monitor
+			const checks = await ctx.db.monitorCheck.findMany({
+				where: {
+					monitorId: input.monitorId,
+					createdAt: { gte: startDate },
+					responseTime: { not: null },
+				},
+				select: {
+					responseTime: true,
+					createdAt: true,
+				},
+				orderBy: { createdAt: "asc" },
+			});
+
+			// Group by day and calculate stats
+			const dailyData: Record<string, { responseTimes: number[] }> = {};
+
+			// Initialize all days
+			for (let i = 0; i < input.days; i++) {
+				const date = new Date();
+				date.setDate(date.getDate() - (input.days - 1 - i));
+				const dayKey = date.toISOString().split("T")[0]!;
+				dailyData[dayKey] = { responseTimes: [] };
+			}
+
+			// Collect response times per day
+			for (const check of checks) {
+				const day = check.createdAt.toISOString().split("T")[0]!;
+				if (dailyData[day] && check.responseTime !== null) {
+					dailyData[day].responseTimes.push(check.responseTime);
+				}
+			}
+
+			return Object.entries(dailyData)
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([date, { responseTimes }]) => {
+					if (responseTimes.length === 0) {
+						return {
+							date,
+							avgResponseTime: null,
+							minResponseTime: null,
+							maxResponseTime: null,
+							checkCount: 0,
+						};
+					}
+
+					const avg =
+						responseTimes.reduce((sum, rt) => sum + rt, 0) /
+						responseTimes.length;
+					const min = Math.min(...responseTimes);
+					const max = Math.max(...responseTimes);
+
+					return {
+						date,
+						avgResponseTime: Math.round(avg),
+						minResponseTime: min,
+						maxResponseTime: max,
+						checkCount: responseTimes.length,
 					};
 				});
 		}),

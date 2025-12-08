@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 import { CHANNEL_ICONS } from "./ChannelIcons";
 
-const DISABLED_CHANNELS: NotificationChannelType[] = ["EMAIL", "WEBHOOK"];
+const DISABLED_CHANNELS: NotificationChannelType[] = [];
 
 interface ChannelTypeSelectorProps {
 	value: NotificationChannelType;

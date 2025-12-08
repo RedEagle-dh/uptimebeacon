@@ -463,6 +463,24 @@ function IncidentDetailSkeleton() {
 	);
 }
 
+// Response time chart skeleton
+function ResponseTimeChartSkeleton() {
+	return (
+		<div className="flex flex-col gap-6 rounded-xl border border-border/50 bg-card py-6">
+			<div className="flex items-center justify-between px-6">
+				<div>
+					<Skeleton className="mb-2 h-5 w-32" />
+					<Skeleton className="h-3 w-56" />
+				</div>
+				<Skeleton className="h-8 w-[180px]" />
+			</div>
+			<div className="px-6">
+				<Skeleton className="h-[200px] w-full" />
+			</div>
+		</div>
+	);
+}
+
 // Public status page skeleton
 function PublicStatusPageSkeleton() {
 	return (
@@ -520,6 +538,7 @@ export {
 	NotificationsPageSkeleton,
 	PageHeaderSkeleton,
 	PublicStatusPageSkeleton,
+	ResponseTimeChartSkeleton,
 	Skeleton,
 	StatCardSkeleton,
 	StatusPageCardSkeleton,

@@ -7,8 +7,11 @@ import {
 	Calendar,
 	CheckCircle2,
 	Clock,
+	Globe,
 	MessageSquarePlus,
 	RefreshCw,
+	Wrench,
+	XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -50,6 +53,27 @@ function formatDuration(seconds: number): string {
 	const hours = Math.round((seconds % 86400) / 3600);
 	return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
 }
+
+const AFFECTED_STATUS_CONFIG = {
+	DOWN: {
+		label: "Down",
+		icon: XCircle,
+		colorClass: "text-red-500",
+		dotClass: "bg-red-500",
+	},
+	DEGRADED: {
+		label: "Degraded",
+		icon: AlertTriangle,
+		colorClass: "text-yellow-500",
+		dotClass: "bg-yellow-500",
+	},
+	MAINTENANCE: {
+		label: "Maintenance",
+		icon: Wrench,
+		colorClass: "text-blue-500",
+		dotClass: "bg-blue-500",
+	},
+} as const;
 
 export function IncidentDetailClient({ id }: IncidentDetailClientProps) {
 	const utils = api.useUtils();
@@ -140,7 +164,7 @@ export function IncidentDetailClient({ id }: IncidentDetailClientProps) {
 			</div>
 
 			{/* Stats Cards */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="font-medium text-sm">Status</CardTitle>
@@ -208,6 +232,40 @@ export function IncidentDetailClient({ id }: IncidentDetailClientProps) {
 						</div>
 						<p className="mt-1 text-muted-foreground text-xs">
 							{isResolved ? "Total duration" : "Ongoing"}
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between pb-2">
+						<CardTitle className="font-medium text-sm">
+							Status Page Impact
+						</CardTitle>
+						<Globe className="size-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						{(() => {
+							const affectedConfig =
+								AFFECTED_STATUS_CONFIG[
+									incident.affectedStatus as keyof typeof AFFECTED_STATUS_CONFIG
+								] ?? AFFECTED_STATUS_CONFIG.DEGRADED;
+							const Icon = affectedConfig.icon;
+							return (
+								<div className="flex items-center gap-2">
+									<Icon className={cn("size-5", affectedConfig.colorClass)} />
+									<span
+										className={cn(
+											"font-bold text-2xl",
+											affectedConfig.colorClass,
+										)}
+									>
+										{affectedConfig.label}
+									</span>
+								</div>
+							);
+						})()}
+						<p className="mt-1 text-muted-foreground text-xs">
+							{isResolved ? "Was shown on status page" : "Shown on status page"}
 						</p>
 					</CardContent>
 				</Card>

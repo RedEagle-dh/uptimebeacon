@@ -1,6 +1,13 @@
 "use client";
 
-import { AlertTriangle, CheckCircle, Clock, Plus } from "lucide-react";
+import {
+	AlertTriangle,
+	CheckCircle,
+	Clock,
+	Plus,
+	Wrench,
+	XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -19,6 +26,25 @@ function formatDate(date: Date) {
 	return new Date(date).toLocaleString();
 }
 
+function getIncidentIcon(incident: Incident) {
+	if (incident.status === "resolved") {
+		return <CheckCircle className="mt-0.5 size-5 shrink-0 text-green-500" />;
+	}
+
+	// Use affectedStatus to determine icon for active incidents
+	switch (incident.affectedStatus) {
+		case "DOWN":
+			return <XCircle className="mt-0.5 size-5 shrink-0 text-red-500" />;
+		case "MAINTENANCE":
+			return <Wrench className="mt-0.5 size-5 shrink-0 text-blue-500" />;
+		case "DEGRADED":
+		default:
+			return (
+				<AlertTriangle className="mt-0.5 size-5 shrink-0 text-yellow-500" />
+			);
+	}
+}
+
 function IncidentCard({ incident }: { incident: Incident }) {
 	return (
 		<Link className="block" href={`/dashboard/incidents/${incident.id}`}>
@@ -26,11 +52,7 @@ function IncidentCard({ incident }: { incident: Incident }) {
 				<CardContent className="p-6">
 					<div className="flex items-start justify-between gap-4">
 						<div className="flex min-w-0 flex-1 items-start gap-4">
-							{incident.status === "resolved" ? (
-								<CheckCircle className="mt-0.5 size-5 shrink-0 text-green-500" />
-							) : (
-								<AlertTriangle className="mt-0.5 size-5 shrink-0 text-yellow-500" />
-							)}
+							{getIncidentIcon(incident)}
 							<div className="min-w-0">
 								<h3 className="truncate font-semibold">{incident.title}</h3>
 								<p className="text-muted-foreground text-sm">

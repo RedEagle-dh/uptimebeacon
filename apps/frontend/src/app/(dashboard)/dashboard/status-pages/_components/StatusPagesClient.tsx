@@ -2,6 +2,7 @@
 
 import { ExternalLink, Globe, Plus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { type Status, StatusDot } from "@/components/shared";
@@ -14,62 +15,64 @@ import { CreateStatusPageDialog } from "./CreateStatusPageDialog";
 type StatusPage = RouterOutputs["statusPage"]["getAll"][number];
 
 function StatusPageCard({ page }: { page: StatusPage }) {
+	const router = useRouter();
 	const domain = page.customDomain;
 	const monitorsCount = page._count.monitors;
 
 	return (
-		<Link className="group block" href={`/dashboard/status-pages/${page.id}`}>
-			<Card className="transition-colors hover:bg-muted/50">
-				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-					<CardTitle className="flex items-center gap-2 font-medium text-base group-hover:underline">
-						<Globe className="size-4" />
-						{page.name}
-					</CardTitle>
-					<StatusDot status={page.overallStatus as Status} />
-				</CardHeader>
-				<CardContent>
-					<div className="space-y-3">
-						<div className="flex items-center gap-2">
-							<Badge variant={page.isPublic ? "default" : "secondary"}>
-								{page.isPublic ? "Public" : "Private"}
-							</Badge>
-							<span className="text-muted-foreground text-sm">
-								{monitorsCount} monitor{monitorsCount !== 1 ? "s" : ""}
-							</span>
-						</div>
-
-						<div className="text-muted-foreground text-sm">
-							{domain ? (
-								<span className="flex items-center gap-1">
-									<ExternalLink className="size-3" />
-									{domain}
-								</span>
-							) : (
-								<span>/{page.slug}</span>
-							)}
-						</div>
-
-						<div className="flex gap-2 pt-2">
-							<Button
-								asChild
-								onClick={(e) => e.stopPropagation()}
-								size="sm"
-								variant="ghost"
-							>
-								<Link
-									href={domain ? `https://${domain}` : `/status/${page.slug}`}
-									rel="noopener noreferrer"
-									target="_blank"
-								>
-									<ExternalLink className="mr-2 size-4" />
-									View
-								</Link>
-							</Button>
-						</div>
+		<Card
+			className="group cursor-pointer transition-colors hover:bg-muted/50"
+			onClick={() => router.push(`/dashboard/status-pages/${page.id}`)}
+		>
+			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardTitle className="flex items-center gap-2 font-medium text-base group-hover:underline">
+					<Globe className="size-4" />
+					{page.name}
+				</CardTitle>
+				<StatusDot status={page.overallStatus as Status} />
+			</CardHeader>
+			<CardContent>
+				<div className="space-y-3">
+					<div className="flex items-center gap-2">
+						<Badge variant={page.isPublic ? "default" : "secondary"}>
+							{page.isPublic ? "Public" : "Private"}
+						</Badge>
+						<span className="text-muted-foreground text-sm">
+							{monitorsCount} monitor{monitorsCount !== 1 ? "s" : ""}
+						</span>
 					</div>
-				</CardContent>
-			</Card>
-		</Link>
+
+					<div className="text-muted-foreground text-sm">
+						{domain ? (
+							<span className="flex items-center gap-1">
+								<ExternalLink className="size-3" />
+								{domain}
+							</span>
+						) : (
+							<span>/{page.slug}</span>
+						)}
+					</div>
+
+					<div className="flex gap-2 pt-2">
+						<Button
+							asChild
+							onClick={(e) => e.stopPropagation()}
+							size="sm"
+							variant="ghost"
+						>
+							<Link
+								href={domain ? `https://${domain}` : `/status/${page.slug}`}
+								rel="noopener noreferrer"
+								target="_blank"
+							>
+								<ExternalLink className="mr-2 size-4" />
+								View
+							</Link>
+						</Button>
+					</div>
+				</div>
+			</CardContent>
+		</Card>
 	);
 }
 

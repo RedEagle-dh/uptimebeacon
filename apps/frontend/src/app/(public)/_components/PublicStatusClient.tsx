@@ -1,9 +1,10 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
+	ResponseTimeCard,
 	type Status,
 	StatusBadge,
 	StatusDot,
@@ -19,7 +20,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { INCIDENT_STATUS_CONFIG } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, formatUptime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 
 type PublicOverview = RouterOutputs["statusPage"]["getPublicOverview"];
@@ -38,7 +39,7 @@ function ServiceRow({ monitor }: { monitor: Monitor }) {
 			</div>
 			<div className="flex items-center gap-4">
 				<span className="font-mono text-muted-foreground text-sm">
-					{uptime.toFixed(2)}%
+					{formatUptime(uptime)}%
 				</span>
 				<StatusBadge showDot={false} size="sm" status={status} />
 			</div>
@@ -124,12 +125,15 @@ export function PublicStatusClient() {
 	}, [data]);
 
 	const {
+		statusPage,
 		monitors,
 		overallStatus,
 		activeIncidents,
 		recentResolvedIncidents,
 		uptimeHistory,
+		responseTimeHistory,
 	} = data;
+	const daysToShow = statusPage?.daysToShow ?? 90;
 
 	const status = overallStatus as Status;
 	const allIncidents = [...activeIncidents, ...recentResolvedIncidents];
@@ -158,6 +162,7 @@ export function PublicStatusClient() {
 						status === "UP" && "bg-status-up/10",
 						status === "DOWN" && "bg-status-down/10",
 						status === "DEGRADED" && "bg-status-degraded/10",
+						status === "MAINTENANCE" && "bg-blue-500/10",
 						status === "PENDING" && "bg-muted/50",
 					)}
 				>
@@ -176,6 +181,8 @@ export function PublicStatusClient() {
 							className="size-10 text-status-degraded"
 							strokeWidth={1.5}
 						/>
+					) : status === "MAINTENANCE" ? (
+						<Wrench className="size-10 text-blue-500" strokeWidth={1.5} />
 					) : (
 						<CheckCircle2
 							className="size-10 text-muted-foreground"
@@ -190,7 +197,9 @@ export function PublicStatusClient() {
 							? "Major System Outage"
 							: status === "DEGRADED"
 								? "Partial System Outage"
-								: "Status Unknown"}
+								: status === "MAINTENANCE"
+									? "Scheduled Maintenance"
+									: "Status Unknown"}
 				</h1>
 				{lastUpdated && (
 					<p className="text-muted-foreground">Last updated: {lastUpdated}</p>
@@ -204,7 +213,7 @@ export function PublicStatusClient() {
 						<div>
 							<CardTitle>Uptime History</CardTitle>
 							<CardDescription className="hidden sm:block">
-								Last 90 days performance
+								Last {daysToShow} days performance
 							</CardDescription>
 							<CardDescription className="sm:hidden">
 								Last 30 days performance
@@ -212,7 +221,7 @@ export function PublicStatusClient() {
 						</div>
 						<div className="text-right">
 							<span className="font-bold text-2xl text-status-up">
-								{uptimePercentage.toFixed(2)}%
+								{formatUptime(uptimePercentage)}%
 							</span>
 							<p className="text-muted-foreground text-xs">avg uptime</p>
 						</div>
@@ -222,16 +231,25 @@ export function PublicStatusClient() {
 					<UptimeBar
 						className="w-full"
 						data={uptimeBarData}
-						days={uptimeBarData.length || 90}
+						days={uptimeBarData.length || daysToShow}
 						mobileDays={30}
 					/>
 					<div className="mt-3 flex justify-between text-muted-foreground text-xs">
-						<span className="hidden sm:inline">90 days ago</span>
+						<span className="hidden sm:inline">{daysToShow} days ago</span>
 						<span className="sm:hidden">30 days ago</span>
 						<span>Today</span>
 					</div>
 				</CardContent>
 			</Card>
+
+			{/* Response Time */}
+			{responseTimeHistory.length > 0 && (
+				<ResponseTimeCard
+					className="mb-8"
+					daysToShow={daysToShow}
+					responseTimeHistory={responseTimeHistory}
+				/>
+			)}
 
 			{/* Services List */}
 			<Card className="mb-8">

@@ -85,6 +85,9 @@ export const incidentRouter = createTRPCRouter({
 				title: z.string().min(1, "Title is required"),
 				description: z.string().optional(),
 				severity: z.enum(["minor", "major", "critical"]).default("minor"),
+				affectedStatus: z
+					.enum(["DOWN", "DEGRADED", "MAINTENANCE"])
+					.default("DEGRADED"),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -108,6 +111,7 @@ export const incidentRouter = createTRPCRouter({
 					title: input.title,
 					description: input.description,
 					severity: input.severity,
+					affectedStatus: input.affectedStatus,
 					status: "investigating",
 				},
 			});
@@ -131,6 +135,7 @@ export const incidentRouter = createTRPCRouter({
 				title: z.string().optional(),
 				description: z.string().optional(),
 				severity: z.enum(["minor", "major", "critical"]).optional(),
+				affectedStatus: z.enum(["DOWN", "DEGRADED", "MAINTENANCE"]).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -156,6 +161,7 @@ export const incidentRouter = createTRPCRouter({
 					title: input.title,
 					description: input.description,
 					severity: input.severity,
+					affectedStatus: input.affectedStatus,
 				},
 			});
 

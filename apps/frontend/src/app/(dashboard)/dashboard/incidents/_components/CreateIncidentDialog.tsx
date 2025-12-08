@@ -32,6 +32,33 @@ interface CreateIncidentDialogProps {
 }
 
 type Severity = "minor" | "major" | "critical";
+type AffectedStatus = "DOWN" | "DEGRADED" | "MAINTENANCE";
+
+const AFFECTED_STATUS_OPTIONS: {
+	value: AffectedStatus;
+	label: string;
+	description: string;
+	dotClass: string;
+}[] = [
+	{
+		value: "DEGRADED",
+		label: "Degraded",
+		description: "Partial outage or performance issues",
+		dotClass: "bg-yellow-500",
+	},
+	{
+		value: "DOWN",
+		label: "Down",
+		description: "Complete service outage",
+		dotClass: "bg-red-500",
+	},
+	{
+		value: "MAINTENANCE",
+		label: "Maintenance",
+		description: "Scheduled or unscheduled maintenance",
+		dotClass: "bg-blue-500",
+	},
+];
 
 export function CreateIncidentDialog({
 	open,
@@ -43,6 +70,8 @@ export function CreateIncidentDialog({
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [severity, setSeverity] = useState<Severity>("minor");
+	const [affectedStatus, setAffectedStatus] =
+		useState<AffectedStatus>("DEGRADED");
 
 	const { data: monitors, isLoading: monitorsLoading } =
 		api.monitor.getAll.useQuery();
@@ -51,6 +80,9 @@ export function CreateIncidentDialog({
 		onSuccess: () => {
 			toast.success("Incident reported successfully");
 			utils.incident.getAll.invalidate();
+			utils.statusPage.getAll.invalidate();
+			utils.statusPage.getBySlug.invalidate();
+			utils.statusPage.getPublicOverview.invalidate();
 			resetForm();
 			onOpenChange(false);
 		},
@@ -64,6 +96,7 @@ export function CreateIncidentDialog({
 		setTitle("");
 		setDescription("");
 		setSeverity("minor");
+		setAffectedStatus("DEGRADED");
 	};
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -84,6 +117,7 @@ export function CreateIncidentDialog({
 			title: title.trim(),
 			description: description.trim() || undefined,
 			severity,
+			affectedStatus,
 		});
 	};
 
@@ -131,6 +165,37 @@ export function CreateIncidentDialog({
 									placeholder="e.g., API endpoints returning 500 errors"
 									value={title}
 								/>
+							</div>
+
+							<div className="space-y-2">
+								<Label htmlFor="affectedStatus">Status Page Impact *</Label>
+								<p className="text-muted-foreground text-xs">
+									This status will be displayed on your status page while the
+									incident is active.
+								</p>
+								<Select
+									onValueChange={(v) => setAffectedStatus(v as AffectedStatus)}
+									value={affectedStatus}
+								>
+									<SelectTrigger className="w-full" id="affectedStatus">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{AFFECTED_STATUS_OPTIONS.map((option) => (
+											<SelectItem key={option.value} value={option.value}>
+												<div className="flex items-center gap-2">
+													<span
+														className={`size-2 rounded-full ${option.dotClass}`}
+													/>
+													<span>{option.label}</span>
+													<span className="text-muted-foreground text-xs">
+														- {option.description}
+													</span>
+												</div>
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
 							</div>
 
 							<div className="space-y-2">

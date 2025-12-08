@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { formatUptime } from "@/lib/utils";
 import { api, type RouterOutputs } from "@/trpc/react";
 import { AddMonitorDialog } from "./AddMonitorDialog";
 
@@ -68,16 +69,6 @@ const DAYS_OPTIONS = [
 	{ value: "60", label: "60 days" },
 	{ value: "90", label: "90 days" },
 ];
-
-function getOverallStatus(monitors: StatusPageMonitor[]): Status {
-	if (monitors.length === 0) return "PENDING";
-	const statuses = monitors.map((m) => m.monitor.status);
-	if (statuses.some((s) => s === "DOWN")) return "DOWN";
-	if (statuses.some((s) => s === "DEGRADED")) return "DEGRADED";
-	if (statuses.some((s) => s === "MAINTENANCE")) return "MAINTENANCE";
-	if (statuses.some((s) => s === "PENDING")) return "PENDING";
-	return "UP";
-}
 
 export function StatusPageDetailClient({ id }: StatusPageDetailClientProps) {
 	const router = useRouter();
@@ -177,7 +168,7 @@ export function StatusPageDetailClient({ id }: StatusPageDetailClientProps) {
 		});
 	};
 
-	const overallStatus = getOverallStatus(statusPage.monitors);
+	const overallStatus = statusPage.overallStatus as Status;
 	const existingMonitorIds = statusPage.monitors.map((m) => m.monitorId);
 	const publicUrl = statusPage.customDomain
 		? `https://${statusPage.customDomain}`
@@ -441,7 +432,7 @@ export function StatusPageDetailClient({ id }: StatusPageDetailClientProps) {
 									</div>
 									<div className="flex items-center gap-2">
 										<Badge variant="secondary">
-											{m.monitor.uptimePercentage.toFixed(1)}%
+											{formatUptime(m.monitor.uptimePercentage)}%
 										</Badge>
 										<Button
 											disabled={removeMonitorMutation.isPending}

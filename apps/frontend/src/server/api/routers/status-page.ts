@@ -69,8 +69,45 @@ export const statusPageRouter = createTRPCRouter({
 			},
 		});
 
-		const monitors = statusPage?.monitors.map((m) => m.monitor) ?? [];
-		const monitorIds = monitors.map((m) => m.id);
+		const rawMonitors = statusPage?.monitors.map((m) => m.monitor) ?? [];
+		const monitorIds = rawMonitors.map((m) => m.id);
+
+		// Fetch active incidents with affectedStatus to compute effective status
+		const activeIncidentsByMonitor =
+			monitorIds.length > 0
+				? await ctx.db.incident.findMany({
+						where: {
+							monitorId: { in: monitorIds },
+							status: { not: "resolved" },
+						},
+						select: {
+							monitorId: true,
+							affectedStatus: true,
+						},
+					})
+				: [];
+
+		// Group incidents by monitor
+		const incidentsByMonitor = new Map<
+			string,
+			Array<{ affectedStatus: string }>
+		>();
+		for (const incident of activeIncidentsByMonitor) {
+			const existing = incidentsByMonitor.get(incident.monitorId) ?? [];
+			existing.push({ affectedStatus: incident.affectedStatus });
+			incidentsByMonitor.set(incident.monitorId, existing);
+		}
+
+		// Compute effective status for each monitor
+		const monitors = rawMonitors.map((m) => {
+			const monitorIncidents = incidentsByMonitor.get(m.id) ?? [];
+			const effectiveStatus = getEffectiveMonitorStatus(
+				m.status,
+				monitorIncidents,
+			);
+			return { ...m, status: effectiveStatus };
+		});
+
 		const overallStatus = getOverallStatus(monitors.map((m) => m.status));
 
 		// Get uptime history for the last 90 days
@@ -171,6 +208,77 @@ export const statusPageRouter = createTRPCRouter({
 				};
 			});
 
+		// Get response time history for each monitor (uses same daysToShow setting)
+		const responseTimeStartDate = new Date();
+		responseTimeStartDate.setDate(responseTimeStartDate.getDate() - days);
+		responseTimeStartDate.setHours(0, 0, 0, 0);
+
+		let responseTimeHistory: Array<{
+			monitorId: string;
+			monitorName: string;
+			data: Array<{
+				date: string;
+				avgResponseTime: number | null;
+			}>;
+		}> = [];
+
+		if (monitorIds.length > 0) {
+			const responseTimeChecks = await ctx.db.monitorCheck.findMany({
+				where: {
+					monitorId: { in: monitorIds },
+					createdAt: { gte: responseTimeStartDate },
+					responseTime: { not: null },
+				},
+				select: {
+					monitorId: true,
+					responseTime: true,
+					createdAt: true,
+				},
+				orderBy: { createdAt: "asc" },
+			});
+
+			// Group by monitor and day
+			const monitorDailyData: Record<string, Record<string, number[]>> = {};
+
+			// Initialize all days for each monitor
+			for (const monitorId of monitorIds) {
+				monitorDailyData[monitorId] = {};
+				for (let i = 0; i < days; i++) {
+					const date = new Date();
+					date.setDate(date.getDate() - (days - 1 - i));
+					const dayKey = date.toISOString().split("T")[0]!;
+					monitorDailyData[monitorId][dayKey] = [];
+				}
+			}
+
+			// Collect response times per monitor per day
+			for (const check of responseTimeChecks) {
+				const day = check.createdAt.toISOString().split("T")[0]!;
+				const monitorData = monitorDailyData[check.monitorId];
+				if (monitorData?.[day] && check.responseTime !== null) {
+					monitorData[day].push(check.responseTime);
+				}
+			}
+
+			// Build response time history
+			responseTimeHistory = monitors.map((monitor) => ({
+				monitorId: monitor.id,
+				monitorName: monitor.name,
+				data: Object.entries(monitorDailyData[monitor.id] ?? {})
+					.sort(([a], [b]) => a.localeCompare(b))
+					.map(([date, responseTimes]) => ({
+						date,
+						avgResponseTime:
+							responseTimes.length > 0
+								? Math.round(
+										responseTimes.reduce((sum, rt) => sum + rt, 0) /
+											responseTimes.length,
+									)
+								: null,
+					})),
+			}));
+		}
+
 		return {
 			statusPage: statusPage
 				? {
@@ -187,6 +295,7 @@ export const statusPageRouter = createTRPCRouter({
 			activeIncidents: incidents,
 			recentResolvedIncidents,
 			uptimeHistory,
+			responseTimeHistory,
 		};
 	}),
 
@@ -202,6 +311,7 @@ export const statusPageRouter = createTRPCRouter({
 					include: {
 						monitor: {
 							select: {
+								id: true,
 								status: true,
 							},
 						},
@@ -210,12 +320,48 @@ export const statusPageRouter = createTRPCRouter({
 			},
 		});
 
-		return statusPages.map((page) => ({
-			...page,
-			overallStatus: getOverallStatus(
-				page.monitors.map((m) => m.monitor.status),
-			),
-		}));
+		// Get all monitor IDs across all status pages
+		const allMonitorIds = statusPages.flatMap((page) =>
+			page.monitors.map((m) => m.monitor.id),
+		);
+
+		// Fetch active incidents for all monitors
+		const activeIncidents =
+			allMonitorIds.length > 0
+				? await ctx.db.incident.findMany({
+						where: {
+							monitorId: { in: allMonitorIds },
+							status: { not: "resolved" },
+						},
+						select: {
+							monitorId: true,
+							affectedStatus: true,
+						},
+					})
+				: [];
+
+		// Group incidents by monitor
+		const incidentsByMonitor = new Map<
+			string,
+			Array<{ affectedStatus: string }>
+		>();
+		for (const incident of activeIncidents) {
+			const existing = incidentsByMonitor.get(incident.monitorId) ?? [];
+			existing.push({ affectedStatus: incident.affectedStatus });
+			incidentsByMonitor.set(incident.monitorId, existing);
+		}
+
+		return statusPages.map((page) => {
+			const effectiveStatuses = page.monitors.map((m) => {
+				const monitorIncidents = incidentsByMonitor.get(m.monitor.id) ?? [];
+				return getEffectiveMonitorStatus(m.monitor.status, monitorIncidents);
+			});
+
+			return {
+				...page,
+				overallStatus: getOverallStatus(effectiveStatuses),
+			};
+		});
 	}),
 
 	getById: protectedProcedure
@@ -243,7 +389,56 @@ export const statusPageRouter = createTRPCRouter({
 				});
 			}
 
-			return statusPage;
+			const monitorIds = statusPage.monitors.map((m) => m.monitor.id);
+
+			// Fetch active incidents with affectedStatus to compute effective status
+			const activeIncidentsByMonitor =
+				monitorIds.length > 0
+					? await ctx.db.incident.findMany({
+							where: {
+								monitorId: { in: monitorIds },
+								status: { not: "resolved" },
+							},
+							select: {
+								monitorId: true,
+								affectedStatus: true,
+							},
+						})
+					: [];
+
+			// Group incidents by monitor
+			const incidentsByMonitor = new Map<
+				string,
+				Array<{ affectedStatus: string }>
+			>();
+			for (const incident of activeIncidentsByMonitor) {
+				const existing = incidentsByMonitor.get(incident.monitorId) ?? [];
+				existing.push({ affectedStatus: incident.affectedStatus });
+				incidentsByMonitor.set(incident.monitorId, existing);
+			}
+
+			// Transform monitors with effective status
+			const monitorsWithEffectiveStatus = statusPage.monitors.map((m) => {
+				const monitorIncidents = incidentsByMonitor.get(m.monitor.id) ?? [];
+				const effectiveStatus = getEffectiveMonitorStatus(
+					m.monitor.status,
+					monitorIncidents,
+				);
+				return {
+					...m,
+					monitor: { ...m.monitor, status: effectiveStatus },
+				};
+			});
+
+			const overallStatus = getOverallStatus(
+				monitorsWithEffectiveStatus.map((m) => m.monitor.status),
+			);
+
+			return {
+				...statusPage,
+				monitors: monitorsWithEffectiveStatus,
+				overallStatus,
+			};
 		}),
 
 	getBySlug: publicProcedure
@@ -281,8 +476,48 @@ export const statusPageRouter = createTRPCRouter({
 			}
 
 			const monitorIds = statusPage.monitors.map((m) => m.monitor.id);
+
+			// Fetch active incidents with affectedStatus to compute effective status
+			const activeIncidentsByMonitor =
+				monitorIds.length > 0
+					? await ctx.db.incident.findMany({
+							where: {
+								monitorId: { in: monitorIds },
+								status: { not: "resolved" },
+							},
+							select: {
+								monitorId: true,
+								affectedStatus: true,
+							},
+						})
+					: [];
+
+			// Group incidents by monitor
+			const incidentsByMonitor = new Map<
+				string,
+				Array<{ affectedStatus: string }>
+			>();
+			for (const incident of activeIncidentsByMonitor) {
+				const existing = incidentsByMonitor.get(incident.monitorId) ?? [];
+				existing.push({ affectedStatus: incident.affectedStatus });
+				incidentsByMonitor.set(incident.monitorId, existing);
+			}
+
+			// Transform monitors with effective status
+			const monitorsWithEffectiveStatus = statusPage.monitors.map((m) => {
+				const monitorIncidents = incidentsByMonitor.get(m.monitor.id) ?? [];
+				const effectiveStatus = getEffectiveMonitorStatus(
+					m.monitor.status,
+					monitorIncidents,
+				);
+				return {
+					...m,
+					monitor: { ...m.monitor, status: effectiveStatus },
+				};
+			});
+
 			const overallStatus = getOverallStatus(
-				statusPage.monitors.map((m) => m.monitor.status),
+				monitorsWithEffectiveStatus.map((m) => m.monitor.status),
 			);
 
 			// Get uptime history if enabled
@@ -451,12 +686,88 @@ export const statusPageRouter = createTRPCRouter({
 				});
 			}
 
+			// Get response time history for each monitor (uses same daysToShow setting)
+			const responseTimeDays = statusPage.daysToShow;
+			let responseTimeHistory: Array<{
+				monitorId: string;
+				monitorName: string;
+				data: Array<{
+					date: string;
+					avgResponseTime: number | null;
+				}>;
+			}> = [];
+
+			if (statusPage.showUptimeGraph && monitorIds.length > 0) {
+				const responseTimeStartDate = new Date();
+				responseTimeStartDate.setDate(
+					responseTimeStartDate.getDate() - responseTimeDays,
+				);
+				responseTimeStartDate.setHours(0, 0, 0, 0);
+
+				const responseTimeChecks = await ctx.db.monitorCheck.findMany({
+					where: {
+						monitorId: { in: monitorIds },
+						createdAt: { gte: responseTimeStartDate },
+						responseTime: { not: null },
+					},
+					select: {
+						monitorId: true,
+						responseTime: true,
+						createdAt: true,
+					},
+					orderBy: { createdAt: "asc" },
+				});
+
+				// Group by monitor and day
+				const monitorDailyData: Record<string, Record<string, number[]>> = {};
+
+				// Initialize all days for each monitor
+				for (const monitorId of monitorIds) {
+					monitorDailyData[monitorId] = {};
+					for (let i = 0; i < responseTimeDays; i++) {
+						const date = new Date();
+						date.setDate(date.getDate() - (responseTimeDays - 1 - i));
+						const dayKey = date.toISOString().split("T")[0]!;
+						monitorDailyData[monitorId][dayKey] = [];
+					}
+				}
+
+				// Collect response times per monitor per day
+				for (const check of responseTimeChecks) {
+					const day = check.createdAt.toISOString().split("T")[0]!;
+					const monitorData = monitorDailyData[check.monitorId];
+					if (monitorData?.[day] && check.responseTime !== null) {
+						monitorData[day].push(check.responseTime);
+					}
+				}
+
+				// Build response time history using monitors with displayName
+				responseTimeHistory = statusPage.monitors.map((sm) => ({
+					monitorId: sm.monitor.id,
+					monitorName: sm.displayName ?? sm.monitor.name,
+					data: Object.entries(monitorDailyData[sm.monitor.id] ?? {})
+						.sort(([a], [b]) => a.localeCompare(b))
+						.map(([date, responseTimes]) => ({
+							date,
+							avgResponseTime:
+								responseTimes.length > 0
+									? Math.round(
+											responseTimes.reduce((sum, rt) => sum + rt, 0) /
+												responseTimes.length,
+										)
+									: null,
+						})),
+				}));
+			}
+
 			return {
 				...statusPage,
+				monitors: monitorsWithEffectiveStatus,
 				overallStatus,
 				uptimeHistory,
 				activeIncidents,
 				recentResolvedIncidents,
+				responseTimeHistory,
 			};
 		}),
 
@@ -731,4 +1042,31 @@ function getOverallStatus(statuses: string[]): string {
 	if (statuses.some((s) => s === "MAINTENANCE")) return "MAINTENANCE";
 	if (statuses.some((s) => s === "PENDING")) return "PENDING";
 	return "UP";
+}
+
+// Status priority: DOWN > DEGRADED > MAINTENANCE > UP > PENDING
+const STATUS_PRIORITY: Record<string, number> = {
+	DOWN: 5,
+	DEGRADED: 4,
+	MAINTENANCE: 3,
+	UP: 2,
+	PENDING: 1,
+};
+
+function getWorstStatus(statuses: string[]): string {
+	if (statuses.length === 0) return "PENDING";
+	return statuses.reduce((worst, current) => {
+		const worstPriority = STATUS_PRIORITY[worst] ?? 0;
+		const currentPriority = STATUS_PRIORITY[current] ?? 0;
+		return currentPriority > worstPriority ? current : worst;
+	}, "PENDING");
+}
+
+function getEffectiveMonitorStatus(
+	automatedStatus: string,
+	activeIncidents: Array<{ affectedStatus: string }>,
+): string {
+	if (activeIncidents.length === 0) return automatedStatus;
+	const incidentStatuses = activeIncidents.map((i) => i.affectedStatus);
+	return getWorstStatus([automatedStatus, ...incidentStatuses]);
 }

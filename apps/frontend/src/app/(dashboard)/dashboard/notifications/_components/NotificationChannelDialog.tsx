@@ -102,6 +102,10 @@ export function NotificationChannelDialog({
 						notifyOnDown: linkedMonitor?.notifyOnDown ?? true,
 						notifyOnUp: linkedMonitor?.notifyOnUp ?? true,
 						notifyOnDegraded: linkedMonitor?.notifyOnDegraded ?? false,
+						notifyOnSslExpiry: linkedMonitor?.notifyOnSslExpiry ?? true,
+						notifyOnMaintenance: linkedMonitor?.notifyOnMaintenance ?? true,
+						notifyOnFirstCheck: linkedMonitor?.notifyOnFirstCheck ?? false,
+						notifyOnPauseResume: linkedMonitor?.notifyOnPauseResume ?? false,
 						originallyLinked: !!linkedMonitor,
 					};
 				},
@@ -128,6 +132,10 @@ export function NotificationChannelDialog({
 					notifyOnDown: link.notifyOnDown,
 					notifyOnUp: link.notifyOnUp,
 					notifyOnDegraded: link.notifyOnDegraded,
+					notifyOnSslExpiry: link.notifyOnSslExpiry,
+					notifyOnMaintenance: link.notifyOnMaintenance,
+					notifyOnFirstCheck: link.notifyOnFirstCheck,
+					notifyOnPauseResume: link.notifyOnPauseResume,
 				});
 			}
 			toast.success("Notification channel created");
@@ -182,12 +190,19 @@ export function NotificationChannelDialog({
 					notifyOnDown: field === "notifyOnDown" ? value : true,
 					notifyOnUp: field === "notifyOnUp" ? value : true,
 					notifyOnDegraded: field === "notifyOnDegraded" ? value : false,
+					notifyOnSslExpiry: field === "notifyOnSslExpiry" ? value : true,
+					notifyOnMaintenance: field === "notifyOnMaintenance" ? value : true,
+					notifyOnFirstCheck: field === "notifyOnFirstCheck" ? value : false,
+					notifyOnPauseResume: field === "notifyOnPauseResume" ? value : false,
 				},
 			];
 		});
 	};
 
-	const validateAndGetConfig = (): Record<string, unknown> | null => {
+	const validateAndGetConfig = (): Record<
+		string,
+		string | undefined
+	> | null => {
 		const channelConfig = NOTIFICATION_CHANNEL_FIELDS[type];
 		for (const field of channelConfig.fields) {
 			if (field.required && !config[field.name]?.trim()) {
@@ -196,19 +211,8 @@ export function NotificationChannelDialog({
 			}
 		}
 
-		// Parse webhook headers if present
-		let finalConfig: Record<string, unknown> = { ...config };
-		if (type === "WEBHOOK" && config.webhookHeaders) {
-			try {
-				const headers = JSON.parse(config.webhookHeaders);
-				finalConfig = { ...finalConfig, webhookHeaders: headers };
-			} catch {
-				toast.error("Invalid JSON for webhook headers");
-				return null;
-			}
-		}
-
-		return finalConfig;
+		// Return config with all fields (including webhookHeader_* fields)
+		return { ...config };
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -240,6 +244,10 @@ export function NotificationChannelDialog({
 							notifyOnDown: link.notifyOnDown,
 							notifyOnUp: link.notifyOnUp,
 							notifyOnDegraded: link.notifyOnDegraded,
+							notifyOnSslExpiry: link.notifyOnSslExpiry,
+							notifyOnMaintenance: link.notifyOnMaintenance,
+							notifyOnFirstCheck: link.notifyOnFirstCheck,
+							notifyOnPauseResume: link.notifyOnPauseResume,
 						});
 					} else if (!link.linked && link.originallyLinked) {
 						await unlinkMonitorMutation.mutateAsync({
@@ -253,6 +261,10 @@ export function NotificationChannelDialog({
 							notifyOnDown: link.notifyOnDown,
 							notifyOnUp: link.notifyOnUp,
 							notifyOnDegraded: link.notifyOnDegraded,
+							notifyOnSslExpiry: link.notifyOnSslExpiry,
+							notifyOnMaintenance: link.notifyOnMaintenance,
+							notifyOnFirstCheck: link.notifyOnFirstCheck,
+							notifyOnPauseResume: link.notifyOnPauseResume,
 						});
 					}
 				}

@@ -64,7 +64,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { INCIDENT_STATUS_CONFIG } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, formatUptime } from "@/lib/utils";
 import { api } from "@/trpc/react";
 
 interface MonitorDetailClientProps {
@@ -300,7 +300,7 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 										: "text-red-500",
 							)}
 						>
-							{monitor.uptimePercentage.toFixed(2)}%
+							{formatUptime(monitor.uptimePercentage)}%
 						</div>
 						<p className="mt-1 text-muted-foreground text-xs">Last 30 days</p>
 					</CardContent>
@@ -405,7 +405,7 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 												content={
 													<ChartTooltipContent
 														formatter={(value) => [
-															`${Number(value).toFixed(2)}%`,
+															`${formatUptime(Number(value))}%`,
 															"Uptime",
 														]}
 													/>

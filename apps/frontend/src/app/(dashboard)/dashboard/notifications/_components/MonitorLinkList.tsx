@@ -7,9 +7,15 @@ import { api } from "@/trpc/react";
 export interface MonitorLinkConfig {
 	monitorId: string;
 	linked: boolean;
+	// Status change notifications
 	notifyOnDown: boolean;
 	notifyOnUp: boolean;
 	notifyOnDegraded: boolean;
+	// Operational event notifications
+	notifyOnSslExpiry: boolean;
+	notifyOnMaintenance: boolean;
+	notifyOnFirstCheck: boolean;
+	notifyOnPauseResume: boolean;
 }
 
 interface MonitorLinkListProps {
@@ -37,6 +43,10 @@ export function MonitorLinkList({
 				notifyOnDown: true,
 				notifyOnUp: true,
 				notifyOnDegraded: false,
+				notifyOnSslExpiry: true,
+				notifyOnMaintenance: true,
+				notifyOnFirstCheck: false,
+				notifyOnPauseResume: false,
 			}
 		);
 	};
@@ -73,46 +83,124 @@ export function MonitorLinkList({
 									</Label>
 								</div>
 								{linkConfig.linked && (
-									<div className="ml-6 flex flex-wrap gap-3 text-sm">
-										<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
-											<Checkbox
-												checked={linkConfig.notifyOnDown}
-												onCheckedChange={(checked) =>
-													onLinkChange(
-														monitor.id,
-														"notifyOnDown",
-														checked === true,
-													)
-												}
-											/>
-											<span className="text-muted-foreground">Down</span>
-										</Label>
-										<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
-											<Checkbox
-												checked={linkConfig.notifyOnUp}
-												onCheckedChange={(checked) =>
-													onLinkChange(
-														monitor.id,
-														"notifyOnUp",
-														checked === true,
-													)
-												}
-											/>
-											<span className="text-muted-foreground">Up</span>
-										</Label>
-										<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
-											<Checkbox
-												checked={linkConfig.notifyOnDegraded}
-												onCheckedChange={(checked) =>
-													onLinkChange(
-														monitor.id,
-														"notifyOnDegraded",
-														checked === true,
-													)
-												}
-											/>
-											<span className="text-muted-foreground">Degraded</span>
-										</Label>
+									<div className="ml-6 space-y-2 text-sm">
+										{/* Status Change Events */}
+										<div>
+											<p className="mb-1 font-medium text-muted-foreground text-xs">
+												Status Changes
+											</p>
+											<div className="flex flex-wrap gap-3">
+												<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
+													<Checkbox
+														checked={linkConfig.notifyOnDown}
+														onCheckedChange={(checked) =>
+															onLinkChange(
+																monitor.id,
+																"notifyOnDown",
+																checked === true,
+															)
+														}
+													/>
+													<span className="text-muted-foreground">Down</span>
+												</Label>
+												<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
+													<Checkbox
+														checked={linkConfig.notifyOnUp}
+														onCheckedChange={(checked) =>
+															onLinkChange(
+																monitor.id,
+																"notifyOnUp",
+																checked === true,
+															)
+														}
+													/>
+													<span className="text-muted-foreground">Up</span>
+												</Label>
+												<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
+													<Checkbox
+														checked={linkConfig.notifyOnDegraded}
+														onCheckedChange={(checked) =>
+															onLinkChange(
+																monitor.id,
+																"notifyOnDegraded",
+																checked === true,
+															)
+														}
+													/>
+													<span className="text-muted-foreground">
+														Degraded
+													</span>
+												</Label>
+											</div>
+										</div>
+										{/* Operational Events */}
+										<div>
+											<p className="mb-1 font-medium text-muted-foreground text-xs">
+												Operational Events
+											</p>
+											<div className="flex flex-wrap gap-3">
+												<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
+													<Checkbox
+														checked={linkConfig.notifyOnSslExpiry}
+														onCheckedChange={(checked) =>
+															onLinkChange(
+																monitor.id,
+																"notifyOnSslExpiry",
+																checked === true,
+															)
+														}
+													/>
+													<span className="text-muted-foreground">
+														SSL Expiry
+													</span>
+												</Label>
+												<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
+													<Checkbox
+														checked={linkConfig.notifyOnMaintenance}
+														onCheckedChange={(checked) =>
+															onLinkChange(
+																monitor.id,
+																"notifyOnMaintenance",
+																checked === true,
+															)
+														}
+													/>
+													<span className="text-muted-foreground">
+														Maintenance
+													</span>
+												</Label>
+												<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
+													<Checkbox
+														checked={linkConfig.notifyOnFirstCheck}
+														onCheckedChange={(checked) =>
+															onLinkChange(
+																monitor.id,
+																"notifyOnFirstCheck",
+																checked === true,
+															)
+														}
+													/>
+													<span className="text-muted-foreground">
+														First Check
+													</span>
+												</Label>
+												<Label className="flex cursor-pointer items-center gap-1.5 font-normal">
+													<Checkbox
+														checked={linkConfig.notifyOnPauseResume}
+														onCheckedChange={(checked) =>
+															onLinkChange(
+																monitor.id,
+																"notifyOnPauseResume",
+																checked === true,
+															)
+														}
+													/>
+													<span className="text-muted-foreground">
+														Pause/Resume
+													</span>
+												</Label>
+											</div>
+										</div>
 									</div>
 								)}
 							</div>

@@ -1,6 +1,7 @@
 import { db } from "@uptimebeacon/database";
 import { Elysia, t } from "elysia";
 import { runCheck } from "../services/checker";
+import { sendNotifications } from "../services/notification";
 import { scheduleMonitor, unscheduleMonitor } from "../services/scheduler";
 import { broadcastUpdate } from "../websocket";
 
@@ -155,6 +156,12 @@ export const monitorRoutes = new Elysia({ prefix: "/api/monitors" })
 
 			unscheduleMonitor(params.id);
 
+			// Send paused notification
+			await sendNotifications({
+				monitor,
+				event: "paused",
+			});
+
 			broadcastUpdate({
 				type: "monitor",
 				monitorId: params.id,
@@ -181,6 +188,12 @@ export const monitorRoutes = new Elysia({ prefix: "/api/monitors" })
 
 			scheduleMonitor(monitor);
 
+			// Send resumed notification
+			await sendNotifications({
+				monitor,
+				event: "resumed",
+			});
+
 			broadcastUpdate({
 				type: "monitor",
 				monitorId: params.id,
@@ -188,6 +201,49 @@ export const monitorRoutes = new Elysia({ prefix: "/api/monitors" })
 			});
 
 			return monitor;
+		},
+		{
+			params: t.Object({
+				id: t.String(),
+			}),
+		},
+	)
+
+	// Schedule a monitor (called after creation from frontend)
+	.post(
+		"/:id/schedule",
+		async ({ params }) => {
+			const monitor = await db.monitor.findUnique({
+				where: { id: params.id },
+			});
+
+			if (!monitor) {
+				return { error: "Monitor not found" };
+			}
+
+			if (monitor.active && !monitor.paused) {
+				scheduleMonitor(monitor);
+				return { success: true, message: `Monitor ${monitor.name} scheduled` };
+			}
+
+			return {
+				success: false,
+				message: "Monitor is inactive or paused",
+			};
+		},
+		{
+			params: t.Object({
+				id: t.String(),
+			}),
+		},
+	)
+
+	// Unschedule a monitor (called before deletion from frontend)
+	.post(
+		"/:id/unschedule",
+		async ({ params }) => {
+			unscheduleMonitor(params.id);
+			return { success: true, message: `Monitor ${params.id} unscheduled` };
 		},
 		{
 			params: t.Object({

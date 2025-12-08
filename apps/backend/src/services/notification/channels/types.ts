@@ -1,6 +1,16 @@
 // Shared types for all notification channels
 
-export type NotificationEvent = "down" | "up" | "degraded";
+export type NotificationEvent =
+	| "down"
+	| "up"
+	| "degraded"
+	| "ssl_expiring"
+	| "ssl_expired"
+	| "maintenance_started"
+	| "maintenance_ended"
+	| "first_check"
+	| "paused"
+	| "resumed";
 
 export interface NotificationPayload {
 	title: string;
@@ -8,6 +18,34 @@ export interface NotificationPayload {
 	event: NotificationEvent;
 	color: string;
 	timestamp: string;
+}
+
+// Rich payload with additional context for all channels
+export interface RichNotificationPayload extends NotificationPayload {
+	monitor: {
+		id: string;
+		name: string;
+		url: string | null;
+		type: string;
+		currentStatus: string;
+		previousStatus?: string;
+	};
+	eventData?: {
+		// For recovery (up) events
+		downtimeDuration?: number; // seconds
+		downtimeFormatted?: string; // "2h 15m"
+		// For check-related events
+		responseTime?: number; // milliseconds
+		statusCode?: number;
+		// For SSL events
+		sslExpiryDate?: string; // ISO date
+		sslDaysRemaining?: number;
+	};
+	incident?: {
+		id: string;
+		title: string;
+		severity: string;
+	};
 }
 
 // Channel config types - used for validation
@@ -158,11 +196,21 @@ export function getEventColor(event: NotificationEvent): {
 } {
 	switch (event) {
 		case "up":
+		case "resumed":
+		case "maintenance_ended":
 			return { hex: 0x22c55e, css: "#22c55e", slack: "good" };
 		case "down":
+		case "ssl_expired":
 			return { hex: 0xef4444, css: "#ef4444", slack: "danger" };
 		case "degraded":
+		case "ssl_expiring":
 			return { hex: 0xeab308, css: "#eab308", slack: "warning" };
+		case "maintenance_started":
+			return { hex: 0x3b82f6, css: "#3b82f6", slack: "#3b82f6" };
+		case "first_check":
+			return { hex: 0x8b5cf6, css: "#8b5cf6", slack: "#8b5cf6" };
+		case "paused":
+			return { hex: 0x6b7280, css: "#6b7280", slack: "#6b7280" };
 	}
 }
 
@@ -174,6 +222,20 @@ export function getStatusText(event: NotificationEvent): string {
 			return "is down";
 		case "degraded":
 			return "is degraded";
+		case "ssl_expiring":
+			return "SSL certificate expiring soon";
+		case "ssl_expired":
+			return "SSL certificate has expired";
+		case "maintenance_started":
+			return "maintenance started";
+		case "maintenance_ended":
+			return "maintenance ended";
+		case "first_check":
+			return "first check completed";
+		case "paused":
+			return "monitoring paused";
+		case "resumed":
+			return "monitoring resumed";
 	}
 }
 
@@ -185,5 +247,39 @@ export function getStatusEmoji(event: NotificationEvent): string {
 			return "🔴";
 		case "degraded":
 			return "🟡";
+		case "ssl_expiring":
+			return "⚠️";
+		case "ssl_expired":
+			return "🔒";
+		case "maintenance_started":
+			return "🔧";
+		case "maintenance_ended":
+			return "✅";
+		case "first_check":
+			return "🆕";
+		case "paused":
+			return "⏸️";
+		case "resumed":
+			return "▶️";
 	}
+}
+
+// Helper to format duration in human-readable format
+export function formatDuration(seconds: number): string {
+	if (seconds < 60) {
+		return `${seconds}s`;
+	}
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) {
+		const secs = seconds % 60;
+		return secs > 0 ? `${minutes}m ${secs}s` : `${minutes}m`;
+	}
+	const hours = Math.floor(minutes / 60);
+	const mins = minutes % 60;
+	if (hours < 24) {
+		return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+	}
+	const days = Math.floor(hours / 24);
+	const hrs = hours % 24;
+	return hrs > 0 ? `${days}d ${hrs}h` : `${days}d`;
 }

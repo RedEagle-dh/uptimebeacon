@@ -373,14 +373,7 @@ export const NOTIFICATION_CHANNEL_FIELDS: Record<
 				type: "text",
 				description: "HTTP method (GET or POST, defaults to POST)",
 			},
-			{
-				name: "webhookHeaders",
-				label: "Custom Headers",
-				placeholder: '{"Authorization": "Bearer token"}',
-				required: false,
-				type: "textarea",
-				description: "Custom headers as JSON (optional)",
-			},
+			// webhookHeaders is handled by WebhookHeadersField component
 		],
 	},
 } as const;

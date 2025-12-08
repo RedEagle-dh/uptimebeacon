@@ -1,17 +1,18 @@
 "use client";
 
 import { Eye, EyeOff, Loader2, Lock } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
 	NOTIFICATION_CHANNEL_FIELDS,
 	type NotificationChannelType,
 } from "@/lib/constants";
 import { api } from "@/trpc/react";
+
+import { WebhookHeadersField } from "./WebhookHeadersField";
 
 interface ChannelConfigFieldsProps {
 	type: NotificationChannelType;
@@ -19,6 +20,11 @@ interface ChannelConfigFieldsProps {
 	onConfigChange: (fieldName: string, value: string) => void;
 	isEditMode?: boolean;
 	channelId?: string;
+}
+
+interface WebhookHeader {
+	key: string;
+	value: string;
 }
 
 export function ChannelConfigFields({
@@ -40,6 +46,60 @@ export function ChannelConfigFields({
 	);
 
 	const utils = api.useUtils();
+
+	// Local state for webhook headers (allows empty keys while editing)
+	const [webhookHeaders, setWebhookHeaders] = useState<WebhookHeader[]>([]);
+
+	// Initialize headers from config on mount (only once)
+	const initializedRef = useRef(false);
+	useEffect(() => {
+		if (type !== "WEBHOOK" || initializedRef.current) return;
+		initializedRef.current = true;
+
+		const headers: WebhookHeader[] = [];
+		for (const [key, value] of Object.entries(config)) {
+			// Only include non-empty keys with non-empty values
+			if (key.startsWith("webhookHeader_") && value) {
+				const headerKey = key.replace("webhookHeader_", "");
+				headers.push({ key: headerKey, value });
+			}
+		}
+		if (headers.length > 0) {
+			setWebhookHeaders(headers);
+		}
+	}, [type, config]);
+
+	// Reset initialization when type changes
+	useEffect(() => {
+		if (type !== "WEBHOOK") {
+			initializedRef.current = false;
+			setWebhookHeaders([]);
+		}
+	}, [type]);
+
+	const handleWebhookHeadersChange = (headers: WebhookHeader[]) => {
+		// Update local state immediately (allows empty keys)
+		setWebhookHeaders(headers);
+
+		// Build the set of keys we want to keep
+		const newKeys = new Set(
+			headers.filter((h) => h.key).map((h) => `webhookHeader_${h.key}`),
+		);
+
+		// Remove old keys that are no longer needed
+		for (const key of Object.keys(config)) {
+			if (key.startsWith("webhookHeader_") && !newKeys.has(key)) {
+				onConfigChange(key, "");
+			}
+		}
+
+		// Add/update headers with non-empty keys
+		for (const header of headers) {
+			if (header.key) {
+				onConfigChange(`webhookHeader_${header.key}`, header.value);
+			}
+		}
+	};
 
 	const togglePasswordVisibility = async (fieldName: string) => {
 		const isCurrentlyVisible = visiblePasswords[fieldName];
@@ -98,15 +158,7 @@ export function ChannelConfigFields({
 							<Lock className="ml-1 inline-block size-3 text-muted-foreground" />
 						)}
 					</Label>
-					{field.type === "textarea" ? (
-						<Textarea
-							id={field.name}
-							onChange={(e) => onConfigChange(field.name, e.target.value)}
-							placeholder={field.placeholder}
-							rows={3}
-							value={config[field.name] || ""}
-						/>
-					) : field.type === "password" ? (
+					{field.type === "password" ? (
 						<div className="relative">
 							<Input
 								className="pr-10"
@@ -149,6 +201,15 @@ export function ChannelConfigFields({
 					)}
 				</div>
 			))}
+
+			{type === "WEBHOOK" && (
+				<WebhookHeadersField
+					channelId={channelId}
+					headers={webhookHeaders}
+					isEditMode={isEditMode}
+					onChange={handleWebhookHeadersChange}
+				/>
+			)}
 		</>
 	);
 }

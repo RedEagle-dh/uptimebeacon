@@ -1,7 +1,7 @@
 import { logger } from "../../utils/logger";
 import {
 	type ChannelConfig,
-	type NotificationPayload,
+	type RichNotificationPayload,
 	sendDiscord,
 	sendEmail,
 	sendResend,
@@ -10,7 +10,7 @@ import {
 	sendWebhook,
 } from "./channels";
 
-function createTestPayload(): NotificationPayload {
+function createTestPayload(): RichNotificationPayload {
 	return {
 		title: "Test Notification",
 		message:
@@ -18,6 +18,19 @@ function createTestPayload(): NotificationPayload {
 		event: "up",
 		color: "good",
 		timestamp: new Date().toISOString(),
+		monitor: {
+			id: "test",
+			name: "Test Monitor",
+			url: "https://example.com",
+			type: "HTTP",
+			currentStatus: "UP",
+			previousStatus: "DOWN",
+		},
+		eventData: {
+			responseTime: 123,
+			downtimeDuration: 300,
+			downtimeFormatted: "5m",
+		},
 	};
 }
 
@@ -50,14 +63,7 @@ export async function sendTestNotification(
 				await sendTelegram(config, payload);
 				break;
 			case "WEBHOOK":
-				await sendWebhook(config, payload, {
-					monitor: {
-						id: "test",
-						name: "Test Monitor",
-						url: "https://example.com",
-						status: "UP",
-					},
-				});
+				await sendWebhook(config, payload);
 				break;
 			default:
 				throw new Error(`Unknown channel type: ${channelType}`);
