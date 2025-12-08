@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.2.1...frontend-v1.3.0) (2025-12-08)
+
+
+### Features
+
+* add notifications, status pages, incidents, and monitor management ([46eac78](https://github.com/RedEagle-dh/uptimebeacon/commit/46eac7816c1e459d30982ffa6b5851db2d2839de))
+
 # [1.3.0-beta.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.2.1...frontend-v1.3.0-beta.1) (2025-12-07)
 
 
