@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.1...frontend-v1.3.2) (2025-12-12)
+
+
+### Bug Fixes
+
+* update.ts using process.env instead of env fix: BACKEND_URL was ([917d4fb](https://github.com/RedEagle-dh/uptimebeacon/commit/917d4fb42b5438e321896252cd69061226891081))
+
 ## [1.3.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.0...frontend-v1.3.1) (2025-12-08)
 
 
