@@ -254,19 +254,29 @@ jobs:
 
       - name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: nick-fields/retry@v3
         with:
-          context: .
-          file: ./apps/frontend/Dockerfile
-          platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            APP_VERSION=${{ needs.release-frontend.outputs.version }}
-          cache-from: type=gha,scope=frontend-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=frontend-${{ matrix.platform }}
-          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
-          provenance: false
-          sbom: false
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            # Build and push using docker buildx
+            docker buildx build \
+              --platform ${{ matrix.platform }} \
+              --label "${{ steps.meta.outputs.labels }}" \
+              --build-arg APP_VERSION=${{ needs.release-frontend.outputs.version }} \
+              --cache-from type=gha,scope=frontend-${{ matrix.platform }} \
+              --cache-to type=gha,mode=max,scope=frontend-${{ matrix.platform }} \
+              --output type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true \
+              --provenance=false \
+              --sbom=false \
+              --metadata-file /tmp/build-metadata.json \
+              -f ./apps/frontend/Dockerfile \
+              .
+
+            # Extract digest from metadata file
+            DIGEST=$(jq -r '."containerimage.digest"' /tmp/build-metadata.json)
+            echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Export digest
         run: |
@@ -327,19 +337,29 @@ jobs:
 
       - name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: nick-fields/retry@v3
         with:
-          context: .
-          file: ./apps/backend/Dockerfile
-          platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            APP_VERSION=${{ needs.release-backend.outputs.version }}
-          cache-from: type=gha,scope=backend-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=backend-${{ matrix.platform }}
-          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
-          provenance: false
-          sbom: false
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            # Build and push using docker buildx
+            docker buildx build \
+              --platform ${{ matrix.platform }} \
+              --label "${{ steps.meta.outputs.labels }}" \
+              --build-arg APP_VERSION=${{ needs.release-backend.outputs.version }} \
+              --cache-from type=gha,scope=backend-${{ matrix.platform }} \
+              --cache-to type=gha,mode=max,scope=backend-${{ matrix.platform }} \
+              --output type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true \
+              --provenance=false \
+              --sbom=false \
+              --metadata-file /tmp/build-metadata.json \
+              -f ./apps/backend/Dockerfile \
+              .
+
+            # Extract digest from metadata file
+            DIGEST=$(jq -r '."containerimage.digest"' /tmp/build-metadata.json)
+            echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Export digest
         run: |
