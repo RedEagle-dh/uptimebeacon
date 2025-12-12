@@ -12,7 +12,7 @@ export const env = createEnv({
 				? z.string()
 				: z.string().optional(),
 		DATABASE_URL: z.url(),
-		BACKEND_URL: z.string().url().optional(),
+		BACKEND_URL: z.string(),
 		NODE_ENV: z
 			.enum(["development", "test", "production"])
 			.default("development"),

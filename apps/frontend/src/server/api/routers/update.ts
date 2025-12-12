@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { env } from "@/env";
 import {
 	adminProcedure,
 	createTRPCRouter,
@@ -7,7 +8,7 @@ import {
 } from "@/server/api/trpc";
 
 // Backend API URL
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = env.BACKEND_URL ?? "http://localhost:3001";
 
 // Timeout for backend requests (5 seconds)
 const FETCH_TIMEOUT_MS = 5000;
