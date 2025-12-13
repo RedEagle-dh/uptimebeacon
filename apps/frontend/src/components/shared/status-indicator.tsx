@@ -270,7 +270,7 @@ function UptimeBarDay({ day, daysAgo, hideOnMobile }: UptimeBarDayProps) {
 			<PopoverTrigger asChild>
 				<button
 					className={cn(
-						"h-8 w-2 min-w-1 flex-1 rounded-sm transition-shadow duration-200 sm:h-8",
+						"h-8 w-2 min-w-1 flex-1 rounded-sm transition-all duration-200 hover:-translate-y-1 sm:h-8",
 						config.barClass,
 						hideOnMobile && "hidden sm:block",
 					)}
