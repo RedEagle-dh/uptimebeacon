@@ -13,6 +13,7 @@ export default async function MonitorDetailPage({
 	const { id } = await params;
 
 	void api.monitor.getById.prefetch({ id });
+	void api.monitor.getUptimeData.prefetch({ monitorId: id, days: 30 });
 
 	return (
 		<HydrateClient>
