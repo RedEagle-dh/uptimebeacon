@@ -7,7 +7,7 @@ module.exports = {
 			prerelease: "beta",
 		},
 	],
-	tagFormat: "frontend-v${version}",
+	tagFormat: "v${version}",
 	plugins: [
 		[
 			"@semantic-release/commit-analyzer",
@@ -34,21 +34,27 @@ module.exports = {
 			"@semantic-release/exec",
 			{
 				prepareCmd:
-					'sed -i \'s/"version": "[^"]*"/"version": "${nextRelease.version}"/\' package.json',
+					'sed -i \'s/"version": "[^"]*"/"version": "${nextRelease.version}"/\' package.json && ' +
+					'sed -i \'s/"version": "[^"]*"/"version": "${nextRelease.version}"/\' apps/frontend/package.json && ' +
+					'sed -i \'s/"version": "[^"]*"/"version": "${nextRelease.version}"/\' apps/backend/package.json',
 			},
 		],
 		[
 			"@semantic-release/git",
 			{
-				assets: ["package.json", "CHANGELOG.md"],
+				assets: [
+					"package.json",
+					"apps/frontend/package.json",
+					"apps/backend/package.json",
+					"CHANGELOG.md",
+				],
 				message:
-					"chore(release/frontend): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
+					"chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
 			},
 		],
 		[
 			"@semantic-release/github",
 			{
-				releasedLabels: ["released-frontend"],
 				successComment: false,
 				failComment: false,
 			},
