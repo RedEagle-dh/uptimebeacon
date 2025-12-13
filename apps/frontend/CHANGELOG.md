@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.2...frontend-v1.3.3) (2025-12-13)
+
+
+### Bug Fixes
+
+* Update next.js and react due to vulnerabilities feat: Implementing ([a1beac9](https://github.com/RedEagle-dh/uptimebeacon/commit/a1beac93f76fe0c322eedab4f97c008b422fd1b2))
+
 ## [1.3.2](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.1...frontend-v1.3.2) (2025-12-12)
 
 
