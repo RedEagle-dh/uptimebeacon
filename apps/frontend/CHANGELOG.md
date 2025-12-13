@@ -1,3 +1,10 @@
+## [1.3.5](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.4...frontend-v1.3.5) (2025-12-13)
+
+
+### Bug Fixes
+
+* making httpLink default, setting ([5ec59bc](https://github.com/RedEagle-dh/uptimebeacon/commit/5ec59bc565289b93b0976f7bf9e20f4f18494d4a))
+
 ## [1.3.4](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.3...frontend-v1.3.4) (2025-12-13)
 
 
