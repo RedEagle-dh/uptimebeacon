@@ -1,3 +1,45 @@
+## [1.3.5](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.4...frontend-v1.3.5) (2025-12-13)
+
+
+### Bug Fixes
+
+* making httpLink default, setting ([5ec59bc](https://github.com/RedEagle-dh/uptimebeacon/commit/5ec59bc565289b93b0976f7bf9e20f4f18494d4a))
+
+## [1.3.4](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.3...frontend-v1.3.4) (2025-12-13)
+
+
+### Bug Fixes
+
+* getDailyUptimeHistory prefetch missing in server compoenent ([f88e74f](https://github.com/RedEagle-dh/uptimebeacon/commit/f88e74f55192c3019a45692f7ff9b16963e2311b))
+
+## [1.3.3](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.2...frontend-v1.3.3) (2025-12-13)
+
+
+### Bug Fixes
+
+* Update next.js and react due to vulnerabilities feat: Implementing ([a1beac9](https://github.com/RedEagle-dh/uptimebeacon/commit/a1beac93f76fe0c322eedab4f97c008b422fd1b2))
+
+## [1.3.2](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.1...frontend-v1.3.2) (2025-12-12)
+
+
+### Bug Fixes
+
+* update.ts using process.env instead of env fix: BACKEND_URL was ([917d4fb](https://github.com/RedEagle-dh/uptimebeacon/commit/917d4fb42b5438e321896252cd69061226891081))
+
+## [1.3.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.0...frontend-v1.3.1) (2025-12-08)
+
+
+### Bug Fixes
+
+* frontend build fails because of db calls fix: Adding missing db ([d322f57](https://github.com/RedEagle-dh/uptimebeacon/commit/d322f573da1093d3526acd5caf1bff55c2b84a06))
+
+# [1.3.0](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.2.1...frontend-v1.3.0) (2025-12-08)
+
+
+### Features
+
+* add notifications, status pages, incidents, and monitor management ([46eac78](https://github.com/RedEagle-dh/uptimebeacon/commit/46eac7816c1e459d30982ffa6b5851db2d2839de))
+
 # [1.3.0-beta.1](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.2.1...frontend-v1.3.0-beta.1) (2025-12-07)
 
 

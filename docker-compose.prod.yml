@@ -28,6 +28,9 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - AUTH_SECRET=${AUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      # tRPC batching disabled by default for WAF compatibility (Cloudflare, etc.)
+      # Set to "false" to enable batching for better performance
+      - NEXT_PUBLIC_TRPC_BATCH_DISABLED=${NEXT_PUBLIC_TRPC_BATCH_DISABLED:-true}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:

@@ -7,12 +7,8 @@ on:
     branches: [main, develop]
   workflow_dispatch:
     inputs:
-      force_frontend:
-        description: 'Force frontend release'
-        type: boolean
-        default: false
-      force_backend:
-        description: 'Force backend release'
+      force_release:
+        description: 'Force release'
         type: boolean
         default: false
       skip_tests:
@@ -82,6 +78,7 @@ jobs:
       frontend: ${{ steps.changes.outputs.frontend }}
       backend: ${{ steps.changes.outputs.backend }}
       shared: ${{ steps.changes.outputs.shared }}
+      any_changed: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.backend == 'true' || steps.changes.outputs.shared == 'true' }}
 
     steps:
       - name: Checkout code
@@ -102,18 +99,19 @@ jobs:
               - 'packages/**'
 
   # ============================================
-  # Release: Frontend
+  # Unified Release
   # ============================================
-  release-frontend:
-    name: Release Frontend
+  release:
+    name: Release
     runs-on: ubuntu-latest
     needs: detect-changes
     if: |
       always() &&
       needs.detect-changes.result == 'success' &&
       (needs.detect-changes.outputs.frontend == 'true' ||
+       needs.detect-changes.outputs.backend == 'true' ||
        needs.detect-changes.outputs.shared == 'true' ||
-       github.event.inputs.force_frontend == 'true')
+       github.event.inputs.force_release == 'true')
     outputs:
       released: ${{ steps.semantic-release.outputs.released }}
       version: ${{ steps.semantic-release.outputs.version }}
@@ -140,65 +138,8 @@ jobs:
         id: semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        working-directory: apps/frontend
         run: |
-          OUTPUT=$(node ../../.github/release/node_modules/semantic-release/bin/semantic-release.js 2>&1) || true
-          echo "$OUTPUT"
-          if echo "$OUTPUT" | grep -q "Published release"; then
-            echo "released=true" >> $GITHUB_OUTPUT
-            VERSION=$(echo "$OUTPUT" | grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?" | head -1)
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "released=false" >> $GITHUB_OUTPUT
-            echo "version=" >> $GITHUB_OUTPUT
-          fi
-
-  # ============================================
-  # Release: Backend
-  # ============================================
-  release-backend:
-    name: Release Backend
-    runs-on: ubuntu-latest
-    needs: [detect-changes, release-frontend]
-    if: |
-      always() &&
-      needs.detect-changes.result == 'success' &&
-      (needs.release-frontend.result == 'success' || needs.release-frontend.result == 'skipped') &&
-      (needs.detect-changes.outputs.backend == 'true' ||
-       needs.detect-changes.outputs.shared == 'true' ||
-       github.event.inputs.force_backend == 'true')
-    outputs:
-      released: ${{ steps.semantic-release.outputs.released }}
-      version: ${{ steps.semantic-release.outputs.version }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.RELEASE_TOKEN }}
-
-      - name: Pull latest changes
-        run: git pull origin ${{ github.ref_name }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: .github/release/package-lock.json
-
-      - name: Install semantic-release dependencies
-        run: npm ci
-        working-directory: .github/release
-
-      - name: Run Semantic Release
-        id: semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        working-directory: apps/backend
-        run: |
-          OUTPUT=$(node ../../.github/release/node_modules/semantic-release/bin/semantic-release.js 2>&1) || true
+          OUTPUT=$(node .github/release/node_modules/semantic-release/bin/semantic-release.js 2>&1) || true
           echo "$OUTPUT"
           if echo "$OUTPUT" | grep -q "Published release"; then
             echo "released=true" >> $GITHUB_OUTPUT
@@ -214,8 +155,8 @@ jobs:
   # ============================================
   build-frontend:
     name: Build Frontend (${{ matrix.platform }})
-    needs: release-frontend
-    if: needs.release-frontend.outputs.released == 'true'
+    needs: release
+    if: needs.release.outputs.released == 'true'
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -254,19 +195,29 @@ jobs:
 
       - name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: nick-fields/retry@v3
         with:
-          context: .
-          file: ./apps/frontend/Dockerfile
-          platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            APP_VERSION=${{ needs.release-frontend.outputs.version }}
-          cache-from: type=gha,scope=frontend-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=frontend-${{ matrix.platform }}
-          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
-          provenance: false
-          sbom: false
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            # Build and push using docker buildx
+            docker buildx build \
+              --platform ${{ matrix.platform }} \
+              --label "${{ steps.meta.outputs.labels }}" \
+              --build-arg APP_VERSION=${{ needs.release.outputs.version }} \
+              --cache-from type=gha,scope=frontend-${{ matrix.platform }} \
+              --cache-to type=gha,mode=max,scope=frontend-${{ matrix.platform }} \
+              --output type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true \
+              --provenance=false \
+              --sbom=false \
+              --metadata-file /tmp/build-metadata.json \
+              -f ./apps/frontend/Dockerfile \
+              .
+
+            # Extract digest from metadata file
+            DIGEST=$(jq -r '."containerimage.digest"' /tmp/build-metadata.json)
+            echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Export digest
         run: |
@@ -287,8 +238,8 @@ jobs:
   # ============================================
   build-backend:
     name: Build Backend (${{ matrix.platform }})
-    needs: release-backend
-    if: needs.release-backend.outputs.released == 'true'
+    needs: release
+    if: needs.release.outputs.released == 'true'
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -327,19 +278,29 @@ jobs:
 
       - name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: nick-fields/retry@v3
         with:
-          context: .
-          file: ./apps/backend/Dockerfile
-          platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            APP_VERSION=${{ needs.release-backend.outputs.version }}
-          cache-from: type=gha,scope=backend-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=backend-${{ matrix.platform }}
-          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
-          provenance: false
-          sbom: false
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            # Build and push using docker buildx
+            docker buildx build \
+              --platform ${{ matrix.platform }} \
+              --label "${{ steps.meta.outputs.labels }}" \
+              --build-arg APP_VERSION=${{ needs.release.outputs.version }} \
+              --cache-from type=gha,scope=backend-${{ matrix.platform }} \
+              --cache-to type=gha,mode=max,scope=backend-${{ matrix.platform }} \
+              --output type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true \
+              --provenance=false \
+              --sbom=false \
+              --metadata-file /tmp/build-metadata.json \
+              -f ./apps/backend/Dockerfile \
+              .
+
+            # Extract digest from metadata file
+            DIGEST=$(jq -r '."containerimage.digest"' /tmp/build-metadata.json)
+            echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Export digest
         run: |
@@ -361,8 +322,8 @@ jobs:
   merge-frontend:
     name: Merge Frontend Manifests
     runs-on: ubuntu-latest
-    needs: [release-frontend, build-frontend]
-    if: needs.release-frontend.outputs.released == 'true'
+    needs: [release, build-frontend]
+    if: needs.release.outputs.released == 'true'
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository }}/frontend
 
@@ -393,9 +354,9 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.release-frontend.outputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-frontend.outputs.version }}
-            type=semver,pattern={{major}},value=${{ needs.release-frontend.outputs.version }}
+            type=semver,pattern={{version}},value=${{ needs.release.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.version }}
+            type=semver,pattern={{major}},value=${{ needs.release.outputs.version }}
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Create manifest list and push
@@ -406,7 +367,7 @@ jobs:
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ needs.release-frontend.outputs.version }}
+          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}
 
   # ============================================
   # Merge: Backend Manifests
@@ -414,8 +375,8 @@ jobs:
   merge-backend:
     name: Merge Backend Manifests
     runs-on: ubuntu-latest
-    needs: [release-backend, build-backend]
-    if: needs.release-backend.outputs.released == 'true'
+    needs: [release, build-backend]
+    if: needs.release.outputs.released == 'true'
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository }}/backend
 
@@ -446,9 +407,9 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.release-backend.outputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-backend.outputs.version }}
-            type=semver,pattern={{major}},value=${{ needs.release-backend.outputs.version }}
+            type=semver,pattern={{version}},value=${{ needs.release.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.version }}
+            type=semver,pattern={{major}},value=${{ needs.release.outputs.version }}
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Create manifest list and push
@@ -459,7 +420,7 @@ jobs:
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ needs.release-backend.outputs.version }}
+          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}
 
   # ============================================
   # Summary
@@ -467,7 +428,7 @@ jobs:
   summary:
     name: Pipeline Summary
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, detect-changes, release-frontend, release-backend, merge-frontend, merge-backend]
+    needs: [lint-and-typecheck, detect-changes, release, merge-frontend, merge-backend]
     if: always()
     env:
       FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/frontend
@@ -499,11 +460,10 @@ jobs:
             echo "| Shared | ${{ needs.detect-changes.outputs.shared == 'true' && '✅ Yes' || '❌ No' }} |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
 
-            echo "### Releases" >> $GITHUB_STEP_SUMMARY
-            echo "| Package | Released | Version |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------|----------|---------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Frontend | ${{ needs.release-frontend.outputs.released == 'true' && '✅ Yes' || '❌ No' }} | ${{ needs.release-frontend.outputs.version || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Backend | ${{ needs.release-backend.outputs.released == 'true' && '✅ Yes' || '❌ No' }} | ${{ needs.release-backend.outputs.version || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "### Release" >> $GITHUB_STEP_SUMMARY
+            echo "| Released | Version |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|---------|" >> $GITHUB_STEP_SUMMARY
+            echo "| ${{ needs.release.outputs.released == 'true' && '✅ Yes' || '❌ No' }} | ${{ needs.release.outputs.version || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
 
             echo "### Deployments" >> $GITHUB_STEP_SUMMARY
@@ -516,10 +476,10 @@ jobs:
             if [[ "${{ needs.merge-frontend.result }}" == "success" ]] || [[ "${{ needs.merge-backend.result }}" == "success" ]]; then
               echo "### Docker Images" >> $GITHUB_STEP_SUMMARY
               if [[ "${{ needs.merge-frontend.result }}" == "success" ]]; then
-                echo "- \`${FRONTEND_IMAGE}:${{ needs.release-frontend.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+                echo "- \`${FRONTEND_IMAGE}:${{ needs.release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
               fi
               if [[ "${{ needs.merge-backend.result }}" == "success" ]]; then
-                echo "- \`${BACKEND_IMAGE}:${{ needs.release-backend.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+                echo "- \`${BACKEND_IMAGE}:${{ needs.release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
               fi
             fi
           fi

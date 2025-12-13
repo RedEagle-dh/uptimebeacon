@@ -9,6 +9,7 @@ export default async function DashboardPage() {
 	void api.monitor.getStats.prefetch();
 	void api.monitor.getAll.prefetch();
 	void api.incident.getAll.prefetch();
+	void api.monitor.getDailyUptimeHistory.prefetch({ days: 90 });
 
 	return (
 		<HydrateClient>
