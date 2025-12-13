@@ -24,7 +24,12 @@ export const env = createEnv({
 	 * `NEXT_PUBLIC_`.
 	 */
 	client: {
-		// NEXT_PUBLIC_CLIENTVAR: z.string(),
+		// tRPC batching is disabled by default for compatibility with WAFs like Cloudflare
+		// Set to "false" to enable batching for better performance (if not behind a WAF)
+		NEXT_PUBLIC_TRPC_BATCH_DISABLED: z
+			.string()
+			.default("true")
+			.transform((v) => v === "true" || v === "1"),
 	},
 
 	/**
@@ -36,6 +41,8 @@ export const env = createEnv({
 		DATABASE_URL: process.env.DATABASE_URL,
 		BACKEND_URL: process.env.BACKEND_URL,
 		NODE_ENV: process.env.NODE_ENV,
+		NEXT_PUBLIC_TRPC_BATCH_DISABLED:
+			process.env.NEXT_PUBLIC_TRPC_BATCH_DISABLED,
 	},
 	/**
 	 * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
