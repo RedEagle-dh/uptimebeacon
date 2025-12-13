@@ -46,9 +46,12 @@ export function DashboardHeader() {
 	const showEllipsisOnMobile = breadcrumbs.length > 2;
 
 	return (
-		<header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-neutral-900 border-b bg-black/80 px-3 backdrop-blur-sm sm:gap-3 sm:px-4">
+		<header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 px-3 backdrop-blur-sm sm:gap-3 sm:px-4">
 			<SidebarTrigger className="-ml-1 size-8 text-neutral-500 hover:text-neutral-300" />
-			<Separator className="h-4 bg-neutral-800" orientation="vertical" />
+			<Separator
+				className="mt-4 h-[50%] bg-neutral-800"
+				orientation="vertical"
+			/>
 
 			<Breadcrumb className="min-w-0 flex-1">
 				<BreadcrumbList className="flex-nowrap text-xs sm:text-sm">

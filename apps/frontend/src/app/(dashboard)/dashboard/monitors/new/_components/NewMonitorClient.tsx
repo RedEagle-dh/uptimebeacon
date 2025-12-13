@@ -238,10 +238,13 @@ export function MonitorFormClient({ monitor }: MonitorFormClientProps) {
 		<div className="space-y-6">
 			{/* Page header */}
 			<div className="flex items-center gap-4">
-				<Button asChild size="icon" variant="ghost">
-					<Link href={backLink}>
-						<ArrowLeft className="size-4" />
-					</Link>
+				<Button
+					nativeButton={false}
+					render={<Link href={backLink} />}
+					size="icon"
+					variant="ghost"
+				>
+					<ArrowLeft className="size-4" />
 				</Button>
 				<div>
 					<h1 className="font-bold text-2xl tracking-tight">
@@ -726,8 +729,12 @@ export function MonitorFormClient({ monitor }: MonitorFormClientProps) {
 
 				{/* Submit */}
 				<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-					<Button asChild variant="outline">
-						<Link href={backLink}>Cancel</Link>
+					<Button
+						nativeButton={false}
+						render={<Link href={backLink} />}
+						variant="outline"
+					>
+						Cancel
 					</Button>
 					<Button disabled={isPending} type="submit">
 						{isPending

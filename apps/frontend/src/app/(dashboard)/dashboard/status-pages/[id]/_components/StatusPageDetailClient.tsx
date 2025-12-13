@@ -179,10 +179,14 @@ export function StatusPageDetailClient({ id }: StatusPageDetailClientProps) {
 			{/* Header */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<div className="flex items-start gap-4">
-					<Button asChild className="mt-1" size="icon" variant="ghost">
-						<Link href="/dashboard/status-pages">
-							<ArrowLeft className="size-4" />
-						</Link>
+					<Button
+						className="mt-1"
+						nativeButton={false}
+						render={<Link href="/dashboard/status-pages" />}
+						size="icon"
+						variant="ghost"
+					>
+						<ArrowLeft className="size-4" />
 					</Button>
 					<div>
 						<div className="flex flex-wrap items-center gap-2">
@@ -198,28 +202,39 @@ export function StatusPageDetailClient({ id }: StatusPageDetailClientProps) {
 					</div>
 				</div>
 				<div className="flex items-center gap-2">
-					<Button asChild size="sm" variant="outline">
-						<Link href={publicUrl} rel="noopener noreferrer" target="_blank">
-							<ExternalLink className="mr-2 size-4" />
-							View Public Page
-						</Link>
+					<Button
+						nativeButton={false}
+						render={
+							<Link
+								href={publicUrl}
+								rel="noopener noreferrer"
+								target="_blank"
+							/>
+						}
+						size="sm"
+						variant="outline"
+					>
+						<ExternalLink className="mr-2 size-4" />
+						View Public Page
 					</Button>
 					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button size="icon" variant="outline">
-								<MoreHorizontal className="size-4" />
-							</Button>
+						<DropdownMenuTrigger
+							render={<Button size="icon" variant="outline" />}
+						>
+							<MoreHorizontal className="size-4" />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-48">
-							<DropdownMenuItem asChild>
-								<Link
-									href={publicUrl}
-									rel="noopener noreferrer"
-									target="_blank"
-								>
-									<ExternalLink className="mr-2 size-4" />
-									View Public Page
-								</Link>
+							<DropdownMenuItem
+								render={
+									<Link
+										href={publicUrl}
+										rel="noopener noreferrer"
+										target="_blank"
+									/>
+								}
+							>
+								<ExternalLink className="mr-2 size-4" />
+								View Public Page
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
@@ -331,7 +346,10 @@ export function StatusPageDetailClient({ id }: StatusPageDetailClientProps) {
 
 						<div className="space-y-2">
 							<Label htmlFor="daysToShow">History Duration</Label>
-							<Select onValueChange={setDaysToShow} value={daysToShow}>
+							<Select
+								onValueChange={(value) => value && setDaysToShow(value)}
+								value={daysToShow}
+							>
 								<SelectTrigger className="w-full sm:w-48" id="daysToShow">
 									<SelectValue />
 								</SelectTrigger>

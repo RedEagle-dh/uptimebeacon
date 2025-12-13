@@ -108,15 +108,16 @@ export function AddMonitorDialog({
 						<div className="space-y-4 py-4">
 							<div className="space-y-2">
 								<Label htmlFor="monitor">Monitor *</Label>
-								<Select onValueChange={setMonitorId} value={monitorId}>
+								<Select
+									onValueChange={(value) => value && setMonitorId(value)}
+									value={monitorId}
+								>
 									<SelectTrigger className="w-full" id="monitor">
-										<SelectValue
-											placeholder={
-												monitorsLoading
-													? "Loading monitors..."
-													: "Select a monitor"
-											}
-										/>
+										<SelectValue>
+											{monitorsLoading
+												? "Loading monitors..."
+												: "Select a monitor"}
+										</SelectValue>
 									</SelectTrigger>
 									<SelectContent>
 										{availableMonitors?.map((monitor) => (

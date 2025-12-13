@@ -111,10 +111,14 @@ export function IncidentDetailClient({ id }: IncidentDetailClientProps) {
 			{/* Header */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<div className="flex items-start gap-4">
-					<Button asChild className="mt-1" size="icon" variant="ghost">
-						<Link href="/dashboard/incidents">
-							<ArrowLeft className="size-4" />
-						</Link>
+					<Button
+						className="mt-1"
+						nativeButton={false}
+						render={<Link href="/dashboard/incidents" />}
+						size="icon"
+						variant="ghost"
+					>
+						<ArrowLeft className="size-4" />
 					</Button>
 					<div>
 						<div className="flex flex-wrap items-center gap-2">

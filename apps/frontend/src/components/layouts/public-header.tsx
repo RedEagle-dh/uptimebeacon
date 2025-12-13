@@ -75,59 +75,72 @@ export async function PublicHeader() {
 					{/* Additional navigation links */}
 					{headerNavigation.map((link) => (
 						<Button
-							asChild
 							className="hidden sm:inline-flex"
 							key={link.href}
+							nativeButton={false}
+							render={
+								<Link
+									href={link.href}
+									{...(link.external && {
+										target: "_blank",
+										rel: "noopener noreferrer",
+									})}
+								/>
+							}
 							size="sm"
 							variant="ghost"
 						>
-							<Link
-								href={link.href}
-								{...(link.external && {
-									target: "_blank",
-									rel: "noopener noreferrer",
-								})}
-							>
-								{link.label}
-							</Link>
+							{link.label}
 						</Button>
 					))}
 
 					{/* GitHub link */}
 					{settings.githubUrl && (
 						<Button
-							asChild
 							className="hidden sm:inline-flex"
+							nativeButton={false}
+							render={
+								<Link
+									href={settings.githubUrl}
+									rel="noopener noreferrer"
+									target="_blank"
+								/>
+							}
 							size="sm"
 							variant="ghost"
 						>
-							<Link
-								href={settings.githubUrl}
-								rel="noopener noreferrer"
-								target="_blank"
-							>
-								<Github className="mr-2 size-4" />
-								GitHub
-							</Link>
+							<Github className="mr-2 size-4" />
+							GitHub
 						</Button>
 					)}
 
 					{session ? (
-						<Button asChild className="hidden sm:inline-flex" size="sm">
-							<Link href="/dashboard">Dashboard</Link>
+						<Button
+							className="hidden sm:inline-flex"
+							nativeButton={false}
+							render={<Link href="/dashboard" />}
+							size="sm"
+						>
+							Dashboard
 						</Button>
 					) : (
 						<>
 							<Button
-								asChild
 								className="hidden sm:inline-flex"
+								nativeButton={false}
+								render={<Link href="/auth/login" />}
 								size="sm"
 								variant="ghost"
 							>
-								<Link href="/auth/login">Sign in</Link>
+								Sign in
 							</Button>
-							<Button asChild className="hidden sm:inline-flex" size="sm">
-								<Link href="/auth/register">Get Started</Link>
+							<Button
+								className="hidden sm:inline-flex"
+								nativeButton={false}
+								render={<Link href="/auth/register" />}
+								size="sm"
+							>
+								Get Started
 							</Button>
 						</>
 					)}

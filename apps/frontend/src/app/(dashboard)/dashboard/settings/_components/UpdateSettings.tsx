@@ -194,7 +194,9 @@ export function UpdateSettings() {
 								</div>
 								<Select
 									disabled={updateSettingsMutation.isPending}
-									onValueChange={handleIntervalChange}
+									onValueChange={(value) =>
+										value && handleIntervalChange(value)
+									}
 									value={String(settings?.checkIntervalSeconds ?? 21600)}
 								>
 									<SelectTrigger className="w-32">

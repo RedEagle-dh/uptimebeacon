@@ -105,22 +105,26 @@ function MonitorRow({ monitor }: MonitorRowProps) {
 				{/* Actions */}
 				<div className="flex items-center gap-2">
 					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								className="size-8 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
-								onClick={(e) => e.preventDefault()}
-								size="icon-sm"
-								variant="ghost"
-							>
-								<MoreHorizontal className="size-4" />
-							</Button>
+						<DropdownMenuTrigger
+							render={
+								<Button
+									className="size-8 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+									onClick={(e) => e.preventDefault()}
+									size="icon-sm"
+									variant="ghost"
+								/>
+							}
+						>
+							<MoreHorizontal className="size-4" />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-48">
-							<DropdownMenuItem asChild>
-								<Link href={`/dashboard/monitors/${monitor.id}/edit`}>
-									<Settings className="mr-2 size-4" />
-									Edit Monitor
-								</Link>
+							<DropdownMenuItem
+								render={
+									<Link href={`/dashboard/monitors/${monitor.id}/edit`} />
+								}
+							>
+								<Settings className="mr-2 size-4" />
+								Edit Monitor
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								disabled={pauseMutation.isPending || resumeMutation.isPending}
@@ -176,11 +180,12 @@ function EmptyState() {
 			<p className="mt-1 mb-6 max-w-sm text-center text-muted-foreground text-sm">
 				Create your first monitor to start tracking the uptime of your services.
 			</p>
-			<Button asChild>
-				<Link href="/dashboard/monitors/new">
-					<Plus className="mr-2 size-4" />
-					Add your first monitor
-				</Link>
+			<Button
+				nativeButton={false}
+				render={<Link href="/dashboard/monitors/new" />}
+			>
+				<Plus className="mr-2 size-4" />
+				Add your first monitor
 			</Button>
 		</div>
 	);
@@ -223,11 +228,12 @@ export function MonitorsClient() {
 						Manage and track your uptime monitors
 					</p>
 				</div>
-				<Button asChild>
-					<Link href="/dashboard/monitors/new">
-						<Plus className="mr-2 size-4" />
-						Add Monitor
-					</Link>
+				<Button
+					nativeButton={false}
+					render={<Link href="/dashboard/monitors/new" />}
+				>
+					<Plus className="mr-2 size-4" />
+					Add Monitor
 				</Button>
 			</div>
 

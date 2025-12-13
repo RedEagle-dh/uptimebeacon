@@ -220,7 +220,10 @@ export function CreateStatusPageDialog({
 
 								<div className="space-y-2">
 									<Label htmlFor="daysToShow">History Duration</Label>
-									<Select onValueChange={setDaysToShow} value={daysToShow}>
+									<Select
+										onValueChange={(value) => value && setDaysToShow(value)}
+										value={daysToShow}
+									>
 										<SelectTrigger className="w-full" id="daysToShow">
 											<SelectValue />
 										</SelectTrigger>

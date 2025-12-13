@@ -286,11 +286,14 @@ export function DashboardClient() {
 						Overview of your monitoring status
 					</p>
 				</div>
-				<Button asChild size="sm" variant="outline">
-					<Link href="/dashboard/monitors/new">
-						<Zap className="mr-2 size-4" />
-						Add Monitor
-					</Link>
+				<Button
+					nativeButton={false}
+					render={<Link href="/dashboard/monitors/new" />}
+					size="sm"
+					variant="outline"
+				>
+					<Zap className="mr-2 size-4" />
+					Add Monitor
 				</Button>
 			</div>
 
@@ -397,11 +400,14 @@ export function DashboardClient() {
 						<CardTitle>Monitors</CardTitle>
 						<CardDescription>Your active monitoring endpoints</CardDescription>
 						<CardAction>
-							<Button asChild size="sm" variant="ghost">
-								<Link href="/dashboard/monitors">
-									View all
-									<ArrowUpRight className="ml-1 size-3" />
-								</Link>
+							<Button
+								nativeButton={false}
+								render={<Link href="/dashboard/monitors" />}
+								size="sm"
+								variant="ghost"
+							>
+								View all
+								<ArrowUpRight className="ml-1 size-3" />
 							</Button>
 						</CardAction>
 					</CardHeader>
@@ -429,11 +435,14 @@ export function DashboardClient() {
 							Current issues requiring attention
 						</CardDescription>
 						<CardAction>
-							<Button asChild size="sm" variant="ghost">
-								<Link href="/dashboard/incidents">
-									View all
-									<ArrowUpRight className="ml-1 size-3" />
-								</Link>
+							<Button
+								nativeButton={false}
+								render={<Link href="/dashboard/incidents" />}
+								size="sm"
+								variant="ghost"
+							>
+								View all
+								<ArrowUpRight className="ml-1 size-3" />
 							</Button>
 						</CardAction>
 					</CardHeader>

@@ -152,10 +152,14 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 			{/* Header */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<div className="flex items-start gap-4">
-					<Button asChild className="mt-1" size="icon" variant="ghost">
-						<Link href="/dashboard/monitors">
-							<ArrowLeft className="size-4" />
-						</Link>
+					<Button
+						className="mt-1"
+						nativeButton={false}
+						render={<Link href="/dashboard/monitors" />}
+						size="icon"
+						variant="ghost"
+					>
+						<ArrowLeft className="size-4" />
 					</Button>
 					<div>
 						<div className="flex flex-wrap items-center gap-2">
@@ -183,25 +187,34 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 				</div>
 				<div className="flex items-center gap-2">
 					{monitor.url && (
-						<Button asChild size="sm" variant="outline">
-							<a href={monitor.url} rel="noopener noreferrer" target="_blank">
-								<ExternalLink className="mr-2 size-4" />
-								Visit
-							</a>
+						<Button
+							nativeButton={false}
+							render={
+								<Link
+									href={monitor.url}
+									rel="noopener noreferrer"
+									target="_blank"
+								/>
+							}
+							size="sm"
+							variant="outline"
+						>
+							<ExternalLink className="mr-2 size-4" />
+							Visit
 						</Button>
 					)}
 					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button size="icon" variant="outline">
-								<MoreHorizontal className="size-4" />
-							</Button>
+						<DropdownMenuTrigger
+							render={<Button size="icon" variant="outline" />}
+						>
+							<MoreHorizontal className="size-4" />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-48">
-							<DropdownMenuItem asChild>
-								<Link href={`/dashboard/monitors/${id}/edit`}>
-									<Pencil className="mr-2 size-4" />
-									Edit Monitor
-								</Link>
+							<DropdownMenuItem
+								render={<Link href={`/dashboard/monitors/${id}/edit`} />}
+							>
+								<Pencil className="mr-2 size-4" />
+								Edit Monitor
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								disabled={pauseMutation.isPending || resumeMutation.isPending}
@@ -660,11 +673,13 @@ export function MonitorDetailClient({ id }: MonitorDetailClientProps) {
 										Change monitor configuration and settings
 									</p>
 								</div>
-								<Button asChild variant="outline">
-									<Link href={`/dashboard/monitors/${id}/edit`}>
-										<Settings className="mr-2 size-4" />
-										Edit
-									</Link>
+								<Button
+									nativeButton={false}
+									render={<Link href={`/dashboard/monitors/${id}/edit`} />}
+									variant="outline"
+								>
+									<Settings className="mr-2 size-4" />
+									Edit
 								</Button>
 							</div>
 

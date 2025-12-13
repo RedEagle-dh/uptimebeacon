@@ -55,19 +55,20 @@ function StatusPageCard({ page }: { page: StatusPage }) {
 
 					<div className="flex gap-2 pt-2">
 						<Button
-							asChild
+							nativeButton={false}
 							onClick={(e) => e.stopPropagation()}
+							render={
+								<Link
+									href={domain ? `https://${domain}` : `/status/${page.slug}`}
+									rel="noopener noreferrer"
+									target="_blank"
+								/>
+							}
 							size="sm"
 							variant="ghost"
 						>
-							<Link
-								href={domain ? `https://${domain}` : `/status/${page.slug}`}
-								rel="noopener noreferrer"
-								target="_blank"
-							>
-								<ExternalLink className="mr-2 size-4" />
-								View
-							</Link>
+							<ExternalLink className="mr-2 size-4" />
+							View
 						</Button>
 					</div>
 				</div>

@@ -137,15 +137,16 @@ export function CreateIncidentDialog({
 						<div className="space-y-4 py-4 pr-4">
 							<div className="space-y-2">
 								<Label htmlFor="monitor">Monitor *</Label>
-								<Select onValueChange={setMonitorId} value={monitorId}>
+								<Select
+									onValueChange={(value) => value && setMonitorId(value)}
+									value={monitorId}
+								>
 									<SelectTrigger className="w-full" id="monitor">
-										<SelectValue
-											placeholder={
-												monitorsLoading
-													? "Loading monitors..."
-													: "Select a monitor"
-											}
-										/>
+										<SelectValue>
+											{monitorsLoading
+												? "Loading monitors..."
+												: "Select a monitor"}
+										</SelectValue>
 									</SelectTrigger>
 									<SelectContent>
 										{monitors?.map((monitor) => (
@@ -174,7 +175,9 @@ export function CreateIncidentDialog({
 									incident is active.
 								</p>
 								<Select
-									onValueChange={(v) => setAffectedStatus(v as AffectedStatus)}
+									onValueChange={(v) =>
+										v && setAffectedStatus(v as AffectedStatus)
+									}
 									value={affectedStatus}
 								>
 									<SelectTrigger className="w-full" id="affectedStatus">
@@ -201,7 +204,7 @@ export function CreateIncidentDialog({
 							<div className="space-y-2">
 								<Label htmlFor="severity">Severity</Label>
 								<Select
-									onValueChange={(v) => setSeverity(v as Severity)}
+									onValueChange={(v) => v && setSeverity(v as Severity)}
 									value={severity}
 								>
 									<SelectTrigger className="w-full" id="severity">

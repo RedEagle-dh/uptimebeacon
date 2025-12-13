@@ -35,7 +35,6 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -196,12 +195,41 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
 					<SidebarMenuItem>
 						{isMounted ? (
 							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<SidebarMenuButton
-										className="h-auto p-2 hover:bg-neutral-900/50 data-[state=open]:bg-neutral-900"
-										size="lg"
-									>
-										<Avatar className="size-8 rounded-lg ring-2 ring-neutral-800">
+								<DropdownMenuTrigger
+									render={
+										<SidebarMenuButton
+											className="h-auto p-2 hover:bg-neutral-900/50 data-[state=open]:bg-neutral-900"
+											size="lg"
+										/>
+									}
+								>
+									<Avatar className="size-8 rounded-lg ring-2 ring-neutral-800">
+										<AvatarImage
+											alt={user?.name ?? "User"}
+											src={user?.image ?? undefined}
+										/>
+										<AvatarFallback className="rounded-lg bg-neutral-900 font-medium text-neutral-300 text-sm">
+											{user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+										</AvatarFallback>
+									</Avatar>
+									<div className="grid flex-1 text-left text-sm leading-tight">
+										<span className="truncate font-medium text-neutral-200">
+											{user?.name ?? "User"}
+										</span>
+										<span className="truncate text-neutral-500 text-xs">
+											{user?.email ?? ""}
+										</span>
+									</div>
+									<ChevronsUpDown className="ml-auto size-4 text-neutral-600" />
+								</DropdownMenuTrigger>
+								<DropdownMenuContent
+									align="end"
+									className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl border-neutral-800 bg-neutral-950 p-1"
+									side={isCollapsed ? "right" : "top"}
+									sideOffset={8}
+								>
+									<div className="flex items-center gap-3 px-2 py-2">
+										<Avatar className="size-10 rounded-lg ring-2 ring-neutral-800">
 											<AvatarImage
 												alt={user?.name ?? "User"}
 												src={user?.image ?? undefined}
@@ -210,53 +238,22 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
 												{user?.name?.charAt(0)?.toUpperCase() ?? "U"}
 											</AvatarFallback>
 										</Avatar>
-										<div className="grid flex-1 text-left text-sm leading-tight">
-											<span className="truncate font-medium text-neutral-200">
+										<div className="grid flex-1 text-left leading-tight">
+											<span className="font-medium text-neutral-200">
 												{user?.name ?? "User"}
 											</span>
-											<span className="truncate text-neutral-500 text-xs">
+											<span className="text-neutral-500 text-xs">
 												{user?.email ?? ""}
 											</span>
 										</div>
-										<ChevronsUpDown className="ml-auto size-4 text-neutral-600" />
-									</SidebarMenuButton>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent
-									align="end"
-									className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl border-neutral-800 bg-neutral-950 p-1"
-									side={isCollapsed ? "right" : "top"}
-									sideOffset={8}
-								>
-									<DropdownMenuLabel className="p-0 font-normal">
-										<div className="flex items-center gap-3 px-2 py-2">
-											<Avatar className="size-10 rounded-lg ring-2 ring-neutral-800">
-												<AvatarImage
-													alt={user?.name ?? "User"}
-													src={user?.image ?? undefined}
-												/>
-												<AvatarFallback className="rounded-lg bg-neutral-900 font-medium text-neutral-300 text-sm">
-													{user?.name?.charAt(0)?.toUpperCase() ?? "U"}
-												</AvatarFallback>
-											</Avatar>
-											<div className="grid flex-1 text-left leading-tight">
-												<span className="font-medium text-neutral-200">
-													{user?.name ?? "User"}
-												</span>
-												<span className="text-neutral-500 text-xs">
-													{user?.email ?? ""}
-												</span>
-											</div>
-										</div>
-									</DropdownMenuLabel>
+									</div>
 									<DropdownMenuSeparator className="my-1 bg-neutral-800" />
 									<DropdownMenuItem
-										asChild
 										className="cursor-pointer rounded-lg px-2 py-2 text-neutral-300 focus:bg-neutral-900 focus:text-neutral-100"
+										render={<Link href="/dashboard/settings" />}
 									>
-										<Link href="/dashboard/settings">
-											<User className="mr-2 size-4 text-neutral-500" />
-											Account Settings
-										</Link>
+										<User className="mr-2 size-4 text-neutral-500" />
+										Account Settings
 									</DropdownMenuItem>
 									<DropdownMenuSeparator className="my-1 bg-neutral-800" />
 									<DropdownMenuItem

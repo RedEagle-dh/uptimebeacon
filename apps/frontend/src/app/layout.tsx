@@ -1,11 +1,14 @@
 import "@/styles/globals.css";
 
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Inter } from "next/font/google";
 
 import { Toaster } from "@/components/ui/sonner";
 import { getSiteSettings } from "@/lib/get-site-settings";
+import { cn } from "@/lib/utils";
 import { TRPCReactProvider } from "@/trpc/react";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export async function generateMetadata(): Promise<Metadata> {
 	const settings = await getSiteSettings();
@@ -103,7 +106,7 @@ export default async function RootLayout({
 	};
 
 	return (
-		<html className={`${geist.variable} dark`} lang="en">
+		<html className={cn("dark", geist.variable, inter.variable)} lang="en">
 			<head>
 				<script
 					// biome-ignore lint/security/noDangerouslySetInnerHtml: important for SEO

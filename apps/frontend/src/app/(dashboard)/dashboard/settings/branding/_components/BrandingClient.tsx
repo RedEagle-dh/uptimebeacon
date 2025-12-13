@@ -301,9 +301,12 @@ export function BrandingClient() {
 							<div className="flex size-12 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900">
 								<SelectedIcon className="size-6 text-neutral-100" />
 							</div>
-							<Select onValueChange={setIconName} value={iconName}>
+							<Select
+								onValueChange={(value) => value && setIconName(value)}
+								value={iconName}
+							>
 								<SelectTrigger className="w-48">
-									<SelectValue placeholder="Select an icon" />
+									<SelectValue>Select an icon</SelectValue>
 								</SelectTrigger>
 								<SelectContent>
 									{availableIcons?.map((icon) => {
@@ -578,7 +581,7 @@ export function BrandingClient() {
 								<Label>Icon</Label>
 								<Select
 									onValueChange={(value) =>
-										updateSocialLink(index, "iconName", value)
+										value && updateSocialLink(index, "iconName", value)
 									}
 									value={link.iconName}
 								>

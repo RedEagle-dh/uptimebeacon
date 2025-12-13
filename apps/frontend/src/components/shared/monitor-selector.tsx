@@ -32,9 +32,12 @@ export function MonitorSelector({
 	}
 
 	return (
-		<Select onValueChange={onSelect} value={selectedMonitorId}>
+		<Select
+			onValueChange={(value) => value && onSelect(value)}
+			value={selectedMonitorId}
+		>
 			<SelectTrigger className={cn("w-[180px]", className)} size="sm">
-				<SelectValue placeholder="Select monitor" />
+				<SelectValue>Select monitor</SelectValue>
 			</SelectTrigger>
 			<SelectContent>
 				{monitors.map((monitor) => (

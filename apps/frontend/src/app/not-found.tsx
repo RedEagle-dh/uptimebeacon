@@ -18,11 +18,13 @@ export default async function NotFound() {
 					<p className="mt-1 text-center text-muted-foreground text-sm">
 						The page you're looking for doesn't exist or has been moved.
 					</p>
-					<Button asChild className="mt-6">
-						<Link href="/">
-							<Home className="mr-2 size-4" />
-							Back to Home
-						</Link>
+					<Button
+						className="mt-6"
+						nativeButton={false}
+						render={<Link href="/" />}
+					>
+						<Home className="mr-2 size-4" />
+						Back to Home
 					</Button>
 				</div>
 			</main>
