@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.3...frontend-v1.3.4) (2025-12-13)
+
+
+### Bug Fixes
+
+* getDailyUptimeHistory prefetch missing in server compoenent ([f88e74f](https://github.com/RedEagle-dh/uptimebeacon/commit/f88e74f55192c3019a45692f7ff9b16963e2311b))
+
 ## [1.3.3](https://github.com/RedEagle-dh/uptimebeacon/compare/frontend-v1.3.2...frontend-v1.3.3) (2025-12-13)
 
 
